@@ -1,128 +1,80 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-    <modelVersion>4.0.0</modelVersion>
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
 
-    <parent>
-        <groupId>uk.ac.standrews.cs</groupId>
-        <artifactId>common-pom</artifactId>
-        <version>2.0-SNAPSHOT</version>
-    </parent>
+	<parent>
+		<groupId>uk.ac.standrews.cs</groupId>
+		<artifactId>common-pom</artifactId>
+		<version>1.0</version>
+	</parent>
 
-    <artifactId>jetson</artifactId>
-    <version>1.0-SNAPSHOT</version>
-    <packaging>jar</packaging>
-    <name>jetson</name>
-    <url>https://builds.cs.st-andrews.ac.uk/job/jetson</url>
-    <description>A JSON RPC framework that automatically generates RPC proxies using Java Reflection and uses Jackson streaming API to serialize/deserialize Java objects to/from JSON.</description>
+	<groupId>uk.ac.standrews.cs</groupId>
+	<artifactId>jetson</artifactId>
+	<version>1.0-SNAPSHOT</version>
+	<packaging>jar</packaging>
+	<name>jetson</name>
+	<url>https://builds.cs.st-andrews.ac.uk/job/jetson</url>
 
-    <organization>
-        <name>Mashti</name>
-        <url>http://mashti.org</url>
-    </organization>
+	<properties>
+		<repository.type>hg</repository.type>
+		<repository.location>http://quicksilver.hg.cs.st-andrews.ac.uk/jetson</repository.location>
+	</properties>
 
-    <properties>
-        <repository.type>hg</repository.type>
-        <repository.location>http://quicksilver.hg.cs.st-andrews.ac.uk/jetson</repository.location>
-    </properties>
+	<ciManagement>
+		<system>Jenkins</system>
+		<url>https://builds.cs.st-andrews.ac.uk/job/jetson</url>
+	</ciManagement>
 
-    <ciManagement>
-        <system>Jenkins</system>
-        <url>https://builds.cs.st-andrews.ac.uk/job/jetson</url>
-    </ciManagement>
+	<scm>
+		<connection>scm:${repository.type}:${repository.location}</connection>
+		<developerConnection>scm:${repository.type}:${repository.location}</developerConnection>
+		<url>scm:${repository.type}:${repository.location}</url>
+	</scm>
 
-    <developers>
-        <developer>
-            <id>masih</id>
-            <name>Masih Hajiarabderkani</name>
-            <email>m@mashti.org</email>
-            <organization>Mashti</organization>
-            <organizationUrl>http://mashti.org</organizationUrl>
-            <url>http://masih.host.cs.st-andrews.ac.uk</url>
-            <roles>
-                <role>architect</role>
-                <role>developer</role>
-            </roles>
-        </developer>
-    </developers>
+	<repositories>
+		<repository>
+			<id>uk.ac.standrews.cs.maven.repository</id>
+			<name>School of Computer Science Maven Repository</name>
+			<url>http://maven.cs.st-andrews.ac.uk/</url>
+		</repository>
 
-    <scm>
-        <connection>scm:${repository.type}:${repository.location}</connection>
-        <developerConnection>scm:${repository.type}:${repository.location}</developerConnection>
-        <url>scm:${repository.type}:${repository.location}</url>
-    </scm>
+		<repository>
+			<id>jsonrpc4j-webdav-maven-repo</id>
+			<name>jsonrpc4j maven repository</name>
+			<url>http://jsonrpc4j.googlecode.com/svn/maven/repo/</url>
+			<layout>default</layout>
+		</repository>
+	</repositories>
 
-    <repositories>
-        <repository>
-            <id>uk.ac.standrews.cs.maven.repository</id>
-            <name>School of Computer Science Maven Repository</name>
-            <url>http://maven.cs.st-andrews.ac.uk/</url>
-        </repository>
-        <repository>
-            <id>asdasdasda</id>
-            <name>sss</name>
-            <url>https://oss.sonatype.org/content/repositories/snapshots/</url>
-        </repository>
-    </repositories>
+	<build>
+		<plugins>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-javadoc-plugin</artifactId>
+				<configuration>
+					<links>
+						<link>http://fasterxml.github.com/jackson-core/javadoc/2.1.0</link>
+					</links>
+				</configuration>
+			</plugin>
+		</plugins>
+	</build>
 
-    <build>
-        <plugins>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-javadoc-plugin</artifactId>
-                <configuration>
-                    <links>
-                        <link>http://fasterxml.github.com/jackson-core/javadoc/2.1.0</link>
-                    </links>
-                </configuration>
-            </plugin>
-        </plugins>
-    </build>
-
-    <dependencies>
-        <dependency>
-            <groupId>com.fasterxml.jackson.core</groupId>
-            <artifactId>jackson-core</artifactId>
-            <version>2.2.2</version>
-        </dependency>
-        <dependency>
-            <groupId>com.fasterxml.jackson.core</groupId>
-            <artifactId>jackson-databind</artifactId>
-            <version>2.2.2</version>
-        </dependency>
-        <dependency>
-            <groupId>com.fasterxml.jackson.core</groupId>
-            <artifactId>jackson-annotations</artifactId>
-            <version>2.2.2</version>
-        </dependency>
-        <dependency>
-            <groupId>commons-pool</groupId>
-            <artifactId>commons-pool</artifactId>
-            <version>1.6</version>
-        </dependency>
-        <dependency>
-            <groupId>io.netty</groupId>
-            <artifactId>netty-all</artifactId>
-            <version>4.0.7.Final</version>
-        </dependency>
-        <dependency>
-            <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-api</artifactId>
-            <version>1.7.5</version>
-        </dependency>
-        <dependency>
-            <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-simple</artifactId>
-            <version>1.7.5</version>
-        </dependency>
-        <dependency>
-            <groupId>org.javassist</groupId>
-            <artifactId>javassist</artifactId>
-            <version>3.17.1-GA</version>
-        </dependency>
-        <dependency>
-            <groupId>com.google.guava</groupId>
-            <artifactId>guava</artifactId>
-            <version>14.0.1</version>
-        </dependency>
-    </dependencies>
+	<dependencies>
+		<dependency>
+			<groupId>com.fasterxml.jackson.core</groupId>
+			<artifactId>jackson-core</artifactId>
+			<version>2.1.4</version>
+		</dependency>
+		<dependency>
+			<groupId>com.fasterxml.jackson.core</groupId>
+			<artifactId>jackson-databind</artifactId>
+			<version>2.1.4</version>
+		</dependency>
+		<dependency>
+			<groupId>com.fasterxml.jackson.core</groupId>
+			<artifactId>jackson-annotations</artifactId>
+			<version>2.1.4</version>
+		</dependency>
+	</dependencies>
 </project>
