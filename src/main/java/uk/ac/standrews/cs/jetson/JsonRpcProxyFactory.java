@@ -32,36 +32,54 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 public class JsonRpcProxyFactory {
 
-    private static final Logger LOGGER = Logger.getLogger(JsonRpcProxyFactory.class.getName());
-    private static final AtomicLong NEXT_REQUEST_ID = new AtomicLong();
-
     //TODO implement connection pooling
-    public JsonRpcProxyFactory() {
+    private static final Logger LOGGER = Logger.getLogger(JsonRpcProxyFactory.class.getName());
+    private final Class<?>[] interfaces;
+    private final JsonFactory json_factory;
+    private final Map<Method, String> dispatch;
+    private final ClassLoader class_loader;
+    private final AtomicLong next_request_id;
 
-        // TODO Auto-generated constructor stub
+    public JsonRpcProxyFactory(final Class<?> service_interface, final JsonFactory json_factory) {
+
+        this(service_interface, json_factory, ClassLoader.getSystemClassLoader());
+    }
+
+    public JsonRpcProxyFactory(final Class<?> service_interface, final JsonFactory json_factory, final ClassLoader class_loader) {
+
+        dispatch = ReflectionUtil.mapMethodsToNames(service_interface);
+        this.interfaces = new Class<?>[]{service_interface};
+        this.json_factory = json_factory;
+        this.class_loader = class_loader;
+        next_request_id = new AtomicLong();
     }
 
     @SuppressWarnings("unchecked")
-    public <T> T get(final InetSocketAddress address, final Class<T> service_interface, final JsonFactory json_factory) throws IllegalArgumentException, IOException {
+    public <T> T get(final InetSocketAddress address) throws IllegalArgumentException, IOException {
 
         //FIXME Cache generated proxies and clone if needed.
 
-        final Map<Method, String> dispatch = ReflectionUtil.mapMethodsToNames(service_interface);
-
-        return (T) Proxy.newProxyInstance(getClass().getClassLoader(), new Class<?>[]{service_interface}, new JsonRpcInvocationHandler(address, json_factory, dispatch));
+        final JsonRpcInvocationHandler handler = new JsonRpcInvocationHandler(address);
+        return (T) Proxy.newProxyInstance(class_loader, interfaces, handler);
     }
 
-    private static class JsonRpcInvocationHandler implements InvocationHandler {
+    private Long generateRequestId() {
+
+        return next_request_id.getAndIncrement();
+    }
+
+    private String getJsonRpcMethodName(final Method method) {
+
+        return dispatch.get(method);
+    }
+
+    private class JsonRpcInvocationHandler implements InvocationHandler {
 
         private final InetSocketAddress address;
-        private final JsonFactory json_factory;
-        private final Map<Method, String> dispatch;
 
-        public JsonRpcInvocationHandler(final InetSocketAddress address, final JsonFactory json_factory, final Map<Method, String> dispatch) throws IOException {
+        public JsonRpcInvocationHandler(final InetSocketAddress address) throws IOException {
 
             this.address = address;
-            this.json_factory = json_factory;
-            this.dispatch = dispatch;
         }
 
         @Override
@@ -99,8 +117,8 @@ public class JsonRpcProxyFactory {
 
         private JsonRpcRequest createJsonRpcRequest(final Method method, final Object[] params) {
 
-            final Long request_id = NEXT_REQUEST_ID.getAndIncrement();
-            final String json_rpc_method_name = dispatch.get(method);
+            final Long request_id = generateRequestId();
+            final String json_rpc_method_name = getJsonRpcMethodName(method);
             return new JsonRpcRequest(request_id, method, json_rpc_method_name, params);
         }
 
@@ -179,7 +197,6 @@ public class JsonRpcProxyFactory {
                             response_result.setResult(null);
                         }
                         else {
-                            //                            System.out.println("about to read result as " + expected_result_type);
                             response_result.setResult(parser.readValueAs(expected_result_type));
                         }
                         response = response_result;

@@ -20,7 +20,7 @@ public abstract class AbstractJsonRpcTest<TestService> {
     protected JsonFactory json_factory;
     protected ExecutorService executor;
     protected TestService client;
-    private final JsonRpcProxyFactory proxy_factory = new JsonRpcProxyFactory();
+    private JsonRpcProxyFactory proxy_factory;
 
     @Before
     public void setUp() throws Exception {
@@ -31,7 +31,8 @@ public abstract class AbstractJsonRpcTest<TestService> {
         server = new JsonRpcServer(getServiceType(), getService(), json_factory, executor);
         server.expose();
         server_address = server.getLocalSocketAddress();
-        client = proxy_factory.get(server_address, getServiceType(), json_factory);
+        proxy_factory = new JsonRpcProxyFactory(getServiceType(), json_factory);
+        client = proxy_factory.get(server_address);
     }
 
     protected abstract Class<TestService> getServiceType();
