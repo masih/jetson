@@ -1,5 +1,8 @@
 package uk.ac.standrews.cs.jetson;
 
+import java.lang.reflect.Method;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -13,16 +16,23 @@ class JsonRpcRequest extends JsonRpcMessage {
 
     private String method_name;
     private Object[] params;
+    private Method target_method;
 
-    JsonRpcRequest() { // Empty constructor is required by Jackson framework
+    JsonRpcRequest() {
 
     }
 
-    JsonRpcRequest(final Long id, final String method_name, final Object... params) {
+    JsonRpcRequest(final Long id, final Method target_method, final String method_name, final Object... params) {
 
         setId(id);
+        setTargetMethod(target_method);
         setMethodName(method_name);
         setParams(params);
+    }
+
+    void setTargetMethod(final Method target_method) {
+
+        this.target_method = target_method;
     }
 
     @JsonProperty(METHOD_KEY)
@@ -36,7 +46,7 @@ class JsonRpcRequest extends JsonRpcMessage {
     @JsonInclude(Include.NON_NULL)
     public Object[] getParameters() {
 
-        return getParams();
+        return params;
     }
 
     public void setMethodName(final String method_name) {
@@ -44,13 +54,14 @@ class JsonRpcRequest extends JsonRpcMessage {
         this.method_name = method_name;
     }
 
-    public Object[] getParams() {
-
-        return params;
-    }
-
     public void setParams(final Object... params) {
 
         this.params = params;
+    }
+
+    @JsonIgnore
+    public Method getTargetMethod() {
+
+        return target_method;
     }
 }

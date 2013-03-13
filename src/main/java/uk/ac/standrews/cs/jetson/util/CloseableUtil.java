@@ -51,7 +51,7 @@ public final class CloseableUtil {
                     closeable.close();
                 }
                 catch (final IOException e) {
-                    LOGGER.log(Level.WARNING, "IO error occured while closing" + closeable, e);
+                    LOGGER.log(Level.FINE, "IO error occured while closing" + closeable, e);
                 };
             }
         }

@@ -1,22 +1,79 @@
 package uk.ac.standrews.cs.jetson;
 
-import com.fasterxml.jackson.annotation.JsonSubTypes;
-import com.fasterxml.jackson.annotation.JsonTypeInfo;
+import uk.ac.standrews.cs.jetson.exception.JsonRpcError;
 
-//FIXME implement serializer and get rid of type proerty
-@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, defaultImpl = JsonRpcResponseResult.class, visible = false)
-@JsonSubTypes({@JsonSubTypes.Type(value = JsonRpcResponseResult.class, name = "result"), @JsonSubTypes.Type(value = JsonRpcResponseError.class, name = "error")})
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+
 abstract class JsonRpcResponse extends JsonRpcMessage {
 
     static final String RESULT_KEY = "result";
     static final String ERROR_KEY = "error";
 
-    JsonRpcResponse() {
+    private JsonRpcResponse() {
 
     }
 
-    JsonRpcResponse(final Long id) {
+    private JsonRpcResponse(final Long id) {
 
         setId(id);
+    }
+
+    @JsonPropertyOrder({JsonRpcMessage.VERSION_KEY, JsonRpcResponse.RESULT_KEY, JsonRpcMessage.ID_KEY})
+    static final class JsonRpcResponseResult extends JsonRpcResponse {
+
+        private Object result;
+
+        JsonRpcResponseResult() {
+
+        }
+
+        JsonRpcResponseResult(final Long id, final Object result) {
+
+            super(id);
+            setResult(result);
+        }
+
+        @JsonProperty(RESULT_KEY)
+        @JsonInclude(Include.ALWAYS)
+        public Object getResult() {
+
+            return result;
+        }
+
+        public void setResult(final Object result) {
+
+            this.result = result;
+        }
+    }
+
+    @JsonPropertyOrder({JsonRpcMessage.VERSION_KEY, JsonRpcResponse.ERROR_KEY, JsonRpcMessage.ID_KEY})
+    static final class JsonRpcResponseError extends JsonRpcResponse {
+
+        private JsonRpcError error;
+
+        JsonRpcResponseError() {
+
+        }
+
+        JsonRpcResponseError(final Long id, final JsonRpcError error) {
+
+            super(id);
+            setError(error);
+        }
+
+        @JsonProperty(ERROR_KEY)
+        @JsonInclude(Include.ALWAYS)
+        public JsonRpcError getError() {
+
+            return error;
+        }
+
+        public void setError(final JsonRpcError error) {
+
+            this.error = error;
+        }
     }
 }

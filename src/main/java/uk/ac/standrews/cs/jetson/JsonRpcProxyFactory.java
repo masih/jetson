@@ -11,7 +11,10 @@ import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.logging.Logger;
 
+import uk.ac.standrews.cs.jetson.JsonRpcResponse.JsonRpcResponseError;
+import uk.ac.standrews.cs.jetson.JsonRpcResponse.JsonRpcResponseResult;
 import uk.ac.standrews.cs.jetson.exception.InvalidResponseException;
 import uk.ac.standrews.cs.jetson.exception.InvocationException;
 import uk.ac.standrews.cs.jetson.exception.JsonRpcException;
@@ -24,9 +27,12 @@ import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.JsonToken;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 public class JsonRpcProxyFactory {
 
+    private static final Logger LOGGER = Logger.getLogger(JsonRpcProxyFactory.class.getName());
     private static final AtomicLong NEXT_REQUEST_ID = new AtomicLong();
 
     //TODO implement connection pooling
@@ -75,14 +81,14 @@ public class JsonRpcProxyFactory {
                 catch (final IOException e) {
                     throw new TransportException(e);
                 }
-                final JsonRpcRequest request = new JsonRpcRequest(NEXT_REQUEST_ID.getAndIncrement(), dispatch.get(method), params);
+                final JsonRpcRequest request = createJsonRpcRequest(method, params);
 
                 writeRequest(json_generator, request);
-                final JsonRpcResponse response = readResponse(json_parser);
+                final JsonRpcResponse response = readResponse(json_parser, method.getReturnType());
                 if (isResponseError(response)) {
                     final JsonRpcResponseError response_error = toJsonRpcResponseError(response);
                     final JsonRpcException exception = JsonRpcExceptions.fromJsonRpcError(response_error.getError());
-                    throw !isInvocationException(exception) ? exception : reconstructException(method.getExceptionTypes(), asInvovationException(exception));
+                    throw !isInvocationException(exception) ? exception : reconstructException(method.getExceptionTypes(), castToInvovationException(exception));
                 }
                 return JsonRpcResponseResult.class.cast(response).getResult();
             }
@@ -91,8 +97,16 @@ public class JsonRpcProxyFactory {
             }
         }
 
-        private InvocationException asInvovationException(final JsonRpcException exception) {
+        private JsonRpcRequest createJsonRpcRequest(final Method method, final Object[] params) {
 
+            final Long request_id = NEXT_REQUEST_ID.getAndIncrement();
+            final String json_rpc_method_name = dispatch.get(method);
+            return new JsonRpcRequest(request_id, method, json_rpc_method_name, params);
+        }
+
+        private InvocationException castToInvovationException(final JsonRpcException exception) {
+
+            assert InvocationException.class.isInstance(exception);
             return InvocationException.class.cast(exception);
         }
 
@@ -136,16 +150,55 @@ public class JsonRpcProxyFactory {
             return JsonRpcResponseError.class.isInstance(response);
         }
 
-        private JsonRpcResponse readResponse(final JsonParser json_parser) throws InvalidResponseException, TransportException {
+        private JsonRpcResponse readResponse(final JsonParser parser, final Class<?> expected_result_type) throws JsonRpcException {
 
             try {
-                //                final TreeNode readValueAsTree = json_parser.readValueAsTree();
-                //                System.out.println(readValueAsTree);
-                //                return json_parser.getCodec().treeToValue(readValueAsTree, JsonRpcResponse.class);
-                return json_parser.readValueAs(JsonRpcResponse.class);
+
+                JsonRpcResponse response = null;
+                String version = null;
+                Long id = null;
+                parser.nextToken();
+                while (parser.nextToken() != JsonToken.END_OBJECT && parser.getCurrentToken() != null) {
+
+                    final String fieldname = parser.getCurrentName();
+                    if (JsonRpcMessage.VERSION_KEY.equals(fieldname)) {
+                        parser.nextToken();
+                        version = parser.getText();
+                    }
+                    if (JsonRpcResponse.ERROR_KEY.equals(fieldname)) {
+                        parser.nextToken();
+                        final JsonRpcResponseError response_error = new JsonRpcResponseError();
+                        response_error.setError(parser.readValueAs(JsonRpcException.class));
+                        response = response_error;
+                    }
+                    if (JsonRpcResponse.RESULT_KEY.equals(fieldname)) {
+                        parser.nextToken();
+                        final JsonRpcResponseResult response_result = new JsonRpcResponseResult();
+                        if (expected_result_type.equals(Void.TYPE)) {
+                            if (parser.getCurrentToken() != JsonToken.VALUE_NULL && !parser.getText().equals("")) { throw new InvalidResponseException(); }
+                            response_result.setResult(null);
+                        }
+                        else {
+                            //                            System.out.println("about to read result as " + expected_result_type);
+                            response_result.setResult(parser.readValueAs(expected_result_type));
+                        }
+                        response = response_result;
+                    }
+                    if (JsonRpcMessage.ID_KEY.equals(fieldname)) {
+                        parser.nextToken();
+                        id = parser.getLongValue();
+                    }
+                }
+                if (response == null) { throw new InvalidResponseException(); }
+                response.setId(id);
+                response.setVersion(version);
+                return response;
             }
             catch (final JsonProcessingException e) {
                 throw new InvalidResponseException(e);
+            }
+            catch (final JsonRpcException e) {
+                throw e;
             }
             catch (final IOException e) {
                 throw new TransportException(e);
@@ -155,9 +208,35 @@ public class JsonRpcProxyFactory {
         private void writeRequest(final JsonGenerator json_generator, final JsonRpcRequest request) throws TransportException {
 
             try {
-                json_generator.writeObject(request);
+                final Method target_method = request.getTargetMethod();
+                final Class<?>[] param_types = target_method.getParameterTypes();
+                LOGGER.fine(((ObjectMapper) json_generator.getCodec()).writeValueAsString(request));
+
+                final ObjectMapper mapper = (ObjectMapper) json_generator.getCodec();
+                json_generator.writeStartObject();
+                json_generator.writeObjectField(JsonRpcMessage.VERSION_KEY, request.getVersion());
+                json_generator.writeObjectField(JsonRpcRequest.METHOD_KEY, request.getMethodName());
+                if (request.getParameters() != null) {
+                    json_generator.writeArrayFieldStart(JsonRpcRequest.PARAMETERS_KEY);
+                    int i = 0;
+                    for (final Object param : request.getParameters()) {
+
+                        final Class<?> static_param_type = param_types[i++];
+                        if (!mapper.canSerialize(static_param_type)) {
+                            LOGGER.warning("No serializer is found for the type" + static_param_type + " at " + target_method);
+                        }
+                        //FIXME cache objectWriter
+                        mapper.writerWithType(static_param_type).writeValue(json_generator, param);
+
+                    }
+                    json_generator.writeEndArray();
+                }
+                json_generator.writeObjectField(JsonRpcMessage.ID_KEY, request.getId());
+                json_generator.writeEndObject();
+                json_generator.flush();
             }
             catch (final IOException e) {
+                e.printStackTrace();
                 throw new TransportException(e);
             }
         }

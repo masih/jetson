@@ -9,9 +9,6 @@ import java.util.concurrent.Executors;
 import org.junit.After;
 import org.junit.Before;
 
-import uk.ac.standrews.cs.jetson.JsonRpcProxyFactory;
-import uk.ac.standrews.cs.jetson.JsonRpcServer;
-
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -31,9 +28,9 @@ public abstract class AbstractJsonRpcTest<TestService> {
         initServerSocket();
         initJsonFactory();
         initExecutorService();
-        server = new JsonRpcServer(server_socket, getServiceType(), getService(), json_factory, executor);
+        server = new JsonRpcServer(getServiceType(), getService(), json_factory, executor);
         server.expose();
-        server_address = new InetSocketAddress(server_socket.getLocalPort());
+        server_address = server.getLocalSocketAddress();
         client = proxy_factory.get(server_address, getServiceType(), json_factory);
     }
 
@@ -48,7 +45,8 @@ public abstract class AbstractJsonRpcTest<TestService> {
 
     protected void initJsonFactory() {
 
-        json_factory = new JsonFactory(new ObjectMapper());
+        final ObjectMapper mapper = new ObjectMapper();
+        json_factory = new JsonFactory(mapper);
     }
 
     protected void initExecutorService() {
