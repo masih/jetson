@@ -253,7 +253,6 @@ public class JsonRpcProxyFactory {
                 json_generator.flush();
             }
             catch (final IOException e) {
-                e.printStackTrace();
                 throw new TransportException(e);
             }
         }
