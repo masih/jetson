@@ -1,4 +1,20 @@
-package uk.ac.standrews.cs.jetson;
+/*
+ * This file is part of Jetson.
+ * 
+ * Jetson is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ * 
+ * Jetson is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License
+ * along with Jetson.  If not, see <http://www.gnu.org/licenses/>.
+ */
+package uk.ac.standrews.cs.jetson.util;
 
 import java.lang.reflect.Method;
 import java.util.Arrays;
@@ -79,7 +95,7 @@ public class ReflectionUtil {
         if (!containsAnyAssignableFrom(JsonRpcException.class, exception_types)) { throw new RuntimeException("must throw JsonRpcException"); }
     }
 
-    static boolean containsAnyAssignableFrom(final Class<?> assignable, final Class<?>[] exception_types) {
+    public static boolean containsAnyAssignableFrom(final Class<?> assignable, final Class<?>[] exception_types) {
 
         for (final Class<?> exception_type : exception_types) {
             if (exception_type.isAssignableFrom(assignable)) { return true; }

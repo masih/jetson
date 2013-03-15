@@ -14,7 +14,10 @@
 	<packaging>jar</packaging>
 	<name>jetson</name>
 	<url>https://builds.cs.st-andrews.ac.uk/job/jetson</url>
-
+	<description>
+		A JSON RPC framework that automatically generates RPC proxies using Java Reflection. 
+		This framework uses Jackson streaming API to serialize/deserialize Java objects to/from JSON.
+	</description>
 	<properties>
 		<repository.type>hg</repository.type>
 		<repository.location>http://quicksilver.hg.cs.st-andrews.ac.uk/jetson</repository.location>
@@ -24,6 +27,21 @@
 		<system>Jenkins</system>
 		<url>https://builds.cs.st-andrews.ac.uk/job/jetson</url>
 	</ciManagement>
+
+	<developers>
+		<developer>
+			<id>masih</id>
+			<name>Masih Hajiarabderkani</name>
+			<email>mh638@st-andrews.ac.uk</email>
+			<organization>School of Computer Science at University of St Andrews</organization>
+			<organizationUrl>http://www.cs.st-andrews.ac.uk</organizationUrl>
+			<url>http://masih.host.cs.st-andrews.ac.uk</url>
+			<roles>
+				<role>architect</role>
+				<role>developer</role>
+			</roles>
+		</developer>
+	</developers>
 
 	<scm>
 		<connection>scm:${repository.type}:${repository.location}</connection>
@@ -36,13 +54,6 @@
 			<id>uk.ac.standrews.cs.maven.repository</id>
 			<name>School of Computer Science Maven Repository</name>
 			<url>http://maven.cs.st-andrews.ac.uk/</url>
-		</repository>
-
-		<repository>
-			<id>jsonrpc4j-webdav-maven-repo</id>
-			<name>jsonrpc4j maven repository</name>
-			<url>http://jsonrpc4j.googlecode.com/svn/maven/repo/</url>
-			<layout>default</layout>
 		</repository>
 	</repositories>
 
