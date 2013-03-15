@@ -14,10 +14,8 @@
 	<packaging>jar</packaging>
 	<name>jetson</name>
 	<url>https://builds.cs.st-andrews.ac.uk/job/jetson</url>
-	<description>
-		A JSON RPC framework that automatically generates RPC proxies using Java Reflection. 
-		This framework uses Jackson streaming API to serialize/deserialize Java objects to/from JSON.
-	</description>
+	<description>A JSON RPC framework that automatically generates RPC proxies using Java Reflection and uses Jackson streaming API to serialize/deserialize Java objects to/from JSON.</description>
+	
 	<properties>
 		<repository.type>hg</repository.type>
 		<repository.location>http://quicksilver.hg.cs.st-andrews.ac.uk/jetson</repository.location>
