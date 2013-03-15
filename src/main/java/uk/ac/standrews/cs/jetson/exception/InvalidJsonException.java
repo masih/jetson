@@ -16,18 +16,20 @@
  */
 package uk.ac.standrews.cs.jetson.exception;
 
-public class AccessException extends ServerException {
+import com.fasterxml.jackson.core.JsonParseException;
 
-    private static final long serialVersionUID = -869413349986223849L;
-    static final int CODE = -32604;
-    private static final String MESSAGE = "cannot access remote method";
+public class InvalidJsonException extends ParseException {
 
-    public AccessException() {
+    private static final long serialVersionUID = -8074257320543449403L;
+    public static final int CODE = -32700;
+    private static final String MESSAGE = "JSON request not well formed";
+
+    public InvalidJsonException() {
 
         super(CODE, MESSAGE);
     }
 
-    public AccessException(final Throwable cause) {
+    public InvalidJsonException(final JsonParseException cause) {
 
         super(CODE, cause);
     }

@@ -16,19 +16,25 @@
  */
 package uk.ac.standrews.cs.jetson.exception;
 
-public class AccessException extends ServerException {
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
 
-    private static final long serialVersionUID = -869413349986223849L;
-    static final int CODE = -32604;
-    private static final String MESSAGE = "cannot access remote method";
+public interface JsonRpcError {
 
-    public AccessException() {
+    String CODE_KEY = "code";
+    String MESSAGE_KEY = "message";
+    String DATA_KEY = "data";
 
-        super(CODE, MESSAGE);
-    }
+    @JsonProperty(CODE_KEY)
+    int getCode();
 
-    public AccessException(final Throwable cause) {
+    @JsonProperty(MESSAGE_KEY)
+    String getMessage();
 
-        super(CODE, cause);
-    }
+    @JsonProperty(value = DATA_KEY)
+    @JsonTypeInfo(use = JsonTypeInfo.Id.CLASS, include = JsonTypeInfo.As.PROPERTY, property = "@type")
+    @JsonInclude(Include.NON_NULL)
+    Object getData();
 }

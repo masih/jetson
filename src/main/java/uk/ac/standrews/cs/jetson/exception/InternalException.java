@@ -16,18 +16,18 @@
  */
 package uk.ac.standrews.cs.jetson.exception;
 
-public class AccessException extends ServerException {
+public class InternalException extends ServerException {
 
-    private static final long serialVersionUID = -869413349986223849L;
-    static final int CODE = -32604;
-    private static final String MESSAGE = "cannot access remote method";
+    private static final long serialVersionUID = -7936488738060772425L;
+    public static final int CODE = -32603;
+    private static final String MESSAGE = "Internal server error";
 
-    public AccessException() {
+    public InternalException() {
 
         super(CODE, MESSAGE);
     }
 
-    public AccessException(final Throwable cause) {
+    public InternalException(final Throwable cause) {
 
         super(CODE, cause);
     }

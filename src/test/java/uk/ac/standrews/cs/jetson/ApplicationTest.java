@@ -14,21 +14,27 @@
  * You should have received a copy of the GNU General Public License
  * along with Jetson.  If not, see <http://www.gnu.org/licenses/>.
  */
-package uk.ac.standrews.cs.jetson.exception;
+package uk.ac.standrews.cs.jetson;
 
-public class AccessException extends ServerException {
+import org.junit.After;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
 
-    private static final long serialVersionUID = -869413349986223849L;
-    static final int CODE = -32604;
-    private static final String MESSAGE = "cannot access remote method";
+/**
+ * Unit test for the application.
+ */
+public class ApplicationTest {
+    
+    @Before
+    public void setUp() { }
 
-    public AccessException() {
+    @After
+    public void tearDown() { }
 
-        super(CODE, MESSAGE);
-    }
-
-    public AccessException(final Throwable cause) {
-
-        super(CODE, cause);
+    @Test
+    public void testApp(){
+        
+        Assert.assertTrue(true);
     }
 }

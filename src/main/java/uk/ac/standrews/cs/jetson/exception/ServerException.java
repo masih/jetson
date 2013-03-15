@@ -16,19 +16,22 @@
  */
 package uk.ac.standrews.cs.jetson.exception;
 
-public class AccessException extends ServerException {
+public abstract class ServerException extends JsonRpcException {
 
-    private static final long serialVersionUID = -869413349986223849L;
-    static final int CODE = -32604;
-    private static final String MESSAGE = "cannot access remote method";
+    private static final long serialVersionUID = -3781403268838978789L;
 
-    public AccessException() {
+    protected ServerException() {
 
-        super(CODE, MESSAGE);
+        super();
     }
 
-    public AccessException(final Throwable cause) {
+    protected ServerException(final int code, final String message) {
 
-        super(CODE, cause);
+        super(code, message);
+    }
+
+    protected ServerException(final int code, final Throwable cause) {
+
+        super(code, cause);
     }
 }

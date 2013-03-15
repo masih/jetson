@@ -16,19 +16,27 @@
  */
 package uk.ac.standrews.cs.jetson.exception;
 
-public class AccessException extends ServerException {
+import java.lang.reflect.InvocationTargetException;
 
-    private static final long serialVersionUID = -869413349986223849L;
-    static final int CODE = -32604;
-    private static final String MESSAGE = "cannot access remote method";
+public class InvocationException extends ServerException {
 
-    public AccessException() {
+    private static final long serialVersionUID = 8618421321786954804L;
+    public static final int CODE = -32606;
 
-        super(CODE, MESSAGE);
+    public InvocationException() {
+
+        setCode(CODE);
     }
 
-    public AccessException(final Throwable cause) {
+    public InvocationException(final InvocationTargetException cause) {
 
-        super(CODE, cause);
+        this(cause.getCause());
+    }
+
+    private InvocationException(final Throwable cause) {
+
+        super(CODE, cause.getMessage());
+        setData(cause); // this is a serialization issue FIXME fix this
     }
 }
+

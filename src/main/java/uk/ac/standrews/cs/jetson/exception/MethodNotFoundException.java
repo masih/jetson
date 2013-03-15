@@ -16,19 +16,14 @@
  */
 package uk.ac.standrews.cs.jetson.exception;
 
-public class AccessException extends ServerException {
+public class MethodNotFoundException extends ServerException {
 
-    private static final long serialVersionUID = -869413349986223849L;
-    static final int CODE = -32604;
-    private static final String MESSAGE = "cannot access remote method";
+    private static final long serialVersionUID = 4963177125593522650L;
+    public static final int CODE = -32601;
+    private static final String METHOD_NOT_FOUND_ERROR_MESSAGE = "Method not found";
 
-    public AccessException() {
+    public MethodNotFoundException() {
 
-        super(CODE, MESSAGE);
-    }
-
-    public AccessException(final Throwable cause) {
-
-        super(CODE, cause);
+        super(CODE, METHOD_NOT_FOUND_ERROR_MESSAGE);
     }
 }

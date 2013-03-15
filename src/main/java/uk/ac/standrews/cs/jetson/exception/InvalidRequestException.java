@@ -16,18 +16,18 @@
  */
 package uk.ac.standrews.cs.jetson.exception;
 
-public class AccessException extends ServerException {
+public class InvalidRequestException extends ServerException {
 
-    private static final long serialVersionUID = -869413349986223849L;
-    static final int CODE = -32604;
-    private static final String MESSAGE = "cannot access remote method";
+    private static final long serialVersionUID = 4266496242494342297L;
+    public static final int CODE = -32600;
+    private static final String MESSAGE = "Invalid Request";
 
-    public AccessException() {
+    public InvalidRequestException() {
 
         super(CODE, MESSAGE);
     }
 
-    public AccessException(final Throwable cause) {
+    public InvalidRequestException(final Throwable cause) {
 
         super(CODE, cause);
     }
