@@ -169,13 +169,13 @@ public class JsonRpcServer {
         }
     }
 
-    private JsonParser createJsonParser(final Socket socket) throws IOException {
+    static JsonParser createJsonParser(final Socket socket, final JsonFactory json_factory, final JsonEncoding encoding) throws IOException {
 
         final BufferedReader buffered_reader = new BufferedReader(new InputStreamReader(socket.getInputStream(), encoding.getJavaName()));
         return json_factory.createParser(buffered_reader);
     }
 
-    private JsonGenerator createJsonGenerator(final Socket socket) throws IOException {
+    static JsonGenerator createJsonGenerator(final Socket socket, final JsonFactory json_factory, final JsonEncoding encoding) throws IOException {
 
         final BufferedWriter buffered_writer = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream(), encoding.getJavaName()));
         return json_factory.createGenerator(buffered_writer);
@@ -213,8 +213,8 @@ public class JsonRpcServer {
 
             id = NEXT_REQUEST_HANDLER_ID.getAndIncrement();
             this.socket = socket;
-            json_generator = createJsonGenerator(socket);
-            parser = createJsonParser(socket);
+            json_generator = createJsonGenerator(socket, json_factory, encoding);
+            parser = createJsonParser(socket, json_factory, encoding);
         }
 
         @Override

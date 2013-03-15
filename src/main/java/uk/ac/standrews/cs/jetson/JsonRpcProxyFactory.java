@@ -17,9 +17,6 @@
 package uk.ac.standrews.cs.jetson;
 
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.OutputStream;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
@@ -40,6 +37,7 @@ import uk.ac.standrews.cs.jetson.exception.UnexpectedException;
 import uk.ac.standrews.cs.jetson.util.CloseableUtil;
 import uk.ac.standrews.cs.jetson.util.ReflectionUtil;
 
+import com.fasterxml.jackson.core.JsonEncoding;
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonParser;
@@ -51,6 +49,7 @@ public class JsonRpcProxyFactory {
 
     //TODO implement connection pooling
     private static final Logger LOGGER = Logger.getLogger(JsonRpcProxyFactory.class.getName());
+    private static final JsonEncoding DEFAULT_ENCODING = JsonEncoding.UTF8;
     private final Class<?>[] interfaces;
     private final JsonFactory json_factory;
     private final Map<Method, String> dispatch;
@@ -108,10 +107,8 @@ public class JsonRpcProxyFactory {
             try {
                 try {
                     socket = new Socket(address.getAddress(), address.getPort());
-                    final InputStream input = socket.getInputStream();
-                    json_parser = json_factory.createParser(new InputStreamReader(input));
-                    final OutputStream outputStream = socket.getOutputStream();
-                    json_generator = json_factory.createGenerator(outputStream);
+                    json_parser = JsonRpcServer.createJsonParser(socket, json_factory, DEFAULT_ENCODING);
+                    json_generator = JsonRpcServer.createJsonGenerator(socket, json_factory, DEFAULT_ENCODING);
                 }
                 catch (final IOException e) {
                     throw new TransportException(e);
