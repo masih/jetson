@@ -149,7 +149,8 @@ public class JsonRpcServer {
 
     private Class<?>[] findParameterTypesByMethodName(final String method_name) {
 
-        return dispatch.get(method_name).getParameterTypes();
+        final Method method = dispatch.get(method_name);
+        return method != null ? method.getParameterTypes() : null;
     }
 
     private Object invoke(final Method method, final Object... parameters) throws IllegalAccessException, InvocationTargetException {
@@ -227,12 +228,11 @@ public class JsonRpcServer {
                     writeResponse(result);
                 }
             }
+            catch (final RuntimeException e) {
+                handleException(new ServerRuntimeException(e));
+            }
             catch (final JsonRpcException e) {
                 handleException(e);
-            }
-            catch (final RuntimeException e) {
-                final ServerRuntimeException wrapped_runtime_exception = new ServerRuntimeException(e);
-                handleException(wrapped_runtime_exception);
             }
             finally {
                 shutdown();
@@ -243,6 +243,43 @@ public class JsonRpcServer {
         public int compareTo(final JsonRpcRequestHandler other) {
 
             return id.compareTo(other.id);
+        }
+
+        @Override
+        public int hashCode() {
+
+            final int prime = 31;
+            int result = 1;
+            result = prime * result + getOuterType().hashCode();
+            result = prime * result + ((id == null) ? 0 : id.hashCode());
+            return result;
+        }
+
+        @Override
+        public boolean equals(final Object obj) {
+
+            if (this == obj) {
+                return true;
+            }
+            if (obj == null) {
+                return false;
+            }
+            if (getClass() != obj.getClass()) {
+                return false;
+            }
+            final JsonRpcRequestHandler other = (JsonRpcRequestHandler) obj;
+            if (!getOuterType().equals(other.getOuterType())) {
+                return false;
+            }
+            if (id == null) {
+                if (other.id != null) {
+                    return false;
+                }
+            }
+            else if (!id.equals(other.id)) {
+                return false;
+            }
+            return true;
         }
 
         private void shutdown() {
@@ -387,6 +424,11 @@ public class JsonRpcServer {
             catch (final IOException e) {
                 throw new InternalException(e);
             }
+        }
+
+        private JsonRpcServer getOuterType() {
+
+            return JsonRpcServer.this;
         }
     }
 }
