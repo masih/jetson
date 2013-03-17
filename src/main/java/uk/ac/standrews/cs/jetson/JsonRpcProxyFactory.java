@@ -26,6 +26,8 @@ import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.logging.Logger;
 
+import javax.net.SocketFactory;
+
 import uk.ac.standrews.cs.jetson.JsonRpcResponse.JsonRpcResponseError;
 import uk.ac.standrews.cs.jetson.JsonRpcResponse.JsonRpcResponseResult;
 import uk.ac.standrews.cs.jetson.exception.InvalidResponseException;
@@ -35,6 +37,7 @@ import uk.ac.standrews.cs.jetson.exception.JsonRpcExceptions;
 import uk.ac.standrews.cs.jetson.exception.TransportException;
 import uk.ac.standrews.cs.jetson.exception.UnexpectedException;
 import uk.ac.standrews.cs.jetson.util.CloseableUtil;
+import uk.ac.standrews.cs.jetson.util.DefaultSocketFactory;
 import uk.ac.standrews.cs.jetson.util.ReflectionUtil;
 
 import com.fasterxml.jackson.core.JsonEncoding;
@@ -55,6 +58,7 @@ public class JsonRpcProxyFactory {
     private final Map<Method, String> dispatch;
     private final ClassLoader class_loader;
     private final AtomicLong next_request_id;
+    private final SocketFactory socket_factory;
 
     public JsonRpcProxyFactory(final Class<?> service_interface, final JsonFactory json_factory) {
 
@@ -63,6 +67,13 @@ public class JsonRpcProxyFactory {
 
     public JsonRpcProxyFactory(final Class<?> service_interface, final JsonFactory json_factory, final ClassLoader class_loader) {
 
+        this(new DefaultSocketFactory(), service_interface, json_factory, class_loader);
+
+    }
+
+    public JsonRpcProxyFactory(final SocketFactory socket_factory, final Class<?> service_interface, final JsonFactory json_factory, final ClassLoader class_loader) {
+
+        this.socket_factory = socket_factory;
         dispatch = ReflectionUtil.mapMethodsToNames(service_interface);
         this.interfaces = new Class<?>[]{service_interface};
         this.json_factory = json_factory;
@@ -106,7 +117,7 @@ public class JsonRpcProxyFactory {
             JsonGenerator json_generator = null;
             try {
                 try {
-                    socket = new Socket(address.getAddress(), address.getPort());
+                    socket = socket_factory.createSocket(address.getAddress(), address.getPort());
                     json_parser = JsonRpcServer.createJsonParser(socket, json_factory, DEFAULT_ENCODING);
                     json_generator = JsonRpcServer.createJsonGenerator(socket, json_factory, DEFAULT_ENCODING);
                 }
