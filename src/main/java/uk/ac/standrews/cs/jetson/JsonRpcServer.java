@@ -67,7 +67,7 @@ public class JsonRpcServer {
     private final Object service;
     private final ServerSocket server_socket;
     private final JsonFactory json_factory;
-    private final ExecutorService executor;
+    private final ExecutorService request_handler_executor;
     private final Thread server_thread;
     private final Map<String, Method> dispatch;
     private final ConcurrentSkipListSet<JsonRpcRequestHandler> request_handlers;
@@ -75,18 +75,23 @@ public class JsonRpcServer {
     private volatile int socket_read_timeout;
     private volatile InetSocketAddress endpoint;
 
-    public <T> JsonRpcServer(final Class<T> service_interface, final T service, final JsonFactory json_factory, final ExecutorService executor) throws IOException {
+    public <T> JsonRpcServer(final Class<T> service_interface, final T service, final JsonFactory json_factory, final ExecutorService request_handler_executor) throws IOException {
 
-        this(new InetSocketAddress(0), service_interface, service, json_factory, executor);
+        this(new InetSocketAddress(0), service_interface, service, json_factory, request_handler_executor);
     }
 
-    public <T> JsonRpcServer(final InetSocketAddress endpoint, final Class<T> service_interface, final T service, final JsonFactory json_factory, final ExecutorService executor) throws IOException {
+    public <T> JsonRpcServer(final InetSocketAddress endpoint, final Class<T> service_interface, final T service, final JsonFactory json_factory, final ExecutorService request_handler_executor) throws IOException {
+
+        this(new ServerSocket(), endpoint, service_interface, service, json_factory, request_handler_executor);
+    }
+
+    public <T> JsonRpcServer(final ServerSocket server_socket, final InetSocketAddress endpoint, final Class<T> service_interface, final T service, final JsonFactory json_factory, final ExecutorService request_handler_executor) throws IOException {
 
         this.endpoint = endpoint;
-        this.server_socket = new ServerSocket();
+        this.server_socket = server_socket;
         this.service = service;
         this.json_factory = json_factory;
-        this.executor = executor;
+        this.request_handler_executor = request_handler_executor;
         request_handlers = new ConcurrentSkipListSet<JsonRpcRequestHandler>();
         dispatch = ReflectionUtil.mapNamesToMethods(service_interface);
         server_thread = new ServerThread();
@@ -130,7 +135,7 @@ public class JsonRpcServer {
 
         unexpose();
         shutdownRequestHandlers();
-        executor.shutdownNow();
+        request_handler_executor.shutdownNow();
         CloseableUtil.closeQuietly(CloseableUtil.toCloseable(server_socket));
     }
 
@@ -162,7 +167,7 @@ public class JsonRpcServer {
 
         try {
             final JsonRpcRequestHandler request_handler = new JsonRpcRequestHandler(socket);
-            executor.execute(request_handler);
+            request_handler_executor.execute(request_handler);
             request_handlers.add(request_handler);
         }
         catch (final IOException e) {
@@ -183,7 +188,6 @@ public class JsonRpcServer {
     }
 
     private class ServerThread extends Thread {
-
 
         public ServerThread() {
 
@@ -264,27 +268,15 @@ public class JsonRpcServer {
         @Override
         public boolean equals(final Object obj) {
 
-            if (this == obj) {
-                return true;
-            }
-            if (obj == null) {
-                return false;
-            }
-            if (getClass() != obj.getClass()) {
-                return false;
-            }
+            if (this == obj) { return true; }
+            if (obj == null) { return false; }
+            if (getClass() != obj.getClass()) { return false; }
             final JsonRpcRequestHandler other = (JsonRpcRequestHandler) obj;
-            if (!getOuterType().equals(other.getOuterType())) {
-                return false;
-            }
+            if (!getOuterType().equals(other.getOuterType())) { return false; }
             if (id == null) {
-                if (other.id != null) {
-                    return false;
-                }
+                if (other.id != null) { return false; }
             }
-            else if (!id.equals(other.id)) {
-                return false;
-            }
+            else if (!id.equals(other.id)) { return false; }
             return true;
         }
 
