@@ -37,7 +37,6 @@ import uk.ac.standrews.cs.jetson.exception.JsonRpcExceptions;
 import uk.ac.standrews.cs.jetson.exception.TransportException;
 import uk.ac.standrews.cs.jetson.exception.UnexpectedException;
 import uk.ac.standrews.cs.jetson.util.CloseableUtil;
-import uk.ac.standrews.cs.jetson.util.DefaultSocketFactory;
 import uk.ac.standrews.cs.jetson.util.ReflectionUtil;
 
 import com.fasterxml.jackson.core.JsonEncoding;
@@ -67,7 +66,7 @@ public class JsonRpcProxyFactory {
 
     public JsonRpcProxyFactory(final Class<?> service_interface, final JsonFactory json_factory, final ClassLoader class_loader) {
 
-        this(new DefaultSocketFactory(), service_interface, json_factory, class_loader);
+        this(SocketFactory.getDefault(), service_interface, json_factory, class_loader);
 
     }
 
