@@ -184,6 +184,12 @@ public class JsonRpcServer {
 
     private class ServerThread extends Thread {
 
+
+        public ServerThread() {
+
+            setName("server_thread_" + server_socket.getLocalPort());
+        }
+
         @Override
         public void run() {
 
