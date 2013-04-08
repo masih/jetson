@@ -24,15 +24,15 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
-@JsonPropertyOrder({JsonRpcMessage.VERSION_KEY, JsonRpcRequest.METHOD_KEY, JsonRpcRequest.PARAMETERS_KEY, JsonRpcMessage.ID_KEY})
+@JsonPropertyOrder({JsonRpcMessage.VERSION_KEY, JsonRpcRequest.METHOD_NAME_KEY, JsonRpcRequest.PARAMETERS_KEY, JsonRpcMessage.ID_KEY})
 class JsonRpcRequest extends JsonRpcMessage {
 
     static final String PARAMETERS_KEY = "params";
-    static final String METHOD_KEY = "method";
+    static final String METHOD_NAME_KEY = "method";
 
     private String method_name;
     private Object[] params;
-    private Method target_method;
+    private Method method;
 
     JsonRpcRequest() {
 
@@ -41,17 +41,17 @@ class JsonRpcRequest extends JsonRpcMessage {
     JsonRpcRequest(final Long id, final Method target_method, final String method_name, final Object... params) {
 
         setId(id);
-        setTargetMethod(target_method);
+        setMethod(target_method);
         setMethodName(method_name);
         setParams(params);
     }
 
-    void setTargetMethod(final Method target_method) {
+    void setMethod(final Method target_method) {
 
-        this.target_method = target_method;
+        this.method = target_method;
     }
 
-    @JsonProperty(METHOD_KEY)
+    @JsonProperty(METHOD_NAME_KEY)
     @JsonInclude(Include.ALWAYS)
     public String getMethodName() {
 
@@ -76,8 +76,8 @@ class JsonRpcRequest extends JsonRpcMessage {
     }
 
     @JsonIgnore
-    public Method getTargetMethod() {
+    public Method getMethod() {
 
-        return target_method;
+        return method;
     }
 }

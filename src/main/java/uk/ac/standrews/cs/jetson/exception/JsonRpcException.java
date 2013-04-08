@@ -43,6 +43,11 @@ public class JsonRpcException extends IOException implements JsonRpcError {
     public JsonRpcException(final int code, final String message) {
 
         super(message);
+        initCodeAndMessage(code);
+    }
+
+    private void initCodeAndMessage(final int code) {
+
         setCode(code);
         setMessage(super.getMessage());
     }
@@ -50,8 +55,13 @@ public class JsonRpcException extends IOException implements JsonRpcError {
     public JsonRpcException(final int code, final Throwable cause) {
 
         super(cause);
-        setCode(code);
-        setMessage(super.getMessage());
+        initCodeAndMessage(code);
+    }
+
+    public JsonRpcException(final int code, final String message, final Throwable cause) {
+
+        super(message, cause);
+        initCodeAndMessage(code);
     }
 
     @Override

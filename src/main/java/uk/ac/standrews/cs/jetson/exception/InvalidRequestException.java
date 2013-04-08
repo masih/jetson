@@ -31,4 +31,9 @@ public class InvalidRequestException extends ServerException {
 
         super(CODE, cause);
     }
+
+    public InvalidRequestException(final String message) {
+
+        super(CODE, message);
+    }
 }
