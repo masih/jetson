@@ -43,6 +43,7 @@ import uk.ac.standrews.cs.jetson.exception.InternalException;
 import uk.ac.standrews.cs.jetson.exception.InvalidJsonException;
 import uk.ac.standrews.cs.jetson.exception.InvalidParameterException;
 import uk.ac.standrews.cs.jetson.exception.InvalidRequestException;
+import uk.ac.standrews.cs.jetson.exception.InvalidResponseException;
 import uk.ac.standrews.cs.jetson.exception.InvocationException;
 import uk.ac.standrews.cs.jetson.exception.JsonRpcException;
 import uk.ac.standrews.cs.jetson.exception.MethodNotFoundException;
@@ -81,12 +82,12 @@ public class JsonRpcServer {
     private volatile int socket_read_timeout;
     private volatile InetSocketAddress endpoint;
 
-    public <T> JsonRpcServer(final Class<T> service_interface, final T service, final JsonFactory json_factory, final ExecutorService request_handler_executor) throws IOException {
+    public <T> JsonRpcServer(final Class<T> service_interface, final T service, final JsonFactory json_factory, final ExecutorService request_handler_executor) {
 
         this(DEFAULT_SERVER_SOCKET_FACTORY, service_interface, service, json_factory, request_handler_executor);
     }
 
-    public <T> JsonRpcServer(final ServerSocketFactory server_socket_factory, final Class<T> service_interface, final T service, final JsonFactory json_factory, final ExecutorService request_handler_executor) throws IOException {
+    public <T> JsonRpcServer(final ServerSocketFactory server_socket_factory, final Class<T> service_interface, final T service, final JsonFactory json_factory, final ExecutorService request_handler_executor) {
 
         this.server_socket_factory = server_socket_factory;
         this.service = service;
@@ -98,6 +99,14 @@ public class JsonRpcServer {
         dispatch = ReflectionUtil.mapNamesToMethods(service_interface);
         server_thread = new ServerThread();
         setDefaultConfigurations();
+    }
+
+    protected void afterReadRequest(final JsonParser parser, final JsonRpcRequest request) {
+
+    }
+
+    private void afterWriteResponse(final JsonGenerator generator, final JsonRpcResponse response) {
+
     }
 
     private void setDefaultConfigurations() {
@@ -256,7 +265,7 @@ public class JsonRpcServer {
 
         private final Long id;
         private final Socket socket;
-        private final JsonGenerator json_generator;
+        private final JsonGenerator generator;
         private final JsonParser parser;
         private volatile Long current_request_id;
 
@@ -264,7 +273,7 @@ public class JsonRpcServer {
 
             id = NEXT_REQUEST_HANDLER_ID.getAndIncrement();
             this.socket = socket;
-            json_generator = createJsonGenerator(socket, json_factory, encoding);
+            generator = createJsonGenerator(socket, json_factory, encoding);
             parser = createJsonParser(socket, json_factory, encoding);
         }
 
@@ -323,25 +332,26 @@ public class JsonRpcServer {
         private void shutdown() {
 
             Thread.currentThread().interrupt();
-            CloseableUtil.closeQuietly(json_generator, parser, CloseableUtil.toCloseable(socket));
+            CloseableUtil.closeQuietly(generator, parser, CloseableUtil.toCloseable(socket));
             request_handlers.remove(this);
         }
 
         private void handleException(final JsonRpcException exception) {
 
-            final JsonRpcResponseError error = new JsonRpcResponseError(current_request_id, exception);
-            try {
-                writeResponse(error);
-            }
-            catch (final IOException e) {
-                LOGGER.log(Level.FINE, "failed to notify JSON RPC error", e);
+            if (!socket.isClosed()) {
+                final JsonRpcResponseError error = new JsonRpcResponseError(current_request_id, exception);
+                try {
+                    writeResponse(error);
+                }
+                catch (final IOException e) {
+                    LOGGER.log(Level.FINE, "failed to notify JSON RPC error", e);
+                }
             }
         }
 
         private JsonRpcResponseResult handleRequest(final JsonRpcRequest request) throws ServerException {
 
-            final String method_name = request.getMethodName();
-            final Method method = findServiceMethodByName(method_name);
+            final Method method = request.getMethod();
             final Object[] parameters = request.getParameters();
 
             try {
@@ -382,26 +392,18 @@ public class JsonRpcServer {
 
                 final JsonRpcRequest request = new JsonRpcRequest();
                 parser.nextToken();
-                while (parser.nextToken() != JsonToken.END_OBJECT && parser.getCurrentToken() != null) {
-
-                    final String key = parser.getCurrentName();
-                    parser.nextToken();
-                    if (JsonRpcMessage.VERSION_KEY.equals(key)) {
-                        request.setVersion(parser.getText());
-                    }
-                    if (JsonRpcRequest.METHOD_KEY.equals(key)) {
-                        request.setMethodName(parser.getText());
-                    }
-                    if (JsonRpcMessage.ID_KEY.equals(key)) {
-                        request.setId(parser.getLongValue());
-                    }
-                    if (JsonRpcRequest.PARAMETERS_KEY.equals(key)) {
-                        final String method_name = request.getMethodName();
-                        final Object[] params = readRequestParameters(method_name);
-                        request.setParams(params);
-                    }
-                }
+                final String version = readAndValidateVersion();
+                final String method_name = readAndValidateMethodName();
+                final Object[] params = readRequestParameters(method_name);
+                final Long id = readAndValidateId();
+                request.setVersion(version);
+                request.setMethod(findServiceMethodByName(method_name));
+                request.setMethodName(method_name);
+                request.setId(id);
+                request.setParams(params);
                 setCurrentRequestId(request.getId());
+                afterReadRequest(parser, request);
+                parser.nextToken();
                 return request;
             }
             catch (final JsonParseException e) {
@@ -418,8 +420,39 @@ public class JsonRpcServer {
             }
         }
 
+        private Long readAndValidateId() throws JsonParseException, IOException {
+
+            final Long id = readValue(parser, JsonRpcMessage.ID_KEY, Long.class);
+            if (id == null) { throw new InvalidResponseException("request id of null is not supported"); }
+            return id;
+        }
+
+        private String readAndValidateMethodName() throws JsonParseException, IOException {
+
+            final String method_name = readValue(parser, JsonRpcRequest.METHOD_NAME_KEY, String.class);
+            if (method_name == null) { throw new InvalidRequestException("method name cannot be null"); }
+            return method_name;
+        }
+
+        private String readAndValidateVersion() throws JsonParseException, IOException {
+
+            final String version = readValue(parser, JsonRpcMessage.VERSION_KEY, String.class);
+            if (version == null || !version.equals(JsonRpcMessage.DEFAULT_VERSION)) { throw new InvalidRequestException("version must be equal to " + JsonRpcMessage.DEFAULT_VERSION); }
+            return version;
+        }
+
+        private <Value> Value readValue(final JsonParser parser, final String expected_key, final Class<Value> value_type) throws JsonParseException, IOException {
+
+            if (parser.nextToken() == JsonToken.FIELD_NAME && expected_key.equals(parser.getCurrentName())) {
+                parser.nextToken();
+                return parser.readValueAs(value_type);
+            }
+            throw new InvalidRequestException("expected key " + expected_key);
+        }
+
         private Object[] readRequestParameters(final String method_name) throws IOException, JsonProcessingException, JsonParseException {
 
+            if (parser.nextToken() != JsonToken.FIELD_NAME || !JsonRpcRequest.PARAMETERS_KEY.equals(parser.getCurrentName())) { throw new InvalidRequestException("params must not be omitted"); }
             final Object[] params;
             if (method_name == null) {
                 LOGGER.warning("unspecified method name, or params is passed before method name in JSON request; deserializing parameters without type information.");
@@ -442,6 +475,7 @@ public class JsonRpcServer {
 
             final Object[] params = new Object[types.length];
             int index = 0;
+            if (parser.nextToken() != JsonToken.START_ARRAY) { throw new InvalidRequestException("expected start array"); }
             while (parser.nextToken() != JsonToken.END_ARRAY && parser.getCurrentToken() != null) {
                 params[index] = parser.readValueAs(types[index]);
                 index++;
@@ -451,13 +485,26 @@ public class JsonRpcServer {
 
         private Object[] readRequestParametersWithoutTypeInformation() throws IOException, JsonProcessingException {
 
+            parser.nextToken();
             return parser.readValueAs(Object[].class);
         }
 
         private void writeResponse(final JsonRpcResponse response) throws ServerException {
 
             try {
-                json_generator.writeObject(response);
+                generator.writeStartObject();
+                generator.writeObjectField(JsonRpcMessage.VERSION_KEY, response.getVersion());
+
+                if (response instanceof JsonRpcResponseResult) {
+                    generator.writeObjectField(JsonRpcResponse.RESULT_KEY, ((JsonRpcResponseResult) response).getResult());
+                }
+                else {
+                    generator.writeObjectField(JsonRpcResponse.ERROR_KEY, ((JsonRpcResponseError) response).getError());
+                }
+                generator.writeObjectField(JsonRpcMessage.ID_KEY, response.getId());
+                afterWriteResponse(generator, response);
+                generator.writeEndObject();
+                generator.flush();
             }
             catch (final IOException e) {
                 throw new InternalException(e);

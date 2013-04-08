@@ -31,4 +31,9 @@ public class InvalidResponseException extends JsonRpcException {
 
         super(CODE, cause);
     }
+
+    public InvalidResponseException(final String message) {
+
+        super(CODE, message);
+    }
 }
