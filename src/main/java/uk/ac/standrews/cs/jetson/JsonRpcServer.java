@@ -30,8 +30,11 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
+import javax.net.ServerSocketFactory;
 
 import uk.ac.standrews.cs.jetson.JsonRpcResponse.JsonRpcResponseError;
 import uk.ac.standrews.cs.jetson.JsonRpcResponse.JsonRpcResponseResult;
@@ -60,39 +63,38 @@ import com.fasterxml.jackson.core.JsonToken;
 
 public class JsonRpcServer {
 
+    private static final ServerSocketFactory DEFAULT_SERVER_SOCKET_FACTORY = ServerSocketFactory.getDefault();
     private static final Logger LOGGER = Logger.getLogger(JsonRpcServer.class.getName());
     private static final JsonEncoding DEFAULT_JSON_ENCODING = JsonEncoding.UTF8;
     private static final int DEFAULT_SOCKET_READ_TIMEOUT_MILLISECONDS = 10 * 1000;
     private static final AtomicLong NEXT_REQUEST_HANDLER_ID = new AtomicLong();
     private final Object service;
-    private final ServerSocket server_socket;
+    private final ServerSocketFactory server_socket_factory;
     private final JsonFactory json_factory;
     private final ExecutorService request_handler_executor;
     private final Thread server_thread;
     private final Map<String, Method> dispatch;
     private final ConcurrentSkipListSet<JsonRpcRequestHandler> request_handlers;
+    private final ReentrantLock exposure_lock;
+    private volatile ServerSocket server_socket;
     private volatile JsonEncoding encoding;
     private volatile int socket_read_timeout;
     private volatile InetSocketAddress endpoint;
 
     public <T> JsonRpcServer(final Class<T> service_interface, final T service, final JsonFactory json_factory, final ExecutorService request_handler_executor) throws IOException {
 
-        this(new InetSocketAddress(0), service_interface, service, json_factory, request_handler_executor);
+        this(DEFAULT_SERVER_SOCKET_FACTORY, service_interface, service, json_factory, request_handler_executor);
     }
 
-    public <T> JsonRpcServer(final InetSocketAddress endpoint, final Class<T> service_interface, final T service, final JsonFactory json_factory, final ExecutorService request_handler_executor) throws IOException {
+    public <T> JsonRpcServer(final ServerSocketFactory server_socket_factory, final Class<T> service_interface, final T service, final JsonFactory json_factory, final ExecutorService request_handler_executor) throws IOException {
 
-        this(new ServerSocket(), endpoint, service_interface, service, json_factory, request_handler_executor);
-    }
-
-    public <T> JsonRpcServer(final ServerSocket server_socket, final InetSocketAddress endpoint, final Class<T> service_interface, final T service, final JsonFactory json_factory, final ExecutorService request_handler_executor) throws IOException {
-
-        this.endpoint = endpoint;
-        this.server_socket = server_socket;
+        this.server_socket_factory = server_socket_factory;
         this.service = service;
         this.json_factory = json_factory;
         this.request_handler_executor = request_handler_executor;
         request_handlers = new ConcurrentSkipListSet<JsonRpcRequestHandler>();
+        exposure_lock = new ReentrantLock();
+
         dispatch = ReflectionUtil.mapNamesToMethods(service_interface);
         server_thread = new ServerThread();
         setDefaultConfigurations();
@@ -114,29 +116,67 @@ public class JsonRpcServer {
         this.encoding = encoding;
     }
 
-    public void expose() throws IOException {
+    public void setBindAddress(final InetSocketAddress endpoint) {
 
-        server_socket.bind(endpoint);
-        server_thread.start();
-        endpoint = new InetSocketAddress(server_socket.getInetAddress(), server_socket.getLocalPort());
+        this.endpoint = this.endpoint;
     }
 
-    public void unexpose() {
+    public void expose() throws IOException {
 
-        server_thread.interrupt();
+        exposure_lock.lock();
+        try {
+            createServerSocket();
+            server_socket.bind(endpoint);
+            server_thread.start();
+        }
+        finally {
+            exposure_lock.unlock();
+        }
+    }
+
+    private void createServerSocket() throws IOException {
+
+        server_socket = server_socket_factory.createServerSocket();
+    }
+
+    public void unexpose() throws IOException {
+
+        exposure_lock.lock();
+        try {
+            server_socket.close();
+            server_thread.interrupt();
+        }
+        finally {
+            exposure_lock.unlock();
+        }
     }
 
     public InetSocketAddress getLocalSocketAddress() {
 
-        return server_socket.isBound() ? endpoint : null;
+        exposure_lock.lock();
+        try {
+            return server_socket == null ? null : (InetSocketAddress) server_socket.getLocalSocketAddress();
+        }
+        finally {
+            exposure_lock.unlock();
+        }
     }
 
     public void shutdown() {
 
-        unexpose();
+        unexposeScilently();
         shutdownRequestHandlers();
         request_handler_executor.shutdownNow();
-        CloseableUtil.closeQuietly(CloseableUtil.toCloseable(server_socket));
+    }
+
+    private void unexposeScilently() {
+
+        try {
+            unexpose();
+        }
+        catch (final IOException e) {
+            LOGGER.log(Level.WARNING, "error occured while unexposing json rpc server as part of shutdown", e);
+        }
     }
 
     private void shutdownRequestHandlers() {
@@ -191,12 +231,12 @@ public class JsonRpcServer {
 
         public ServerThread() {
 
-            setName("server_thread_" + server_socket.getLocalPort());
         }
 
         @Override
         public void run() {
 
+            setName("server_thread_" + server_socket.getLocalPort());
             while (!isInterrupted() && !server_socket.isClosed()) {
 
                 try {
