@@ -15,7 +15,7 @@
 	<name>jetson</name>
 	<url>https://builds.cs.st-andrews.ac.uk/job/jetson</url>
 	<description>A JSON RPC framework that automatically generates RPC proxies using Java Reflection and uses Jackson streaming API to serialize/deserialize Java objects to/from JSON.</description>
-	
+
 	<properties>
 		<repository.type>hg</repository.type>
 		<repository.location>http://quicksilver.hg.cs.st-andrews.ac.uk/jetson</repository.location>
@@ -84,6 +84,11 @@
 			<groupId>com.fasterxml.jackson.core</groupId>
 			<artifactId>jackson-annotations</artifactId>
 			<version>2.1.4</version>
+		</dependency>
+		<dependency>
+			<groupId>commons-pool</groupId>
+			<artifactId>commons-pool</artifactId>
+			<version>1.6</version>
 		</dependency>
 	</dependencies>
 </project>
