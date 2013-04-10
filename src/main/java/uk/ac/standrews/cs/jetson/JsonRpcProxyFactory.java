@@ -74,28 +74,36 @@ public class JsonRpcProxyFactory {
 
     public JsonRpcProxyFactory(final SocketFactory socket_factory, final Class<?> service_interface, final JsonFactory json_factory, final ClassLoader class_loader) {
 
-        this.socket_factory = socket_factory;
         dispatch = ReflectionUtil.mapMethodsToNames(service_interface);
+        next_request_id = new AtomicLong();
+        this.socket_factory = socket_factory;
         this.interfaces = new Class<?>[]{service_interface};
         this.json_factory = json_factory;
         this.class_loader = class_loader;
-        next_request_id = new AtomicLong();
+    }
+
+    public <T> T get(final InetSocketAddress address) {
+
+        final JsonRpcInvocationHandler handler = createJsonRpcInvocationHandler(address);
+        return createProxy(handler);
     }
 
     @SuppressWarnings("unchecked")
-    public <T> T get(final InetSocketAddress address) {
+    protected <T> T createProxy(final JsonRpcInvocationHandler handler) {
 
-        //FIXME Cache generated proxies and clone if needed.
-
-        final JsonRpcInvocationHandler handler = new JsonRpcInvocationHandler(address);
         return (T) Proxy.newProxyInstance(class_loader, interfaces, handler);
     }
 
-    protected void afterReadResponse(final JsonParser parser, final JsonRpcResponse response) {
+    protected JsonRpcInvocationHandler createJsonRpcInvocationHandler(final InetSocketAddress address) {
+
+        return new JsonRpcInvocationHandler(address);
+    }
+
+    protected void afterReadResponse(final JsonParser parser, final JsonRpcResponse response, final JsonRpcInvocationHandler handler) {
 
     }
 
-    protected void afterWriteRequest(final JsonGenerator generator, final JsonRpcRequest request) {
+    protected void afterWriteRequest(final JsonGenerator generator, final JsonRpcRequest request, final JsonRpcInvocationHandler handler) {
 
     }
 
@@ -109,13 +117,18 @@ public class JsonRpcProxyFactory {
         return dispatch.get(method);
     }
 
-    private class JsonRpcInvocationHandler implements InvocationHandler {
+    protected class JsonRpcInvocationHandler implements InvocationHandler {
 
         private final InetSocketAddress address;
 
-        public JsonRpcInvocationHandler(final InetSocketAddress address) {
+        protected JsonRpcInvocationHandler(final InetSocketAddress address) {
 
             this.address = address;
+        }
+
+        public InetSocketAddress getProxiedAddress() {
+
+            return address;
         }
 
         @Override
@@ -211,7 +224,7 @@ public class JsonRpcProxyFactory {
                 final Long id = readAndValidateId(parser, request_id);
                 response.setId(id);
                 response.setVersion(version);
-                afterReadResponse(parser, response);
+                afterReadResponse(parser, response, this);
                 parser.nextToken();
                 return response;
             }
@@ -299,7 +312,7 @@ public class JsonRpcProxyFactory {
                 }
                 generator.writeEndArray();
                 generator.writeObjectField(JsonRpcMessage.ID_KEY, request.getId());
-                afterWriteRequest(generator, request);
+                afterWriteRequest(generator, request, this);
                 generator.writeEndObject();
                 generator.flush();
             }
@@ -307,7 +320,6 @@ public class JsonRpcProxyFactory {
                 throw new TransportException(e);
             }
         }
-
     }
 
     private <Value> Value readValue(final JsonParser parser, final String expected_key, final Class<Value> value_type) throws JsonParseException, IOException {

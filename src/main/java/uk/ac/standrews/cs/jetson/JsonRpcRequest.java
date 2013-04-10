@@ -25,7 +25,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 @JsonPropertyOrder({JsonRpcMessage.VERSION_KEY, JsonRpcRequest.METHOD_NAME_KEY, JsonRpcRequest.PARAMETERS_KEY, JsonRpcMessage.ID_KEY})
-class JsonRpcRequest extends JsonRpcMessage {
+public class JsonRpcRequest extends JsonRpcMessage {
 
     static final String PARAMETERS_KEY = "params";
     static final String METHOD_NAME_KEY = "method";
@@ -65,12 +65,12 @@ class JsonRpcRequest extends JsonRpcMessage {
         return params;
     }
 
-    public void setMethodName(final String method_name) {
+    void setMethodName(final String method_name) {
 
         this.method_name = method_name;
     }
 
-    public void setParams(final Object... params) {
+    void setParams(final Object... params) {
 
         this.params = params;
     }

@@ -40,7 +40,7 @@ abstract class JsonRpcMessage {
         return id;
     }
 
-    public void setId(final Long id) {
+    void setId(final Long id) {
 
         this.id = id;
     }
@@ -52,7 +52,7 @@ abstract class JsonRpcMessage {
         return version;
     }
 
-    public void setVersion(final String version) {
+    void setVersion(final String version) {
 
         this.version = version;
     }
