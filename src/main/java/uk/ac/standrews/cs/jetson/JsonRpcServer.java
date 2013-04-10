@@ -105,7 +105,7 @@ public class JsonRpcServer {
 
     }
 
-    private void afterWriteResponse(final JsonGenerator generator, final JsonRpcResponse response) {
+    protected void afterWriteResponse(final JsonGenerator generator, final JsonRpcResponse response) {
 
     }
 
@@ -494,7 +494,6 @@ public class JsonRpcServer {
             try {
                 generator.writeStartObject();
                 generator.writeObjectField(JsonRpcMessage.VERSION_KEY, response.getVersion());
-
                 if (response instanceof JsonRpcResponseResult) {
                     generator.writeObjectField(JsonRpcResponse.RESULT_KEY, ((JsonRpcResponseResult) response).getResult());
                 }

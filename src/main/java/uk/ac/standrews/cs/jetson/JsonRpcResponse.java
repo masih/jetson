@@ -23,7 +23,7 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
-abstract class JsonRpcResponse extends JsonRpcMessage {
+public abstract class JsonRpcResponse extends JsonRpcMessage {
 
     static final String RESULT_KEY = "result";
     static final String ERROR_KEY = "error";
@@ -38,7 +38,7 @@ abstract class JsonRpcResponse extends JsonRpcMessage {
     }
 
     @JsonPropertyOrder({JsonRpcMessage.VERSION_KEY, JsonRpcResponse.RESULT_KEY, JsonRpcMessage.ID_KEY})
-    static final class JsonRpcResponseResult extends JsonRpcResponse {
+    public static final class JsonRpcResponseResult extends JsonRpcResponse {
 
         private Object result;
 
@@ -59,14 +59,14 @@ abstract class JsonRpcResponse extends JsonRpcMessage {
             return result;
         }
 
-        public void setResult(final Object result) {
+        void setResult(final Object result) {
 
             this.result = result;
         }
     }
 
     @JsonPropertyOrder({JsonRpcMessage.VERSION_KEY, JsonRpcResponse.ERROR_KEY, JsonRpcMessage.ID_KEY})
-    static final class JsonRpcResponseError extends JsonRpcResponse {
+    public static final class JsonRpcResponseError extends JsonRpcResponse {
 
         private JsonRpcError error;
 
@@ -87,7 +87,7 @@ abstract class JsonRpcResponse extends JsonRpcMessage {
             return error;
         }
 
-        public void setError(final JsonRpcError error) {
+        void setError(final JsonRpcError error) {
 
             this.error = error;
         }
