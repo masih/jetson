@@ -20,6 +20,7 @@ import java.io.IOException;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
+import java.lang.reflect.Type;
 import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.util.Map;
@@ -46,6 +47,7 @@ import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.JsonToken;
+import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
 
@@ -148,7 +150,7 @@ public class JsonRpcProxyFactory {
                 }
                 final JsonRpcRequest request = createJsonRpcRequest(method, params);
                 writeRequest(json_generator, request);
-                final JsonRpcResponse response = readResponse(json_parser, method.getReturnType(), request.getId());
+                final JsonRpcResponse response = readResponse(json_parser, method.getGenericReturnType(), request.getId());
                 if (isResponseError(response)) {
                     final JsonRpcResponseError response_error = toJsonRpcResponseError(response);
                     final JsonRpcException exception = JsonRpcExceptions.fromJsonRpcError(response_error.getError());
@@ -214,13 +216,14 @@ public class JsonRpcProxyFactory {
             return JsonRpcResponseError.class.isInstance(response);
         }
 
-        private JsonRpcResponse readResponse(final JsonParser parser, final Class<?> expected_result_type, final Long request_id) throws JsonRpcException {
+        private JsonRpcResponse readResponse(final JsonParser parser, final Type expected_return_type, final Long request_id) throws JsonRpcException {
 
             try {
 
                 parser.nextToken();
                 final String version = readAndValidateVersion(parser);
-                final JsonRpcResponse response = readAndValidateResultOrError(parser, expected_result_type);
+                final JsonRpcResponse response = readAndValidateResultOrError(parser, expected_return_type);
+
                 final Long id = readAndValidateId(parser, request_id);
                 response.setId(id);
                 response.setVersion(version);
@@ -246,7 +249,7 @@ public class JsonRpcProxyFactory {
             return id;
         }
 
-        private JsonRpcResponse readAndValidateResultOrError(final JsonParser parser, final Class<?> expected_result_type) throws JsonParseException, InvalidResponseException, JsonProcessingException, IOException {
+        private JsonRpcResponse readAndValidateResultOrError(final JsonParser parser, final Type expected_return_type) throws JsonParseException, InvalidResponseException, JsonProcessingException, IOException {
 
             if (parser.nextToken() == JsonToken.FIELD_NAME) {
                 final String key = parser.getCurrentName();
@@ -261,12 +264,14 @@ public class JsonRpcProxyFactory {
                 else if (JsonRpcResponse.RESULT_KEY.equals(key)) {
                     parser.nextToken();
                     final JsonRpcResponseResult response_result = new JsonRpcResponseResult();
-                    if (expected_result_type.equals(Void.TYPE)) {
+                    if (expected_return_type.equals(Void.TYPE)) {
                         if (parser.getCurrentToken() != JsonToken.VALUE_NULL && !parser.getText().equals("")) { throw new InvalidResponseException("expected void method return type but found value"); }
                         response_result.setResult(null);
                     }
                     else {
-                        response_result.setResult(parser.readValueAs(expected_result_type));
+                        final ObjectMapper mapper = (ObjectMapper) parser.getCodec();
+                        final JavaType type = mapper.getTypeFactory().constructType(expected_return_type);
+                        response_result.setResult(mapper.readValue(parser, type));
                     }
                     return response_result;
                 }
@@ -328,7 +333,7 @@ public class JsonRpcProxyFactory {
             parser.nextToken();
             return parser.readValueAs(value_type);
         }
-        throw new InvalidResponseException("expected key " + expected_key);
+        throw new InvalidResponseException("expected key " + expected_key + ", found " + parser.getCurrentToken());
     }
 
 }
