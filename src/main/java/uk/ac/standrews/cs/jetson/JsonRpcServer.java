@@ -45,6 +45,7 @@ import uk.ac.standrews.cs.jetson.exception.InvalidParameterException;
 import uk.ac.standrews.cs.jetson.exception.InvalidRequestException;
 import uk.ac.standrews.cs.jetson.exception.InvalidResponseException;
 import uk.ac.standrews.cs.jetson.exception.InvocationException;
+import uk.ac.standrews.cs.jetson.exception.JsonRpcError;
 import uk.ac.standrews.cs.jetson.exception.JsonRpcException;
 import uk.ac.standrews.cs.jetson.exception.MethodNotFoundException;
 import uk.ac.standrews.cs.jetson.exception.ParseException;
@@ -341,9 +342,10 @@ public class JsonRpcServer {
             if (!socket.isClosed()) {
                 final JsonRpcResponseError error = new JsonRpcResponseError(current_request_id, exception);
                 try {
+                    exception.printStackTrace();
                     writeResponse(error);
                 }
-                catch (final IOException e) {
+                catch (final Throwable e) {
                     LOGGER.log(Level.FINE, "failed to notify JSON RPC error", e);
                 }
             }
@@ -498,7 +500,9 @@ public class JsonRpcServer {
                     generator.writeObjectField(JsonRpcResponse.RESULT_KEY, ((JsonRpcResponseResult) response).getResult());
                 }
                 else {
-                    generator.writeObjectField(JsonRpcResponse.ERROR_KEY, ((JsonRpcResponseError) response).getError());
+                    final JsonRpcError error = ((JsonRpcResponseError) response).getError();
+                    LOGGER.warning("error occured on server " + error);
+                    generator.writeObjectField(JsonRpcResponse.ERROR_KEY, error);
                 }
                 generator.writeObjectField(JsonRpcMessage.ID_KEY, response.getId());
                 afterWriteResponse(generator, response);
