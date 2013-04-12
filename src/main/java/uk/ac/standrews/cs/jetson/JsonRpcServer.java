@@ -332,7 +332,6 @@ public class JsonRpcServer {
 
         private void shutdown() {
 
-            Thread.currentThread().interrupt();
             CloseableUtil.closeQuietly(generator, parser, CloseableUtil.toCloseable(socket));
             request_handlers.remove(this);
         }
