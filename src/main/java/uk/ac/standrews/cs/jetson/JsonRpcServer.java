@@ -342,7 +342,6 @@ public class JsonRpcServer {
             if (!socket.isClosed()) {
                 final JsonRpcResponseError error = new JsonRpcResponseError(current_request_id, exception);
                 try {
-                    exception.printStackTrace();
                     writeResponse(error);
                 }
                 catch (final Throwable e) {
@@ -501,7 +500,7 @@ public class JsonRpcServer {
                 }
                 else {
                     final JsonRpcError error = ((JsonRpcResponseError) response).getError();
-                    LOGGER.warning("error occured on server " + error);
+                    LOGGER.fine("error occured on server " + error);
                     generator.writeObjectField(JsonRpcResponse.ERROR_KEY, error);
                 }
                 generator.writeObjectField(JsonRpcMessage.ID_KEY, response.getId());

@@ -294,7 +294,7 @@ public class JsonRpcProxyFactory {
             try {
                 final Method target_method = request.getMethod();
                 final Class<?>[] param_types = target_method.getParameterTypes();
-                LOGGER.fine(((ObjectMapper) generator.getCodec()).writeValueAsString(request));
+                //                LOGGER.fine(((ObjectMapper) generator.getCodec()).writeValueAsString(request));
 
                 final ObjectMapper mapper = (ObjectMapper) generator.getCodec();
                 generator.writeStartObject();
