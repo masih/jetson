@@ -128,7 +128,7 @@ public class JsonRpcServer {
 
     public void setBindAddress(final InetSocketAddress endpoint) {
 
-        this.endpoint = this.endpoint;
+        this.endpoint = endpoint;
     }
 
     public void expose() throws IOException {
