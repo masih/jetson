@@ -1,4 +1,6 @@
 /*
+ * Copyright 2013 Masih Hajiarabderkani
+ * 
  * This file is part of Jetson.
  * 
  * Jetson is free software: you can redistribute it and/or modify
@@ -24,6 +26,10 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
+/**
+ * The Class JsonRpcRequest.
+ * @author Masih Hajiarabderkani (mh638@st-andrews.ac.uk)
+ */
 @JsonPropertyOrder({JsonRpcMessage.VERSION_KEY, JsonRpcRequest.METHOD_NAME_KEY, JsonRpcRequest.PARAMETERS_KEY, JsonRpcMessage.ID_KEY})
 public class JsonRpcRequest extends JsonRpcMessage {
 
@@ -51,6 +57,11 @@ public class JsonRpcRequest extends JsonRpcMessage {
         this.method = target_method;
     }
 
+    /**
+     * Gets the method name.
+     *
+     * @return the method name
+     */
     @JsonProperty(METHOD_NAME_KEY)
     @JsonInclude(Include.ALWAYS)
     public String getMethodName() {
@@ -58,6 +69,11 @@ public class JsonRpcRequest extends JsonRpcMessage {
         return method_name;
     }
 
+    /**
+     * Gets the parameters.
+     *
+     * @return the parameters
+     */
     @JsonProperty(PARAMETERS_KEY)
     @JsonInclude(Include.NON_NULL)
     public Object[] getParameters() {
@@ -75,6 +91,11 @@ public class JsonRpcRequest extends JsonRpcMessage {
         this.params = params;
     }
 
+    /**
+     * Gets the method.
+     *
+     * @return the method
+     */
     @JsonIgnore
     public Method getMethod() {
 

@@ -1,4 +1,6 @@
 /*
+ * Copyright 2013 Masih Hajiarabderkani
+ * 
  * This file is part of Jetson.
  * 
  * Jetson is free software: you can redistribute it and/or modify
@@ -20,11 +22,17 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+/**
+ * The base class for any exchanged JSON RPC message.
+ * 
+ * @author Masih Hajiarabderkani (mh638@st-andrews.ac.uk)
+ */
 abstract class JsonRpcMessage {
 
     static final String ID_KEY = "id";
     static final String VERSION_KEY = "jsonrpc";
     static final String DEFAULT_VERSION = "2.0";
+
     private String version;
     private Long id;
 
