@@ -1,4 +1,6 @@
 /*
+ * Copyright 2013 Masih Hajiarabderkani
+ * 
  * This file is part of Jetson.
  * 
  * Jetson is free software: you can redistribute it and/or modify
@@ -52,6 +54,11 @@ public abstract class JsonRpcResponse extends JsonRpcMessage {
             setResult(result);
         }
 
+        /**
+         * Gets the result.
+         *
+         * @return the result
+         */
         @JsonProperty(RESULT_KEY)
         @JsonInclude(Include.ALWAYS)
         public Object getResult() {
@@ -80,6 +87,11 @@ public abstract class JsonRpcResponse extends JsonRpcMessage {
             setError(error);
         }
 
+        /**
+         * Gets the error.
+         *
+         * @return the error
+         */
         @JsonProperty(ERROR_KEY)
         @JsonInclude(Include.ALWAYS)
         public JsonRpcError getError() {

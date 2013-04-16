@@ -1,4 +1,6 @@
 /*
+ * Copyright 2013 Masih Hajiarabderkani
+ * 
  * This file is part of Jetson.
  * 
  * Jetson is free software: you can redistribute it and/or modify
@@ -43,7 +45,6 @@ import uk.ac.standrews.cs.jetson.util.ReflectionUtil;
 import com.fasterxml.jackson.core.JsonEncoding;
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonGenerator;
-import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.JsonToken;
@@ -51,11 +52,19 @@ import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
 
+/**
+ * A factory for creating JSON RPC proxies that are able to communicate with a {@link JsonRpcServer}.
+ * The proxies are generated using Java Reflection.
+ * This class does not provide any connection pooling. A connection is established per each RPC call.
+ * 
+ * @author Masih Hajiarabderkani (mh638@st-andrews.ac.uk)
+ * @see Proxy
+ */
 public class JsonRpcProxyFactory {
 
-    //TODO implement connection pooling
     private static final Logger LOGGER = Logger.getLogger(JsonRpcProxyFactory.class.getName());
     private static final JsonEncoding DEFAULT_ENCODING = JsonEncoding.UTF8;
+
     private final Class<?>[] interfaces;
     private final JsonFactory json_factory;
     private final Map<Method, String> dispatch;
@@ -63,17 +72,38 @@ public class JsonRpcProxyFactory {
     private final AtomicLong next_request_id;
     private final SocketFactory socket_factory;
 
+    /**
+     * Instantiates a new JSON RPC proxy factory. The {@link ClassLoader#getSystemClassLoader() system class loader} used for constructing new proxy instances.
+     *
+     * @param service_interface the interface presenting the remote service
+     * @param json_factory the provider of JSON serialiser and deserialisers
+     */
     public JsonRpcProxyFactory(final Class<?> service_interface, final JsonFactory json_factory) {
 
         this(service_interface, json_factory, ClassLoader.getSystemClassLoader());
     }
 
+    /**
+     * Instantiates a new JSON RPC proxy factory which uses the given {@link ClassLoader} for constructing new proxy instances.
+     *
+     * @param service_interface the interface presenting the remote service
+     * @param json_factory the provider of JSON serialiser and deserialisers
+     * @param class_loader the class loader that is used to load the remote service interface
+     */
     public JsonRpcProxyFactory(final Class<?> service_interface, final JsonFactory json_factory, final ClassLoader class_loader) {
 
         this(SocketFactory.getDefault(), service_interface, json_factory, class_loader);
 
     }
 
+    /**
+     * Instantiates a new JSON RPC proxy factory that uses the given {@link SocketFactory} to construct new sockets for each RPC call.
+     *
+     * @param socket_factory the socket_factory
+     * @param service_interface the service_interface
+     * @param json_factory the json_factory
+     * @param class_loader the class loader that is used to load the remote service interface
+     */
     public JsonRpcProxyFactory(final SocketFactory socket_factory, final Class<?> service_interface, final JsonFactory json_factory, final ClassLoader class_loader) {
 
         dispatch = ReflectionUtil.mapMethodsToNames(service_interface);
@@ -84,6 +114,13 @@ public class JsonRpcProxyFactory {
         this.class_loader = class_loader;
     }
 
+    /**
+     * Gets a new JSON RPC proxy.
+     *
+     * @param <T> the generic type
+     * @param address the address
+     * @return the t
+     */
     public <T> T get(final InetSocketAddress address) {
 
         final JsonRpcInvocationHandler handler = createJsonRpcInvocationHandler(address);
@@ -242,14 +279,14 @@ public class JsonRpcProxyFactory {
             }
         }
 
-        private Long readAndValidateId(final JsonParser parser, final Long expected_id) throws JsonParseException, IOException {
+        private Long readAndValidateId(final JsonParser parser, final Long expected_id) throws IOException {
 
             final Long id = readValue(parser, JsonRpcMessage.ID_KEY, Long.class);
             if (id == null || !id.equals(expected_id)) { throw new InvalidResponseException("response id must not be null, and must be equal to " + expected_id); }
             return id;
         }
 
-        private JsonRpcResponse readAndValidateResultOrError(final JsonParser parser, final Type expected_return_type) throws JsonParseException, InvalidResponseException, JsonProcessingException, IOException {
+        private JsonRpcResponse readAndValidateResultOrError(final JsonParser parser, final Type expected_return_type) throws IOException {
 
             if (parser.nextToken() == JsonToken.FIELD_NAME) {
                 final String key = parser.getCurrentName();
@@ -282,7 +319,7 @@ public class JsonRpcProxyFactory {
             throw new InvalidResponseException("expected key, found " + parser.getCurrentToken());
         }
 
-        private String readAndValidateVersion(final JsonParser parser) throws JsonParseException, IOException {
+        private String readAndValidateVersion(final JsonParser parser) throws IOException {
 
             final String version = readValue(parser, JsonRpcMessage.VERSION_KEY, String.class);
             if (version == null || !version.equals(JsonRpcMessage.DEFAULT_VERSION)) { throw new InvalidResponseException("version must be equal to " + JsonRpcMessage.DEFAULT_VERSION); }
@@ -327,7 +364,7 @@ public class JsonRpcProxyFactory {
         }
     }
 
-    private <Value> Value readValue(final JsonParser parser, final String expected_key, final Class<Value> value_type) throws JsonParseException, IOException {
+    private <Value> Value readValue(final JsonParser parser, final String expected_key, final Class<Value> value_type) throws IOException {
 
         if (parser.nextToken() == JsonToken.FIELD_NAME && expected_key.equals(parser.getCurrentName())) {
             parser.nextToken();
