@@ -31,6 +31,7 @@ import java.net.Socket;
 import java.util.Map;
 import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.logging.Level;
@@ -84,6 +85,11 @@ public class JsonRpcServer {
     private volatile JsonEncoding encoding;
     private volatile int socket_read_timeout;
     private volatile InetSocketAddress endpoint;
+
+    public <T> JsonRpcServer(final Class<T> service_interface, final T service, final JsonFactory json_factory) {
+
+        this(DEFAULT_SERVER_SOCKET_FACTORY, service_interface, service, json_factory, Executors.newCachedThreadPool());
+    }
 
     public <T> JsonRpcServer(final Class<T> service_interface, final T service, final JsonFactory json_factory, final ExecutorService request_handler_executor) {
 
