@@ -27,16 +27,16 @@ import com.fasterxml.jackson.annotation.JsonProperty;
  * 
  * @author Masih Hajiarabderkani (mh638@st-andrews.ac.uk)
  */
-abstract class JsonRpcMessage {
+public abstract class JsonRpcMessage {
 
-    static final String ID_KEY = "id";
-    static final String VERSION_KEY = "jsonrpc";
-    static final String DEFAULT_VERSION = "2.0";
+    public static final String ID_KEY = "id";
+    public static final String VERSION_KEY = "jsonrpc";
+    public static final String DEFAULT_VERSION = "2.0";
 
     private String version;
     private Long id;
 
-    JsonRpcMessage() {
+    public JsonRpcMessage() {
 
         setVersion(DEFAULT_VERSION);
     }
@@ -48,7 +48,7 @@ abstract class JsonRpcMessage {
         return id;
     }
 
-    void setId(final Long id) {
+    public void setId(final Long id) {
 
         this.id = id;
     }
@@ -60,7 +60,7 @@ abstract class JsonRpcMessage {
         return version;
     }
 
-    void setVersion(final String version) {
+    public void setVersion(final String version) {
 
         this.version = version;
     }

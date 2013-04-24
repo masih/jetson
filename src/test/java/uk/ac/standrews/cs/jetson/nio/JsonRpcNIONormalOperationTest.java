@@ -16,7 +16,7 @@
  * You should have received a copy of the GNU General Public License
  * along with Jetson.  If not, see <http://www.gnu.org/licenses/>.
  */
-package uk.ac.standrews.cs.jetson;
+package uk.ac.standrews.cs.jetson.nio;
 
 import static org.junit.Assert.fail;
 
@@ -32,13 +32,13 @@ import java.util.concurrent.Future;
 
 import junit.framework.Assert;
 
-import org.junit.Ignore;
 import org.junit.Test;
 
+import uk.ac.standrews.cs.jetson.JsonRpcTestService;
+import uk.ac.standrews.cs.jetson.NormalOperationTestService;
 import uk.ac.standrews.cs.jetson.exception.JsonRpcException;
-import uk.ac.standrews.cs.jetson.nio.JsonRpcServerNIO;
 
-public class JsonRpcNormalOperationTest extends AbstractJsonRpcTest<JsonRpcTestService> {
+public class JsonRpcNIONormalOperationTest extends AbstractJsonRpcNIOTest<JsonRpcTestService> {
 
     @Override
     protected Class<JsonRpcTestService> getServiceType() {
@@ -120,7 +120,6 @@ public class JsonRpcNormalOperationTest extends AbstractJsonRpcTest<JsonRpcTestS
     }
 
     @Test
-    @Ignore
     public void testSayFalseOnRemote() throws IOException {
 
         final JsonRpcServerNIO temp_server = new JsonRpcServerNIO(JsonRpcTestService.class, getService(), json_factory);
@@ -135,14 +134,12 @@ public class JsonRpcNormalOperationTest extends AbstractJsonRpcTest<JsonRpcTestS
     }
 
     @Test
-    @Ignore
     public void testConcurrentConnections() throws JsonRpcException, InterruptedException, ExecutionException {
-
         final ExecutorService executor = Executors.newCachedThreadPool();
         try {
             final CountDownLatch start_latch = new CountDownLatch(1);
             final List<Future<Void>> future_concurrent_tests = new ArrayList<Future<Void>>();
-            for (int i = 0; i < 10; i++) {
+            for (int i = 0; i < 100; i++) {
                 future_concurrent_tests.add(executor.submit(new Callable<Void>() {
 
                     @Override
@@ -176,7 +173,7 @@ public class JsonRpcNormalOperationTest extends AbstractJsonRpcTest<JsonRpcTestS
     @Override
     protected JsonRpcTestService getService() {
 
-        return new NormalOperationTestService(proxy_factory);
+        return new NormalOperationNIOTestService(proxy_factory);
     }
 
 }
