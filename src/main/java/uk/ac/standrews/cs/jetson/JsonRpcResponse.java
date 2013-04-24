@@ -25,10 +25,10 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
-public abstract class JsonRpcResponse extends JsonRpcMessage {
+abstract class JsonRpcResponse extends JsonRpcMessage {
 
-    public static final String RESULT_KEY = "result";
-    public static final String ERROR_KEY = "error";
+    static final String RESULT_KEY = "result";
+    static final String ERROR_KEY = "error";
 
     private JsonRpcResponse() {
 
@@ -40,15 +40,15 @@ public abstract class JsonRpcResponse extends JsonRpcMessage {
     }
 
     @JsonPropertyOrder({JsonRpcMessage.VERSION_KEY, JsonRpcResponse.RESULT_KEY, JsonRpcMessage.ID_KEY})
-    public static final class JsonRpcResponseResult extends JsonRpcResponse {
+    static final class JsonRpcResponseResult extends JsonRpcResponse {
 
         private Object result;
 
-        public JsonRpcResponseResult() {
+        JsonRpcResponseResult() {
 
         }
 
-        public JsonRpcResponseResult(final Long id, final Object result) {
+        JsonRpcResponseResult(final Long id, final Object result) {
 
             super(id);
             setResult(result);
@@ -61,27 +61,27 @@ public abstract class JsonRpcResponse extends JsonRpcMessage {
          */
         @JsonProperty(RESULT_KEY)
         @JsonInclude(Include.ALWAYS)
-        public Object getResult() {
+        Object getResult() {
 
             return result;
         }
 
-        public void setResult(final Object result) {
+        void setResult(final Object result) {
 
             this.result = result;
         }
     }
 
     @JsonPropertyOrder({JsonRpcMessage.VERSION_KEY, JsonRpcResponse.ERROR_KEY, JsonRpcMessage.ID_KEY})
-    public static final class JsonRpcResponseError extends JsonRpcResponse {
+    static final class JsonRpcResponseError extends JsonRpcResponse {
 
         private JsonRpcError error;
 
-        public JsonRpcResponseError() {
+        JsonRpcResponseError() {
 
         }
 
-        public JsonRpcResponseError(final Long id, final JsonRpcError error) {
+        JsonRpcResponseError(final Long id, final JsonRpcError error) {
 
             super(id);
             setError(error);
@@ -94,12 +94,12 @@ public abstract class JsonRpcResponse extends JsonRpcMessage {
          */
         @JsonProperty(ERROR_KEY)
         @JsonInclude(Include.ALWAYS)
-        public JsonRpcError getError() {
+        JsonRpcError getError() {
 
             return error;
         }
 
-        public void setError(final JsonRpcError error) {
+        void setError(final JsonRpcError error) {
 
             this.error = error;
         }

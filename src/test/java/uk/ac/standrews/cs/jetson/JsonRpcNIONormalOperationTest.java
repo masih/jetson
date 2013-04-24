@@ -34,7 +34,7 @@ import junit.framework.Assert;
 
 import org.junit.Test;
 
-import uk.ac.standrews.cs.jetson.JsonRpcServerNIO;
+import uk.ac.standrews.cs.jetson.JsonRpcServer;
 import uk.ac.standrews.cs.jetson.exception.JsonRpcException;
 
 public class JsonRpcNIONormalOperationTest extends AbstractJsonRpcNIOTest<JsonRpcTestService> {
@@ -205,7 +205,7 @@ public class JsonRpcNIONormalOperationTest extends AbstractJsonRpcNIOTest<JsonRp
         final JsonRpcNIONormalOperationTest t = new JsonRpcNIONormalOperationTest();
         int i = 0;
         while (!Thread.currentThread().isInterrupted()) {
-            new JsonRpcServerNIO(t.getServiceType(), t.getService(), t.json_factory).expose();
+            new JsonRpcServer(t.getServiceType(), t.getService(), t.json_factory).expose();
             System.out.println(i++);
         }
     }

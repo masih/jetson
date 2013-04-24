@@ -30,7 +30,7 @@ import uk.ac.standrews.cs.jetson.util.ReflectionUtil;
 
 import com.fasterxml.jackson.core.JsonFactory;
 
-public class JsonRpcProxyFactoryNIO {
+public class JsonRpcProxyFactory {
 
     private final Map<Method, String> dispatch;
     private final AtomicLong next_request_id;
@@ -48,12 +48,12 @@ public class JsonRpcProxyFactoryNIO {
      * @param service_interface the interface presenting the remote service
      * @param json_factory the provider of JSON serialiser and deserialisers
      */
-    public JsonRpcProxyFactoryNIO(final Class<?> service_interface, final JsonFactory json_factory) {
+    public JsonRpcProxyFactory(final Class<?> service_interface, final JsonFactory json_factory) {
 
         this(service_interface, json_factory, ClassLoader.getSystemClassLoader());
     }
 
-    public JsonRpcProxyFactoryNIO(final Class<?> service_interface, final JsonFactory json_factory, final ClassLoader class_loader) {
+    public JsonRpcProxyFactory(final Class<?> service_interface, final JsonFactory json_factory, final ClassLoader class_loader) {
 
         dispatch = ReflectionUtil.mapMethodsToNames(service_interface);
         next_request_id = new AtomicLong();

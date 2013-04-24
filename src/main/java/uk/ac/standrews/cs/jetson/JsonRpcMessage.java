@@ -29,38 +29,38 @@ import com.fasterxml.jackson.annotation.JsonProperty;
  */
 public abstract class JsonRpcMessage {
 
-    public static final String ID_KEY = "id";
-    public static final String VERSION_KEY = "jsonrpc";
-    public static final String DEFAULT_VERSION = "2.0";
+    static final String ID_KEY = "id";
+    static final String VERSION_KEY = "jsonrpc";
+    static final String DEFAULT_VERSION = "2.0";
 
     private String version;
     private Long id;
 
-    public JsonRpcMessage() {
+    JsonRpcMessage() {
 
         setVersion(DEFAULT_VERSION);
     }
 
     @JsonProperty(ID_KEY)
     @JsonInclude(Include.ALWAYS)
-    public Long getId() {
+    Long getId() {
 
         return id;
     }
 
-    public void setId(final Long id) {
+    void setId(final Long id) {
 
         this.id = id;
     }
 
     @JsonProperty(VERSION_KEY)
     @JsonInclude(Include.ALWAYS)
-    public String getVersion() {
+    String getVersion() {
 
         return version;
     }
 
-    public void setVersion(final String version) {
+    void setVersion(final String version) {
 
         this.version = version;
     }
