@@ -3,16 +3,17 @@ package uk.ac.standrews.cs.jetson;
 import java.net.InetSocketAddress;
 import java.util.logging.Logger;
 
+import uk.ac.standrews.cs.jetson.JsonRpcProxyFactoryNIO;
 import uk.ac.standrews.cs.jetson.exception.JsonRpcException;
 
-public class NormalOperationTestService implements JsonRpcTestService {
+public class NormalOperationNIOTestService implements JsonRpcTestService {
 
-    private static final Logger LOGGER = Logger.getLogger(NormalOperationTestService.class.getName());
+    private static final Logger LOGGER = Logger.getLogger(NormalOperationNIOTestService.class.getName());
     public static final Exception TEST_EXCEPTION = new Exception("test exception");
     public static final String TEST_OBJECT_MESSAGE = "test message";
-    private final JsonRpcProxyFactory proxy_factory;
+    private final JsonRpcProxyFactoryNIO proxy_factory;
 
-    public NormalOperationTestService(final JsonRpcProxyFactory proxy_factory) {
+    public NormalOperationNIOTestService(final JsonRpcProxyFactoryNIO proxy_factory) {
 
         this.proxy_factory = proxy_factory;
     }

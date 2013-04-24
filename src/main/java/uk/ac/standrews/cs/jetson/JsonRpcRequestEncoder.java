@@ -1,4 +1,4 @@
-package uk.ac.standrews.cs.jetson.nio;
+package uk.ac.standrews.cs.jetson;
 
 import io.netty.buffer.ByteBufOutputStream;
 import io.netty.channel.ChannelHandler.Sharable;
@@ -11,8 +11,6 @@ import java.lang.reflect.Method;
 import java.util.concurrent.CountDownLatch;
 import java.util.logging.Logger;
 
-import uk.ac.standrews.cs.jetson.JsonRpcMessage;
-import uk.ac.standrews.cs.jetson.JsonRpcRequest;
 import uk.ac.standrews.cs.jetson.exception.InternalException;
 import uk.ac.standrews.cs.jetson.exception.TransportException;
 

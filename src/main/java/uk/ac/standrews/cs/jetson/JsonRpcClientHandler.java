@@ -1,10 +1,9 @@
-package uk.ac.standrews.cs.jetson.nio;
+package uk.ac.standrews.cs.jetson;
 
 import io.netty.channel.ChannelHandler.Sharable;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundMessageHandlerAdapter;
 import io.netty.util.AttributeKey;
-import uk.ac.standrews.cs.jetson.JsonRpcResponse;
 
 @Sharable
 public class JsonRpcClientHandler extends ChannelInboundMessageHandlerAdapter<JsonRpcResponse> {
@@ -16,8 +15,6 @@ public class JsonRpcClientHandler extends ChannelInboundMessageHandlerAdapter<Js
 
         ctx.channel().attr(RESPONSE_ATTRIBUTE).set(response);
         ctx.channel().attr(JsonRpcRequestEncoder.RESPONSE_LATCH).get().countDown();
-        //        final boolean offered = responses.offer(response);
-        //        assert offered;
     }
 
     @Override

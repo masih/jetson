@@ -1,4 +1,4 @@
-package uk.ac.standrews.cs.jetson.nio;
+package uk.ac.standrews.cs.jetson;
 
 import io.netty.buffer.ByteBufOutputStream;
 import io.netty.channel.ChannelHandler.Sharable;
@@ -8,8 +8,6 @@ import io.netty.channel.ChannelOutboundMessageHandlerAdapter;
 import java.io.IOException;
 import java.util.logging.Logger;
 
-import uk.ac.standrews.cs.jetson.JsonRpcMessage;
-import uk.ac.standrews.cs.jetson.JsonRpcResponse;
 import uk.ac.standrews.cs.jetson.JsonRpcResponse.JsonRpcResponseError;
 import uk.ac.standrews.cs.jetson.JsonRpcResponse.JsonRpcResponseResult;
 import uk.ac.standrews.cs.jetson.exception.InternalException;
