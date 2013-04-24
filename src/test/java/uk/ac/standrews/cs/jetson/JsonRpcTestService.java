@@ -34,13 +34,19 @@ public interface JsonRpcTestService {
 
     Boolean sayFalse() throws JsonRpcException;
 
+    Boolean sayFalseOnRemote(Integer port) throws JsonRpcException;
+
     void throwException() throws Exception;
+
+    void throwExceptionOnRemote(Integer port) throws Exception;
 
     Integer add(Integer a, Integer b) throws JsonRpcException;
 
+    Integer addOnRemote(Integer a, Integer b,Integer port) throws JsonRpcException;
+
     TestObject getObject() throws JsonRpcException;
 
-    Boolean sayFalseOnRemote(Integer port) throws JsonRpcException;
+    TestObject getObjectOnRemote(Integer port) throws JsonRpcException;
 
     public class TestObject {
 

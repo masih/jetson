@@ -19,7 +19,6 @@
 package uk.ac.standrews.cs.jetson.nio;
 
 import java.net.InetSocketAddress;
-import java.net.ServerSocket;
 import java.util.concurrent.ExecutorService;
 
 import org.junit.After;
@@ -31,8 +30,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 public abstract class AbstractJsonRpcNIOTest<TestService> {
 
     protected JsonRpcServerNIO server;
-    protected ServerSocket server_socket;
     protected InetSocketAddress server_address;
+    protected JsonRpcServerNIO temp_server;
+    protected int temp_server_port;
     protected JsonFactory json_factory;
     protected ExecutorService executor;
     protected TestService client;
@@ -46,6 +46,9 @@ public abstract class AbstractJsonRpcNIOTest<TestService> {
         server = new JsonRpcServerNIO(getServiceType(), getService(), json_factory);
         server.expose();
         server_address = server.getLocalSocketAddress();
+        temp_server = new JsonRpcServerNIO(getServiceType(), getService(), json_factory);
+        temp_server.expose();
+        temp_server_port = temp_server.getLocalSocketAddress().getPort();
         client = proxy_factory.get(server_address);
     }
 
@@ -63,5 +66,6 @@ public abstract class AbstractJsonRpcNIOTest<TestService> {
     public void tearDown() throws Exception {
 
         server.shutdown();
+        temp_server.shutdown();
     }
 }
