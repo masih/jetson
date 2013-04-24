@@ -1,6 +1,5 @@
-package uk.ac.standrews.cs.jetson.nio;
+package uk.ac.standrews.cs.jetson;
 
-import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelHandler.Sharable;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundMessageHandlerAdapter;
@@ -10,8 +9,6 @@ import java.lang.reflect.Method;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import uk.ac.standrews.cs.jetson.JsonRpcRequest;
-import uk.ac.standrews.cs.jetson.JsonRpcResponse;
 import uk.ac.standrews.cs.jetson.JsonRpcResponse.JsonRpcResponseError;
 import uk.ac.standrews.cs.jetson.JsonRpcResponse.JsonRpcResponseResult;
 import uk.ac.standrews.cs.jetson.exception.AccessException;
@@ -37,13 +34,7 @@ public class JsonRpcServerHandler extends ChannelInboundMessageHandlerAdapter<Js
     public void messageReceived(final ChannelHandlerContext ctx, final JsonRpcRequest request) throws Exception {
 
         final JsonRpcResponse response = handleRequest(request);
-        final ChannelFuture future = ctx.write(response);
-
-        // Close the connection after sending 'Have a good day!'
-        // if the client has sent 'bye'.
-        //        if (close) {
-        //            future.addListener(ChannelFutureListener.CLOSE);
-        //        }
+        ctx.write(response);
     }
 
     private JsonRpcResponseResult handleRequest(final JsonRpcRequest request) throws ServerException {

@@ -1,4 +1,4 @@
-package uk.ac.standrews.cs.jetson.nio;
+package uk.ac.standrews.cs.jetson;
 
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.ChannelFuture;
@@ -13,14 +13,13 @@ import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import uk.ac.standrews.cs.jetson.JsonRpcServer;
 import uk.ac.standrews.cs.jetson.util.ReflectionUtil;
 
 import com.fasterxml.jackson.core.JsonFactory;
 
 public class JsonRpcServerNIO {
 
-    private static final Logger LOGGER = Logger.getLogger(JsonRpcServer.class.getName());
+    private static final Logger LOGGER = Logger.getLogger(JsonRpcServerNIO.class.getName());
     private static final EventLoopGroup GLOBAL_SERVER_THREADS_GROUP = new NioEventLoopGroup(100);
 
     private final Map<String, Method> dispatch;

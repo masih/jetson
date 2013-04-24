@@ -32,13 +32,14 @@ import java.util.concurrent.Future;
 
 import junit.framework.Assert;
 
-import org.junit.Ignore;
 import org.junit.Test;
 
+import uk.ac.standrews.cs.jetson.JsonRpcServerNIO;
 import uk.ac.standrews.cs.jetson.exception.JsonRpcException;
-import uk.ac.standrews.cs.jetson.nio.JsonRpcServerNIO;
 
-public class JsonRpcNormalOperationTest extends AbstractJsonRpcTest<JsonRpcTestService> {
+public class JsonRpcNIONormalOperationTest extends AbstractJsonRpcNIOTest<JsonRpcTestService> {
+
+
 
     @Override
     protected Class<JsonRpcTestService> getServiceType() {
@@ -91,12 +92,25 @@ public class JsonRpcNormalOperationTest extends AbstractJsonRpcTest<JsonRpcTestS
     public void testThrowException() {
 
         try {
-            client.throwException();
+            client.throwExceptionOnRemote(temp_server_port);
             fail("expected exception");
         }
         catch (final Exception e) {
-            Assert.assertEquals(NormalOperationTestService.TEST_EXCEPTION.getClass(), e.getClass());
-            Assert.assertEquals(NormalOperationTestService.TEST_EXCEPTION.getMessage(), e.getMessage());
+            Assert.assertEquals(NormalOperationNIOTestService.TEST_EXCEPTION.getClass(), e.getClass());
+            Assert.assertEquals(NormalOperationNIOTestService.TEST_EXCEPTION.getMessage(), e.getMessage());
+        }
+    }
+
+    @Test
+    public void testThrowExceptionOnRemote() {
+
+        try {
+            client.throwExceptionOnRemote(temp_server_port);
+            fail("expected exception");
+        }
+        catch (final Exception e) {
+            Assert.assertEquals(NormalOperationNIOTestService.TEST_EXCEPTION.getClass(), e.getClass());
+            Assert.assertEquals(NormalOperationNIOTestService.TEST_EXCEPTION.getMessage(), e.getMessage());
         }
     }
 
@@ -112,37 +126,45 @@ public class JsonRpcNormalOperationTest extends AbstractJsonRpcTest<JsonRpcTestS
         final Integer minus_seven = client.add(-4, -3);
         Assert.assertEquals(new Integer(-4 + -3), minus_seven);
     }
+    @Test
+    public void testAddOnRemote() throws JsonRpcException {
+
+        final Integer three = client.addOnRemote(1, 2, temp_server_port);
+        Assert.assertEquals(new Integer(1 + 2), three);
+        final Integer eleven = client.addOnRemote(12, -1, temp_server_port);
+        Assert.assertEquals(new Integer(12 + -1), eleven);
+        final Integer fifty_one = client.addOnRemote(-61, 112, temp_server_port);
+        Assert.assertEquals(new Integer(-61 + 112), fifty_one);
+        final Integer minus_seven = client.addOnRemote(-4, -3, temp_server_port);
+        Assert.assertEquals(new Integer(-4 + -3), minus_seven);
+    }
 
     @Test
     public void testGetObject() throws JsonRpcException {
 
-        Assert.assertEquals(NormalOperationTestService.TEST_OBJECT_MESSAGE, client.getObject().getMessage());
+        Assert.assertEquals(NormalOperationNIOTestService.TEST_OBJECT_MESSAGE, client.getObject().getMessage());
     }
 
     @Test
-    @Ignore
     public void testSayFalseOnRemote() throws IOException {
 
-        final JsonRpcServerNIO temp_server = new JsonRpcServerNIO(JsonRpcTestService.class, getService(), json_factory);
-        temp_server.expose();
-        try {
-            final Boolean _false = client.sayFalseOnRemote(temp_server.getLocalSocketAddress().getPort());
-            Assert.assertFalse(_false);
-        }
-        finally {
-            temp_server.shutdown();
-        }
+        final Boolean _false = client.sayFalseOnRemote(temp_server_port);
+        Assert.assertFalse(_false);
     }
 
     @Test
-    @Ignore
-    public void testConcurrentConnections() throws JsonRpcException, InterruptedException, ExecutionException {
+    public void testGetObjectOnRemote() throws IOException {
 
+        Assert.assertEquals(NormalOperationNIOTestService.TEST_OBJECT_MESSAGE, client.getObjectOnRemote(temp_server_port).getMessage());
+    }
+
+    @Test
+    public void testConcurrentConnections() throws JsonRpcException, InterruptedException, ExecutionException {
         final ExecutorService executor = Executors.newCachedThreadPool();
         try {
             final CountDownLatch start_latch = new CountDownLatch(1);
             final List<Future<Void>> future_concurrent_tests = new ArrayList<Future<Void>>();
-            for (int i = 0; i < 10; i++) {
+            for (int i = 0; i < 100; i++) {
                 future_concurrent_tests.add(executor.submit(new Callable<Void>() {
 
                     @Override
@@ -176,7 +198,16 @@ public class JsonRpcNormalOperationTest extends AbstractJsonRpcTest<JsonRpcTestS
     @Override
     protected JsonRpcTestService getService() {
 
-        return new NormalOperationTestService(proxy_factory);
+        return new NormalOperationNIOTestService(proxy_factory);
+    }
+
+    public static void main(final String[] args) throws IOException {
+        final JsonRpcNIONormalOperationTest t = new JsonRpcNIONormalOperationTest();
+        int i = 0;
+        while (!Thread.currentThread().isInterrupted()) {
+            new JsonRpcServerNIO(t.getServiceType(), t.getService(), t.json_factory).expose();
+            System.out.println(i++);
+        }
     }
 
 }

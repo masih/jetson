@@ -1,4 +1,4 @@
-package uk.ac.standrews.cs.jetson.nio;
+package uk.ac.standrews.cs.jetson;
 
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.Channel;
@@ -17,8 +17,6 @@ import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicLong;
 
-import uk.ac.standrews.cs.jetson.JsonRpcRequest;
-import uk.ac.standrews.cs.jetson.JsonRpcResponse;
 import uk.ac.standrews.cs.jetson.JsonRpcResponse.JsonRpcResponseError;
 import uk.ac.standrews.cs.jetson.JsonRpcResponse.JsonRpcResponseResult;
 import uk.ac.standrews.cs.jetson.exception.InternalException;
@@ -34,7 +32,6 @@ import com.fasterxml.jackson.core.JsonFactory;
 
 public class JsonRpcProxyFactoryNIO {
 
-    private final JsonFactory json_factory;
     private final Map<Method, String> dispatch;
     private final AtomicLong next_request_id;
     private final Bootstrap bootstrap;
@@ -60,7 +57,6 @@ public class JsonRpcProxyFactoryNIO {
 
         dispatch = ReflectionUtil.mapMethodsToNames(service_interface);
         next_request_id = new AtomicLong();
-        this.json_factory = json_factory;
         this.class_loader = class_loader;
         this.interfaces = new Class<?>[]{service_interface};
 

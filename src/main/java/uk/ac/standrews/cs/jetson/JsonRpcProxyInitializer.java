@@ -1,4 +1,4 @@
-package uk.ac.standrews.cs.jetson.nio;
+package uk.ac.standrews.cs.jetson;
 
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelPipeline;

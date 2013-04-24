@@ -1,4 +1,4 @@
-package uk.ac.standrews.cs.jetson.nio;
+package uk.ac.standrews.cs.jetson;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufInputStream;
@@ -11,8 +11,6 @@ import java.lang.reflect.Method;
 import java.util.Map;
 import java.util.logging.Logger;
 
-import uk.ac.standrews.cs.jetson.JsonRpcMessage;
-import uk.ac.standrews.cs.jetson.JsonRpcRequest;
 import uk.ac.standrews.cs.jetson.exception.InternalException;
 import uk.ac.standrews.cs.jetson.exception.InvalidJsonException;
 import uk.ac.standrews.cs.jetson.exception.InvalidRequestException;
