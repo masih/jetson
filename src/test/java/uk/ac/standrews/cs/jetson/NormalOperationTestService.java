@@ -77,4 +77,25 @@ public class NormalOperationTestService implements JsonRpcTestService {
         final JsonRpcTestService remote_service = proxy_factory.get(new InetSocketAddress(port));
         return remote_service.sayFalse();
     }
+
+    @Override
+    public void throwExceptionOnRemote(final Integer port) throws Exception {
+
+        final JsonRpcTestService remote_service = proxy_factory.get(new InetSocketAddress(port));
+        remote_service.throwException();
+    }
+
+    @Override
+    public Integer addOnRemote(final Integer a, final Integer b, final Integer port) throws JsonRpcException {
+
+        final JsonRpcTestService remote_service = proxy_factory.get(new InetSocketAddress(port));
+        return remote_service.add(a, b);
+    }
+
+    @Override
+    public TestObject getObjectOnRemote(final Integer port) throws JsonRpcException {
+
+        final JsonRpcTestService remote_service = proxy_factory.get(new InetSocketAddress(port));
+        return remote_service.getObject();
+    }
 }

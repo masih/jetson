@@ -21,20 +21,18 @@ import com.fasterxml.jackson.core.JsonFactory;
 public class JsonRpcServerNIO {
 
     private static final Logger LOGGER = Logger.getLogger(JsonRpcServer.class.getName());
-    private static final EventLoopGroup GLOBAL_SERVER_THREADS_GROUP = new NioEventLoopGroup();
+    private static final EventLoopGroup GLOBAL_SERVER_THREADS_GROUP = new NioEventLoopGroup(100);
 
     private final Map<String, Method> dispatch;
     private volatile InetSocketAddress endpoint;
     private final ServerBootstrap bootstrap;
     private ChannelFuture server_channel_future;
-    private final EventLoopGroup worker_group;
 
     public <T> JsonRpcServerNIO(final Class<T> service_interface, final T service, final JsonFactory json_factory) {
 
         dispatch = ReflectionUtil.mapNamesToMethods(service_interface);
-        worker_group = new NioEventLoopGroup();
         bootstrap = new ServerBootstrap();
-        bootstrap.group(GLOBAL_SERVER_THREADS_GROUP, worker_group).channel(NioServerSocketChannel.class).childHandler(new JsonRpcServerPipelineFactory(service, json_factory, dispatch));
+        bootstrap.group(GLOBAL_SERVER_THREADS_GROUP).channel(NioServerSocketChannel.class).childHandler(new JsonRpcServerPipelineFactory(service, json_factory, dispatch));
         endpoint = new InetSocketAddress(0);
     }
 
@@ -87,6 +85,5 @@ public class JsonRpcServerNIO {
         catch (final IOException e) {
             LOGGER.log(Level.WARNING, "error while unexposing the server", e);
         }
-        worker_group.shutdown();
     }
 }

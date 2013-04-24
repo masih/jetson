@@ -12,6 +12,7 @@ import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.net.InetSocketAddress;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicLong;
@@ -26,6 +27,7 @@ import uk.ac.standrews.cs.jetson.exception.JsonRpcException;
 import uk.ac.standrews.cs.jetson.exception.JsonRpcExceptions;
 import uk.ac.standrews.cs.jetson.exception.TransportException;
 import uk.ac.standrews.cs.jetson.exception.UnexpectedException;
+import uk.ac.standrews.cs.jetson.pool.ChannelPool;
 import uk.ac.standrews.cs.jetson.util.ReflectionUtil;
 
 import com.fasterxml.jackson.core.JsonFactory;
@@ -39,7 +41,9 @@ public class JsonRpcProxyFactoryNIO {
     private final ClassLoader class_loader;
     private final Class<?>[] interfaces;
 
-    private static final EventLoopGroup group = new NioEventLoopGroup();
+    private static final Map<InetSocketAddress, Object> PROXY_MAP = new HashMap<InetSocketAddress, Object>();
+
+    private static final EventLoopGroup group = new NioEventLoopGroup(10);
 
     /**
      * Instantiates a new JSON RPC proxy factory. The {@link ClassLoader#getSystemClassLoader() system class loader} used for constructing new proxy instances.
@@ -65,16 +69,20 @@ public class JsonRpcProxyFactoryNIO {
 
     }
 
-    public <T> T get(final InetSocketAddress address) {
+    public synchronized <T> T get(final InetSocketAddress address) {
+
+        if (PROXY_MAP.containsKey(address)) { return (T) PROXY_MAP.get(address); }
 
         final JsonRpcInvocationHandler handler = createJsonRpcInvocationHandler(address);
-        return createProxy(handler);
+        final Object proxy = createProxy(handler);
+        PROXY_MAP.put(address, proxy);
+        return (T) proxy;
     }
 
     @SuppressWarnings("unchecked")
-    protected <T> T createProxy(final JsonRpcInvocationHandler handler) {
+    protected Object createProxy(final JsonRpcInvocationHandler handler) {
 
-        return (T) Proxy.newProxyInstance(class_loader, interfaces, handler);
+        return Proxy.newProxyInstance(class_loader, interfaces, handler);
     }
 
     protected JsonRpcInvocationHandler createJsonRpcInvocationHandler(final InetSocketAddress address) {
@@ -85,10 +93,12 @@ public class JsonRpcProxyFactoryNIO {
     private class JsonRpcInvocationHandler implements InvocationHandler {
 
         private final InetSocketAddress address;
+        private final ChannelPool channel_pool;
 
         protected JsonRpcInvocationHandler(final InetSocketAddress address) {
 
             this.address = address;
+            channel_pool = new ChannelPool(bootstrap, address);
 
         }
 
@@ -102,9 +112,7 @@ public class JsonRpcProxyFactoryNIO {
 
             final Channel channel;
             try {
-                final ChannelFuture connect_future = bootstrap.connect(address);
-                connect_future.await().get();
-                channel = connect_future.sync().channel();
+                channel = channel_pool.borrowObject();
             }
             catch (final InterruptedException e) {
                 throw new InternalException(e);
@@ -114,23 +122,36 @@ public class JsonRpcProxyFactoryNIO {
                 if (cause instanceof IOException) { throw new TransportException(cause); }
                 throw new InternalException(e);
             }
-            final JsonRpcRequest request = createJsonRpcRequest(method, params);
-            final ChannelFuture lastWriteFuture = channel.write(request);
-            try {
-                lastWriteFuture.sync();
-                channel.attr(JsonRpcRequestEncoder.RESPONSE_LATCH).get().await();
-            }
-            catch (final InterruptedException e) {
+            catch (final Exception e) {
                 throw new InternalException(e);
             }
-            final JsonRpcResponse response = channel.attr(JsonRpcClientHandler.RESPONSE_ATTRIBUTE).get();
-            if (isResponseError(response)) {
-                final JsonRpcResponseError response_error = toJsonRpcResponseError(response);
-                final JsonRpcException exception = JsonRpcExceptions.fromJsonRpcError(response_error.getError());
-                throw !isInvocationException(exception) ? exception : reconstructException(method.getExceptionTypes(), castToInvovationException(exception));
-            }
+            try {
+                final JsonRpcRequest request = createJsonRpcRequest(method, params);
+                final ChannelFuture lastWriteFuture = channel.write(request);
+                try {
+                    lastWriteFuture.sync();
+                    channel.attr(JsonRpcRequestEncoder.RESPONSE_LATCH).get().await();
+                }
+                catch (final InterruptedException e) {
+                    throw new InternalException(e);
+                }
+                final JsonRpcResponse response = channel.attr(JsonRpcClientHandler.RESPONSE_ATTRIBUTE).get();
+                if (isResponseError(response)) {
+                    final JsonRpcResponseError response_error = toJsonRpcResponseError(response);
+                    final JsonRpcException exception = JsonRpcExceptions.fromJsonRpcError(response_error.getError());
+                    throw !isInvocationException(exception) ? exception : reconstructException(method.getExceptionTypes(), castToInvovationException(exception));
+                }
 
-            return JsonRpcResponseResult.class.cast(response).getResult();
+                return JsonRpcResponseResult.class.cast(response).getResult();
+            }
+            finally {
+                try {
+                    channel_pool.returnObject(channel);
+                }
+                catch (final Exception e) {
+                    throw new InternalException(e);
+                }
+            }
         }
     }
 

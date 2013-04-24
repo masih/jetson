@@ -40,6 +40,8 @@ import uk.ac.standrews.cs.jetson.exception.JsonRpcException;
 
 public class JsonRpcNIONormalOperationTest extends AbstractJsonRpcNIOTest<JsonRpcTestService> {
 
+
+
     @Override
     protected Class<JsonRpcTestService> getServiceType() {
 
@@ -91,7 +93,20 @@ public class JsonRpcNIONormalOperationTest extends AbstractJsonRpcNIOTest<JsonRp
     public void testThrowException() {
 
         try {
-            client.throwException();
+            client.throwExceptionOnRemote(temp_server_port);
+            fail("expected exception");
+        }
+        catch (final Exception e) {
+            Assert.assertEquals(NormalOperationTestService.TEST_EXCEPTION.getClass(), e.getClass());
+            Assert.assertEquals(NormalOperationTestService.TEST_EXCEPTION.getMessage(), e.getMessage());
+        }
+    }
+
+    @Test
+    public void testThrowExceptionOnRemote() {
+
+        try {
+            client.throwExceptionOnRemote(temp_server_port);
             fail("expected exception");
         }
         catch (final Exception e) {
@@ -112,6 +127,18 @@ public class JsonRpcNIONormalOperationTest extends AbstractJsonRpcNIOTest<JsonRp
         final Integer minus_seven = client.add(-4, -3);
         Assert.assertEquals(new Integer(-4 + -3), minus_seven);
     }
+    @Test
+    public void testAddOnRemote() throws JsonRpcException {
+
+        final Integer three = client.addOnRemote(1, 2, temp_server_port);
+        Assert.assertEquals(new Integer(1 + 2), three);
+        final Integer eleven = client.addOnRemote(12, -1, temp_server_port);
+        Assert.assertEquals(new Integer(12 + -1), eleven);
+        final Integer fifty_one = client.addOnRemote(-61, 112, temp_server_port);
+        Assert.assertEquals(new Integer(-61 + 112), fifty_one);
+        final Integer minus_seven = client.addOnRemote(-4, -3, temp_server_port);
+        Assert.assertEquals(new Integer(-4 + -3), minus_seven);
+    }
 
     @Test
     public void testGetObject() throws JsonRpcException {
@@ -122,15 +149,14 @@ public class JsonRpcNIONormalOperationTest extends AbstractJsonRpcNIOTest<JsonRp
     @Test
     public void testSayFalseOnRemote() throws IOException {
 
-        final JsonRpcServerNIO temp_server = new JsonRpcServerNIO(JsonRpcTestService.class, getService(), json_factory);
-        temp_server.expose();
-        try {
-            final Boolean _false = client.sayFalseOnRemote(temp_server.getLocalSocketAddress().getPort());
-            Assert.assertFalse(_false);
-        }
-        finally {
-            temp_server.shutdown();
-        }
+        final Boolean _false = client.sayFalseOnRemote(temp_server_port);
+        Assert.assertFalse(_false);
+    }
+
+    @Test
+    public void testGetObjectOnRemote() throws IOException {
+
+        Assert.assertEquals(NormalOperationTestService.TEST_OBJECT_MESSAGE, client.getObjectOnRemote(temp_server_port).getMessage());
     }
 
     @Test
@@ -174,6 +200,15 @@ public class JsonRpcNIONormalOperationTest extends AbstractJsonRpcNIOTest<JsonRp
     protected JsonRpcTestService getService() {
 
         return new NormalOperationNIOTestService(proxy_factory);
+    }
+
+    public static void main(final String[] args) throws IOException {
+        final JsonRpcNIONormalOperationTest t = new JsonRpcNIONormalOperationTest();
+        int i = 0;
+        while (!Thread.currentThread().isInterrupted()) {
+            new JsonRpcServerNIO(t.getServiceType(), t.getService(), t.json_factory).expose();
+            System.out.println(i++);
+        }
     }
 
 }
