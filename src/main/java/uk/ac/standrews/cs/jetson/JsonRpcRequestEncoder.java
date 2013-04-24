@@ -26,7 +26,7 @@ public class JsonRpcRequestEncoder extends ChannelOutboundMessageHandlerAdapter<
     private static final Logger LOGGER = Logger.getLogger(JsonRpcRequestEncoder.class.getName());
     private final JsonFactory json_factory;
 
-    static final AttributeKey<CountDownLatch> RESPONSE_LATCH = new AttributeKey<CountDownLatch>("response_latch");
+    public static final AttributeKey<CountDownLatch> RESPONSE_LATCH = new AttributeKey<CountDownLatch>("response_latch");
 
     public JsonRpcRequestEncoder(final JsonFactory json_factory) {
 

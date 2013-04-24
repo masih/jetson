@@ -71,7 +71,6 @@ public class JsonRpcServerHandler extends ChannelInboundMessageHandlerAdapter<Js
     @Override
     public void exceptionCaught(final ChannelHandlerContext ctx, final Throwable cause) throws Exception {
 
-        //        cause.printStackTrace();
         if (ctx.channel().isOpen()) {
             final long current_request_id = ctx.channel().attr(JsonRpcResponseDecoder.REQUEST_ID_ATTRIBUTE).get();
             final JsonRpcException exception = JsonRpcException.class.isInstance(cause) ? JsonRpcException.class.cast(cause) : new InternalException(cause);
