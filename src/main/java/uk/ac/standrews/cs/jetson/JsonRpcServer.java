@@ -77,10 +77,10 @@ public class JsonRpcServer {
     private final ServerSocketFactory server_socket_factory;
     private final JsonFactory json_factory;
     private final ExecutorService request_handler_executor;
-    private final Thread server_thread;
     private final Map<String, Method> dispatch;
     private final ConcurrentSkipListSet<JsonRpcRequestHandler> request_handlers;
     private final ReentrantLock exposure_lock;
+    private volatile Thread server_thread;
     private volatile ServerSocket server_socket;
     private volatile JsonEncoding encoding;
     private volatile int socket_read_timeout;
@@ -106,7 +106,6 @@ public class JsonRpcServer {
         exposure_lock = new ReentrantLock();
 
         dispatch = ReflectionUtil.mapNamesToMethods(service_interface);
-        server_thread = new ServerThread();
         setDefaultConfigurations();
     }
 
@@ -145,11 +144,17 @@ public class JsonRpcServer {
         try {
             createServerSocket();
             server_socket.bind(endpoint);
-            server_thread.start();
+            start();
         }
         finally {
             exposure_lock.unlock();
         }
+    }
+
+    private void start() {
+
+        server_thread = new ServerThread();
+        server_thread.start();
     }
 
     private void createServerSocket() throws IOException {
@@ -162,10 +167,17 @@ public class JsonRpcServer {
         exposure_lock.lock();
         try {
             server_socket.close();
-            server_thread.interrupt();
+            stop();
         }
         finally {
             exposure_lock.unlock();
+        }
+    }
+
+    private void stop() {
+
+        if(server_thread!= null) {
+            server_thread.interrupt();
         }
     }
 
@@ -345,7 +357,7 @@ public class JsonRpcServer {
         }
 
         private void handleException(final JsonRpcException exception) {
-
+            exception.printStackTrace();
             if (!socket.isClosed()) {
                 final JsonRpcResponseError error = new JsonRpcResponseError(current_request_id, exception);
                 try {
@@ -373,6 +385,7 @@ public class JsonRpcServer {
                 throw new ServerRuntimeException(e);
             }
             catch (final InvocationTargetException e) {
+                e.printStackTrace();
                 throw new InvocationException(e);
             }
             catch (final IllegalAccessException e) {

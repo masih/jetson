@@ -40,6 +40,8 @@ public interface JsonRpcTestService {
 
     TestObject getObject() throws JsonRpcException;
 
+    Boolean sayFalseOnRemote(Integer port) throws JsonRpcException;
+
     public class TestObject {
 
         private String message;
