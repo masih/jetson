@@ -9,6 +9,9 @@ import java.net.InetSocketAddress;
 
 import org.apache.commons.pool.BasePoolableObjectFactory;
 
+import uk.ac.standrews.cs.jetson.JsonRpcClientHandler;
+import uk.ac.standrews.cs.jetson.JsonRpcRequestEncoder;
+
 public class PoolableChannelFactory extends BasePoolableObjectFactory<Channel> {
 
     private final Bootstrap bootstrap;
@@ -36,9 +39,16 @@ public class PoolableChannelFactory extends BasePoolableObjectFactory<Channel> {
     }
 
     @Override
+    public void passivateObject(final Channel channel) throws Exception {
+
+        channel.attr(JsonRpcClientHandler.RESPONSE_ATTRIBUTE).remove();
+        channel.attr(JsonRpcRequestEncoder.RESPONSE_LATCH).remove();
+    }
+
+    @Override
     public boolean validateObject(final Channel channel) {
 
-        return channel.isOpen() && super.validateObject(channel);
+        return channel.isOpen() && channel.isActive() && super.validateObject(channel);
     }
 
 }

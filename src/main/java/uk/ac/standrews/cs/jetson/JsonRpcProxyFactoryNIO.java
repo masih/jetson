@@ -128,7 +128,7 @@ public class JsonRpcProxyFactoryNIO {
                     lastWriteFuture.sync();
                     channel.attr(JsonRpcRequestEncoder.RESPONSE_LATCH).get().await();
                 }
-                catch (final InterruptedException e) {
+                catch (final Exception e) {
                     throw new InternalException(e);
                 }
                 final JsonRpcResponse response = channel.attr(JsonRpcClientHandler.RESPONSE_ATTRIBUTE).get();
