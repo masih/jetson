@@ -24,32 +24,32 @@ import java.util.concurrent.ExecutorService;
 import org.junit.After;
 import org.junit.Before;
 
-import uk.ac.standrews.cs.jetson.JsonRpcProxyFactoryNIO;
-import uk.ac.standrews.cs.jetson.JsonRpcServerNIO;
+import uk.ac.standrews.cs.jetson.JsonRpcProxyFactory;
+import uk.ac.standrews.cs.jetson.JsonRpcServer;
 
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 public abstract class AbstractJsonRpcNIOTest<TestService> {
 
-    protected JsonRpcServerNIO server;
+    protected JsonRpcServer server;
     protected InetSocketAddress server_address;
-    protected JsonRpcServerNIO temp_server;
+    protected JsonRpcServer temp_server;
     protected int temp_server_port;
     protected JsonFactory json_factory;
     protected ExecutorService executor;
     protected TestService client;
-    protected JsonRpcProxyFactoryNIO proxy_factory;
+    protected JsonRpcProxyFactory proxy_factory;
 
     @Before
     public void setUp() throws Exception {
 
         initJsonFactory();
-        proxy_factory = new JsonRpcProxyFactoryNIO(getServiceType(), json_factory);
-        server = new JsonRpcServerNIO(getServiceType(), getService(), json_factory);
+        proxy_factory = new JsonRpcProxyFactory(getServiceType(), json_factory);
+        server = new JsonRpcServer(getServiceType(), getService(), json_factory);
         server.expose();
         server_address = server.getLocalSocketAddress();
-        temp_server = new JsonRpcServerNIO(getServiceType(), getService(), json_factory);
+        temp_server = new JsonRpcServer(getServiceType(), getService(), json_factory);
         temp_server.expose();
         temp_server_port = temp_server.getLocalSocketAddress().getPort();
         client = proxy_factory.get(server_address);

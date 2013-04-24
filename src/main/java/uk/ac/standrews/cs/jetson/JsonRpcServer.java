@@ -17,9 +17,9 @@ import uk.ac.standrews.cs.jetson.util.ReflectionUtil;
 
 import com.fasterxml.jackson.core.JsonFactory;
 
-public class JsonRpcServerNIO {
+public class JsonRpcServer {
 
-    private static final Logger LOGGER = Logger.getLogger(JsonRpcServerNIO.class.getName());
+    private static final Logger LOGGER = Logger.getLogger(JsonRpcServer.class.getName());
     private static final EventLoopGroup GLOBAL_SERVER_THREADS_GROUP = new NioEventLoopGroup(100);
 
     private final Map<String, Method> dispatch;
@@ -27,7 +27,7 @@ public class JsonRpcServerNIO {
     private final ServerBootstrap bootstrap;
     private ChannelFuture server_channel_future;
 
-    public <T> JsonRpcServerNIO(final Class<T> service_interface, final T service, final JsonFactory json_factory) {
+    public <T> JsonRpcServer(final Class<T> service_interface, final T service, final JsonFactory json_factory) {
 
         dispatch = ReflectionUtil.mapNamesToMethods(service_interface);
         bootstrap = new ServerBootstrap();

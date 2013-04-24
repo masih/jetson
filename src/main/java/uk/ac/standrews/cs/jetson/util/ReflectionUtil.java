@@ -18,6 +18,7 @@
  */
 package uk.ac.standrews.cs.jetson.util;
 
+import java.io.Serializable;
 import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.Comparator;
@@ -105,7 +106,9 @@ public class ReflectionUtil {
         return false;
     }
 
-    private static final class MethodComparator implements Comparator<Method> {
+    private static final class MethodComparator implements Comparator<Method>, Serializable {
+
+        private static final long serialVersionUID = -4937883029462194071L;
 
         @Override
         public int compare(final Method first, final Method second) {

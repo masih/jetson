@@ -33,18 +33,18 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 @JsonPropertyOrder({JsonRpcMessage.VERSION_KEY, JsonRpcRequest.METHOD_NAME_KEY, JsonRpcRequest.PARAMETERS_KEY, JsonRpcMessage.ID_KEY})
 public class JsonRpcRequest extends JsonRpcMessage {
 
-    public static final String PARAMETERS_KEY = "params";
-    public static final String METHOD_NAME_KEY = "method";
+    static final String PARAMETERS_KEY = "params";
+    static final String METHOD_NAME_KEY = "method";
 
     private String method_name;
     private Object[] params;
     private Method method;
 
-    public JsonRpcRequest() {
+    JsonRpcRequest() {
 
     }
 
-    public JsonRpcRequest(final Long id, final Method target_method, final String method_name, final Object... params) {
+    JsonRpcRequest(final Long id, final Method target_method, final String method_name, final Object... params) {
 
         setId(id);
         setMethod(target_method);
@@ -52,7 +52,7 @@ public class JsonRpcRequest extends JsonRpcMessage {
         setParams(params);
     }
 
-    public void setMethod(final Method target_method) {
+    void setMethod(final Method target_method) {
 
         this.method = target_method;
     }
@@ -64,7 +64,7 @@ public class JsonRpcRequest extends JsonRpcMessage {
      */
     @JsonProperty(METHOD_NAME_KEY)
     @JsonInclude(Include.ALWAYS)
-    public String getMethodName() {
+    String getMethodName() {
 
         return method_name;
     }
@@ -76,17 +76,17 @@ public class JsonRpcRequest extends JsonRpcMessage {
      */
     @JsonProperty(PARAMETERS_KEY)
     @JsonInclude(Include.NON_NULL)
-    public Object[] getParameters() {
+    Object[] getParameters() {
 
-        return params;
+        return params.clone();
     }
 
-    public void setMethodName(final String method_name) {
+    void setMethodName(final String method_name) {
 
         this.method_name = method_name;
     }
 
-    public void setParams(final Object... params) {
+    void setParams(final Object... params) {
 
         this.params = params;
     }
@@ -97,7 +97,7 @@ public class JsonRpcRequest extends JsonRpcMessage {
      * @return the method
      */
     @JsonIgnore
-    public Method getMethod() {
+    Method getMethod() {
 
         return method;
     }
