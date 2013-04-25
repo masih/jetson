@@ -40,7 +40,7 @@ public class JsonRpcProxyFactory {
 
     private static final Map<InetSocketAddress, Object> PROXY_MAP = new HashMap<InetSocketAddress, Object>();
 
-    private static final EventLoopGroup group = new NioEventLoopGroup(10);
+    private static final EventLoopGroup group = new NioEventLoopGroup(50);
 
     /**
      * Instantiates a new JSON RPC proxy factory. The {@link ClassLoader#getSystemClassLoader() system class loader} used for constructing new proxy instances.
