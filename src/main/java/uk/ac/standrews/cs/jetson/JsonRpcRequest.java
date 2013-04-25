@@ -78,7 +78,7 @@ public class JsonRpcRequest extends JsonRpcMessage {
     @JsonInclude(Include.NON_NULL)
     Object[] getParameters() {
 
-        return params.clone();
+        return params == null ? null : params.clone();
     }
 
     void setMethodName(final String method_name) {
