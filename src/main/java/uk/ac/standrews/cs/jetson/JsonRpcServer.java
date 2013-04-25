@@ -20,8 +20,8 @@ import com.fasterxml.jackson.core.JsonFactory;
 public class JsonRpcServer {
 
     private static final Logger LOGGER = Logger.getLogger(JsonRpcServer.class.getName());
-    private static final EventLoopGroup GLOBAL_SERVER_THREADS_GROUP = new NioEventLoopGroup(50);
-    private static final EventLoopGroup GLOBAL_SERVER_THREADS_GROUP2 = new NioEventLoopGroup(500);
+    private static final EventLoopGroup GLOBAL_SERVER_THREADS_GROUP = new NioEventLoopGroup();
+    private static final EventLoopGroup GLOBAL_SERVER_WORKER_THREADS_GROUP = new NioEventLoopGroup(200);
 
     private final Map<String, Method> dispatch;
     private volatile InetSocketAddress endpoint;
@@ -32,7 +32,7 @@ public class JsonRpcServer {
 
         dispatch = ReflectionUtil.mapNamesToMethods(service_interface);
         bootstrap = new ServerBootstrap();
-        bootstrap.group(GLOBAL_SERVER_THREADS_GROUP, GLOBAL_SERVER_THREADS_GROUP2).channel(NioServerSocketChannel.class).childHandler(new JsonRpcServerPipelineFactory(service, json_factory, dispatch));
+        bootstrap.group(GLOBAL_SERVER_THREADS_GROUP, GLOBAL_SERVER_WORKER_THREADS_GROUP).channel(NioServerSocketChannel.class).childHandler(new JsonRpcServerPipelineFactory(service, json_factory, dispatch));
         endpoint = new InetSocketAddress(0);
     }
 

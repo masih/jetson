@@ -34,12 +34,9 @@ import junit.framework.Assert;
 
 import org.junit.Test;
 
-import uk.ac.standrews.cs.jetson.JsonRpcServer;
 import uk.ac.standrews.cs.jetson.exception.JsonRpcException;
 
 public class JsonRpcNIONormalOperationTest extends AbstractJsonRpcNIOTest<JsonRpcTestService> {
-
-
 
     @Override
     protected Class<JsonRpcTestService> getServiceType() {
@@ -126,6 +123,7 @@ public class JsonRpcNIONormalOperationTest extends AbstractJsonRpcNIOTest<JsonRp
         final Integer minus_seven = client.add(-4, -3);
         Assert.assertEquals(new Integer(-4 + -3), minus_seven);
     }
+
     @Test
     public void testAddOnRemote() throws JsonRpcException {
 
@@ -160,6 +158,7 @@ public class JsonRpcNIONormalOperationTest extends AbstractJsonRpcNIOTest<JsonRp
 
     @Test
     public void testConcurrentConnections() throws JsonRpcException, InterruptedException, ExecutionException {
+
         final ExecutorService executor = Executors.newCachedThreadPool();
         try {
             final CountDownLatch start_latch = new CountDownLatch(1);
@@ -172,8 +171,10 @@ public class JsonRpcNIONormalOperationTest extends AbstractJsonRpcNIOTest<JsonRp
 
                         start_latch.await();
                         testAdd();
+                        testAddOnRemote();
                         testDoVoidWithNoParams();
                         testGetObject();
+                        testGetObjectOnRemote();
                         testSay65535();
                         testSayFalse();
                         testSayFalseOnRemote();
@@ -181,6 +182,7 @@ public class JsonRpcNIONormalOperationTest extends AbstractJsonRpcNIOTest<JsonRp
                         testSaySomething();
                         testSayTrue();
                         testThrowException();
+                        testThrowExceptionOnRemote();
                         return null;
                     }
                 }));
@@ -202,6 +204,7 @@ public class JsonRpcNIONormalOperationTest extends AbstractJsonRpcNIOTest<JsonRp
     }
 
     public static void main(final String[] args) throws IOException {
+
         final JsonRpcNIONormalOperationTest t = new JsonRpcNIONormalOperationTest();
         int i = 0;
         while (!Thread.currentThread().isInterrupted()) {

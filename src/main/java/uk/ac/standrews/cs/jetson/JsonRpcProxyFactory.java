@@ -40,7 +40,7 @@ public class JsonRpcProxyFactory {
 
     private static final Map<InetSocketAddress, Object> PROXY_MAP = new HashMap<InetSocketAddress, Object>();
 
-    private static final EventLoopGroup group = new NioEventLoopGroup(50);
+    private static final EventLoopGroup GLOBAL_CLIENT_WORKER_GROUP = new NioEventLoopGroup();
 
     /**
      * Instantiates a new JSON RPC proxy factory. The {@link ClassLoader#getSystemClassLoader() system class loader} used for constructing new proxy instances.
@@ -61,7 +61,7 @@ public class JsonRpcProxyFactory {
         this.interfaces = new Class<?>[]{service_interface};
 
         bootstrap = new Bootstrap();
-        bootstrap.group(group).channel(NioSocketChannel.class).handler(new JsonRpcProxyInitializer(json_factory));
+        bootstrap.group(GLOBAL_CLIENT_WORKER_GROUP).channel(NioSocketChannel.class).handler(new JsonRpcProxyInitializer(json_factory));
 
     }
 
