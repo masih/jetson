@@ -48,7 +48,7 @@ public class JsonRpcServer {
         if (!isExposed()) {
             try {
                 server_channel_future = bootstrap.bind(endpoint).sync();
-                endpoint = getLocalSocketAddress();
+                endpoint = (InetSocketAddress) server_channel_future.channel().localAddress();
             }
             catch (final InterruptedException e) {
                 throw new IOException(e);
@@ -78,9 +78,7 @@ public class JsonRpcServer {
 
     public InetSocketAddress getLocalSocketAddress() {
 
-        synchronized (server_channel_future) {
-            return (InetSocketAddress) (!isExposed() ? null : server_channel_future.channel().localAddress());
-        }
+        return endpoint;
     }
 
     public void shutdown() {
