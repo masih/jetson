@@ -67,5 +67,6 @@ public abstract class AbstractJsonRpcNIOTest<TestService> {
 
         server.shutdown();
         temp_server.shutdown();
+
     }
 }
