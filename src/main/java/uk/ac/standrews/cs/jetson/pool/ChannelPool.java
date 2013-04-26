@@ -12,6 +12,9 @@ public class ChannelPool extends GenericObjectPool<Channel> {
     public ChannelPool(final Bootstrap bootstrap, final InetSocketAddress address) {
 
         super(new PoolableChannelFactory(bootstrap, address));
+        setTestOnBorrow(true);
+        setTestOnReturn(true);
+        setTestWhileIdle(true);
     }
 
 
