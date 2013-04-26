@@ -38,11 +38,6 @@ import uk.ac.standrews.cs.jetson.exception.JsonRpcException;
 
 public class JsonRpcNIONormalOperationTest extends AbstractJsonRpcNIOTest<JsonRpcTestService> {
 
-    @Override
-    protected Class<JsonRpcTestService> getServiceType() {
-
-        return JsonRpcTestService.class;
-    }
 
     @Test
     public void testDoVoidWithNoParams() throws JsonRpcException {
@@ -106,6 +101,7 @@ public class JsonRpcNIONormalOperationTest extends AbstractJsonRpcNIOTest<JsonRp
             fail("expected exception");
         }
         catch (final Exception e) {
+            e.printStackTrace();
             Assert.assertEquals(NormalOperationNIOTestService.TEST_EXCEPTION.getClass(), e.getClass());
             Assert.assertEquals(NormalOperationNIOTestService.TEST_EXCEPTION.getMessage(), e.getMessage());
         }
@@ -163,7 +159,7 @@ public class JsonRpcNIONormalOperationTest extends AbstractJsonRpcNIOTest<JsonRp
         try {
             final CountDownLatch start_latch = new CountDownLatch(1);
             final List<Future<Void>> future_concurrent_tests = new ArrayList<Future<Void>>();
-            for (int i = 0; i < 100; i++) {
+            for (int i = 0; i < 1; i++) {
                 future_concurrent_tests.add(executor.submit(new Callable<Void>() {
 
                     @Override
@@ -196,7 +192,11 @@ public class JsonRpcNIONormalOperationTest extends AbstractJsonRpcNIOTest<JsonRp
             executor.shutdown();
         }
     }
+    @Override
+    protected Class<JsonRpcTestService> getServiceType() {
 
+        return JsonRpcTestService.class;
+    }
     @Override
     protected JsonRpcTestService getService() {
 

@@ -6,6 +6,7 @@ import io.netty.channel.ChannelInboundMessageHandlerAdapter;
 import io.netty.util.AttributeKey;
 
 import java.nio.channels.ClosedChannelException;
+import java.util.concurrent.CountDownLatch;
 
 import uk.ac.standrews.cs.jetson.exception.JsonRpcError;
 import uk.ac.standrews.cs.jetson.exception.JsonRpcException;
@@ -27,22 +28,27 @@ public class JsonRpcClientHandler extends ChannelInboundMessageHandlerAdapter<Js
     @Override
     public void channelInactive(final ChannelHandlerContext ctx) throws Exception {
 
-        throw new TransportException(new ClosedChannelException());
+        exceptionCaught(ctx, new TransportException(new ClosedChannelException()));
     }
 
     @Override
     public void exceptionCaught(final ChannelHandlerContext ctx, final Throwable cause) {
 
-        final long request_id = ctx.channel().attr(JsonRpcResponseDecoder.REQUEST_ID_ATTRIBUTE).get();
-        final JsonRpcError error;
-        if (cause instanceof JsonRpcException) {
-            error = JsonRpcException.class.cast(cause);
+        final CountDownLatch latch = ctx.channel().attr(JsonRpcRequestEncoder.RESPONSE_LATCH).get();
+        if (latch != null) {
+            final long request_id = ctx.channel().attr(JsonRpcResponseDecoder.REQUEST_ID_ATTRIBUTE).get();
+            final JsonRpcError error;
+            if (cause instanceof JsonRpcException) {
+                error = JsonRpcException.class.cast(cause);
+            }
+            else {
+                error = new UnexpectedException(cause);
+            }
+            ctx.channel().attr(RESPONSE_ATTRIBUTE).set(new JsonRpcResponse.JsonRpcResponseError(request_id, error));
+            latch.countDown();
         }
         else {
-            error = new UnexpectedException(cause);
+            ctx.close();
         }
-
-        ctx.channel().attr(RESPONSE_ATTRIBUTE).set(new JsonRpcResponse.JsonRpcResponseError(request_id, error));
-        ctx.channel().attr(JsonRpcRequestEncoder.RESPONSE_LATCH).get().countDown();
     }
 }
