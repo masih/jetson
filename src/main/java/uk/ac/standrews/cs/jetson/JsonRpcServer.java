@@ -2,7 +2,7 @@ package uk.ac.standrews.cs.jetson;
 
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.ChannelFuture;
-import io.netty.channel.EventLoopGroup;
+import io.netty.channel.group.DefaultChannelGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
 
@@ -20,19 +20,21 @@ import com.fasterxml.jackson.core.JsonFactory;
 public class JsonRpcServer {
 
     private static final Logger LOGGER = Logger.getLogger(JsonRpcServer.class.getName());
-    private static final EventLoopGroup GLOBAL_SERVER_THREADS_GROUP = new NioEventLoopGroup();
-    private static final EventLoopGroup GLOBAL_SERVER_WORKER_THREADS_GROUP = new NioEventLoopGroup(200);
+    private static final NioEventLoopGroup GLOBAL_SERVER_THREADS_GROUP = new NioEventLoopGroup();
+    private static final NioEventLoopGroup GLOBAL_SERVER_WORKER_THREADS_GROUP = new NioEventLoopGroup(200);
 
     private final Map<String, Method> dispatch;
     private volatile InetSocketAddress endpoint;
     private final ServerBootstrap bootstrap;
     private ChannelFuture server_channel_future;
+    private final DefaultChannelGroup channel_group;
 
     public <T> JsonRpcServer(final Class<T> service_interface, final T service, final JsonFactory json_factory) {
 
         dispatch = ReflectionUtil.mapNamesToMethods(service_interface);
+        channel_group = new DefaultChannelGroup();
         bootstrap = new ServerBootstrap();
-        bootstrap.group(GLOBAL_SERVER_THREADS_GROUP, GLOBAL_SERVER_WORKER_THREADS_GROUP).channel(NioServerSocketChannel.class).childHandler(new JsonRpcServerPipelineFactory(service, json_factory, dispatch));
+        bootstrap.group(GLOBAL_SERVER_THREADS_GROUP, GLOBAL_SERVER_WORKER_THREADS_GROUP).channel(NioServerSocketChannel.class).childHandler(new JsonRpcServerPipelineFactory(channel_group, service, json_factory, dispatch));
         endpoint = new InetSocketAddress(0);
     }
 
@@ -57,6 +59,7 @@ public class JsonRpcServer {
 
         if (isExposed()) {
             try {
+                channel_group.close().sync();
                 server_channel_future.channel().close().sync();
             }
             catch (final InterruptedException e) {
@@ -85,5 +88,6 @@ public class JsonRpcServer {
         catch (final IOException e) {
             LOGGER.log(Level.WARNING, "error while unexposing the server", e);
         }
+        //        bootstrap.shutdown();
     }
 }

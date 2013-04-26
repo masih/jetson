@@ -42,6 +42,8 @@ public class JsonRpcResponseDecoder extends MessageToMessageDecoder<ByteBuf> {
         this.json_factory = json_factory;
     }
 
+
+
     @Override
     protected JsonRpcResponse decode(final ChannelHandlerContext ctx, final ByteBuf msg) throws Exception {
 

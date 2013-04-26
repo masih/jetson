@@ -24,9 +24,6 @@ import java.util.concurrent.ExecutorService;
 import org.junit.After;
 import org.junit.Before;
 
-import uk.ac.standrews.cs.jetson.JsonRpcProxyFactory;
-import uk.ac.standrews.cs.jetson.JsonRpcServer;
-
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.databind.ObjectMapper;
 

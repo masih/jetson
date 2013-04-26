@@ -2,6 +2,7 @@ package uk.ac.standrews.cs.jetson;
 
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelPipeline;
+import io.netty.channel.group.ChannelGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.handler.codec.DelimiterBasedFrameDecoder;
 import io.netty.handler.codec.Delimiters;
@@ -17,11 +18,11 @@ public class JsonRpcServerPipelineFactory extends ChannelInitializer<SocketChann
     private final JsonRpcResponseEncoder response_encoder;
     private final JsonRpcServerHandler server_handler;
 
-    public JsonRpcServerPipelineFactory(final Object service, final JsonFactory json_factory, final Map<String, Method> dispatch) {
+    public JsonRpcServerPipelineFactory(final ChannelGroup channel_group, final Object service, final JsonFactory json_factory, final Map<String, Method> dispatch) {
 
         request_decoder = new JsonRpcRequestDecoder(json_factory, dispatch);
         response_encoder = new JsonRpcResponseEncoder(json_factory);
-        server_handler = new JsonRpcServerHandler(service);
+        server_handler = new JsonRpcServerHandler(channel_group, service);
     }
 
     @Override
@@ -29,7 +30,7 @@ public class JsonRpcServerPipelineFactory extends ChannelInitializer<SocketChann
 
         final ChannelPipeline pipeline = channel.pipeline();
 
-        pipeline.addLast("framer", new DelimiterBasedFrameDecoder(8192, Delimiters.lineDelimiter()));
+        pipeline.addFirst("framer", new DelimiterBasedFrameDecoder(8192, Delimiters.lineDelimiter()));
         pipeline.addLast("encoder", request_decoder);
         pipeline.addLast("decoder", response_encoder);
         pipeline.addLast("handler", server_handler);
