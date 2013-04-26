@@ -48,6 +48,7 @@ public class JsonRpcServer {
         if (!isExposed()) {
             try {
                 server_channel_future = bootstrap.bind(endpoint).sync();
+                endpoint = getLocalSocketAddress();
             }
             catch (final InterruptedException e) {
                 throw new IOException(e);
@@ -60,7 +61,9 @@ public class JsonRpcServer {
         if (isExposed()) {
             try {
                 channel_group.close().sync();
-                server_channel_future.channel().close().sync();
+                server_channel_future.cancel(true);
+                server_channel_future.channel().disconnect().sync();
+                server_channel_future.channel().closeFuture().sync();
             }
             catch (final InterruptedException e) {
                 throw new IOException(e);

@@ -24,6 +24,17 @@ public class JsonRpcServerTest extends AbstractJsonRpcNIOTest<JsonRpcTestService
         catch (final JsonRpcException e) {
             //expected
         }
+
+        server.expose();
+        client.saySomething();
+        server.unexpose();
+        try {
+            client.saySomething();
+            fail();
+        }
+        catch (final JsonRpcException e) {
+            //expected
+        }
     }
 
     @Test

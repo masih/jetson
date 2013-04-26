@@ -38,7 +38,6 @@ import uk.ac.standrews.cs.jetson.exception.JsonRpcException;
 
 public class JsonRpcNIONormalOperationTest extends AbstractJsonRpcNIOTest<JsonRpcTestService> {
 
-
     @Test
     public void testDoVoidWithNoParams() throws JsonRpcException {
 
@@ -101,7 +100,6 @@ public class JsonRpcNIONormalOperationTest extends AbstractJsonRpcNIOTest<JsonRp
             fail("expected exception");
         }
         catch (final Exception e) {
-            e.printStackTrace();
             Assert.assertEquals(NormalOperationNIOTestService.TEST_EXCEPTION.getClass(), e.getClass());
             Assert.assertEquals(NormalOperationNIOTestService.TEST_EXCEPTION.getMessage(), e.getMessage());
         }
@@ -192,11 +190,13 @@ public class JsonRpcNIONormalOperationTest extends AbstractJsonRpcNIOTest<JsonRp
             executor.shutdown();
         }
     }
+
     @Override
     protected Class<JsonRpcTestService> getServiceType() {
 
         return JsonRpcTestService.class;
     }
+
     @Override
     protected JsonRpcTestService getService() {
 
