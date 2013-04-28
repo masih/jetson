@@ -17,12 +17,12 @@ import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonGenerator;
 
 @Sharable
-public class JsonRpcResponseEncoder extends ChannelOutboundMessageHandlerAdapter<JsonRpcResponse> {
+class JsonRpcResponseEncoder extends ChannelOutboundMessageHandlerAdapter<JsonRpcResponse> {
 
     private static final Logger LOGGER = Logger.getLogger(JsonRpcResponseEncoder.class.getName());
     private final JsonFactory json_factory;
 
-    public JsonRpcResponseEncoder(final JsonFactory json_factory) {
+    JsonRpcResponseEncoder(final JsonFactory json_factory) {
 
         this.json_factory = json_factory;
     }

@@ -37,13 +37,13 @@ public abstract class AbstractJsonRpcNIOTest<TestService> {
     protected JsonFactory json_factory;
     protected ExecutorService executor;
     protected TestService client;
-    protected JsonRpcProxyFactory proxy_factory;
+    protected JsonRpcClientFactory proxy_factory;
 
     @Before
     public void setUp() throws Exception {
 
         initJsonFactory();
-        proxy_factory = new JsonRpcProxyFactory(getServiceType(), json_factory);
+        proxy_factory = new JsonRpcClientFactory(getServiceType(), json_factory);
         server = startJsonRpcTestServer();
         server_address = server.getLocalSocketAddress();
         temp_server = startJsonRpcTestServer();

@@ -12,13 +12,14 @@ import java.util.Map;
 
 import com.fasterxml.jackson.core.JsonFactory;
 
-public class JsonRpcServerInitializer extends ChannelInitializer<SocketChannel> {
+class JsonRpcServerInitializer extends ChannelInitializer<SocketChannel> {
 
+    private static final int MAX_FRAME_LENGTH = 8192;
     private final JsonRpcRequestDecoder request_decoder;
     private final JsonRpcResponseEncoder response_encoder;
     private final JsonRpcServerHandler server_handler;
 
-    public JsonRpcServerInitializer(final ChannelGroup channel_group, final Object service, final JsonFactory json_factory, final Map<String, Method> dispatch) {
+    JsonRpcServerInitializer(final ChannelGroup channel_group, final Object service, final JsonFactory json_factory, final Map<String, Method> dispatch) {
 
         request_decoder = new JsonRpcRequestDecoder(json_factory, dispatch);
         response_encoder = new JsonRpcResponseEncoder(json_factory);
@@ -30,7 +31,7 @@ public class JsonRpcServerInitializer extends ChannelInitializer<SocketChannel> 
 
         final ChannelPipeline pipeline = channel.pipeline();
 
-        pipeline.addFirst("framer", new DelimiterBasedFrameDecoder(8192, Delimiters.lineDelimiter()));
+        pipeline.addFirst("framer", new DelimiterBasedFrameDecoder(MAX_FRAME_LENGTH, Delimiters.lineDelimiter()));
         pipeline.addLast("encoder", request_decoder);
         pipeline.addLast("decoder", response_encoder);
         pipeline.addLast("handler", server_handler);

@@ -21,14 +21,14 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
 
 @Sharable
-public class JsonRpcRequestEncoder extends ChannelOutboundMessageHandlerAdapter<JsonRpcRequest> {
+class JsonRpcRequestEncoder extends ChannelOutboundMessageHandlerAdapter<JsonRpcRequest> {
 
     private static final Logger LOGGER = Logger.getLogger(JsonRpcRequestEncoder.class.getName());
     private final JsonFactory json_factory;
 
-    public static final AttributeKey<CountDownLatch> RESPONSE_LATCH = new AttributeKey<CountDownLatch>("response_latch");
+    static final AttributeKey<CountDownLatch> RESPONSE_LATCH_ATTRIBUTE = new AttributeKey<CountDownLatch>("response_latch");
 
-    public JsonRpcRequestEncoder(final JsonFactory json_factory) {
+    JsonRpcRequestEncoder(final JsonFactory json_factory) {
 
         this.json_factory = json_factory;
 
@@ -39,14 +39,13 @@ public class JsonRpcRequestEncoder extends ChannelOutboundMessageHandlerAdapter<
 
         ctx.channel().attr(JsonRpcResponseDecoder.REQUEST_ID_ATTRIBUTE).set(request.getId());
         ctx.channel().attr(JsonRpcResponseDecoder.RETURN_TYPE_ATTRIBUTE).set(request.getMethod().getGenericReturnType());
-        ctx.channel().attr(RESPONSE_LATCH).set(new CountDownLatch(1));
+        ctx.channel().attr(RESPONSE_LATCH_ATTRIBUTE).set(new CountDownLatch(1));
         final ByteBufOutputStream out = new ByteBufOutputStream(ctx.nextOutboundByteBuffer());
         JsonGenerator generator = null;
         try {
             generator = json_factory.createGenerator(out, JsonEncoding.UTF8);
             final Method target_method = request.getMethod();
             final Class<?>[] param_types = target_method.getParameterTypes();
-            //                LOGGER.fine(((ObjectMapper) generator.getCodec()).writeValueAsString(request));
 
             final ObjectMapper mapper = (ObjectMapper) generator.getCodec();
             generator.writeStartObject();
