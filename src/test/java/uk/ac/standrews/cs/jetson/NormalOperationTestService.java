@@ -3,17 +3,16 @@ package uk.ac.standrews.cs.jetson;
 import java.net.InetSocketAddress;
 import java.util.logging.Logger;
 
-import uk.ac.standrews.cs.jetson.JsonRpcClientFactory;
 import uk.ac.standrews.cs.jetson.exception.JsonRpcException;
 
-public class NormalOperationNIOTestService implements JsonRpcTestService {
+public class NormalOperationTestService implements TestService {
 
-    private static final Logger LOGGER = Logger.getLogger(NormalOperationNIOTestService.class.getName());
+    private static final Logger LOGGER = Logger.getLogger(NormalOperationTestService.class.getName());
     public static final Exception TEST_EXCEPTION = new Exception("test exception");
     public static final String TEST_OBJECT_MESSAGE = "test message";
-    private final JsonRpcClientFactory proxy_factory;
+    private final ClientFactory proxy_factory;
 
-    public NormalOperationNIOTestService(final JsonRpcClientFactory proxy_factory) {
+    public NormalOperationTestService(final ClientFactory proxy_factory) {
 
         this.proxy_factory = proxy_factory;
     }
@@ -75,28 +74,28 @@ public class NormalOperationNIOTestService implements JsonRpcTestService {
     @Override
     public Boolean sayFalseOnRemote(final Integer port) throws JsonRpcException {
 
-        final JsonRpcTestService remote_service = proxy_factory.get(new InetSocketAddress(port));
+        final TestService remote_service = (TestService) proxy_factory.get(new InetSocketAddress(port));
         return remote_service.sayFalse();
     }
 
     @Override
     public void throwExceptionOnRemote(final Integer port) throws Exception {
 
-        final JsonRpcTestService remote_service = proxy_factory.get(new InetSocketAddress(port));
+        final TestService remote_service = (TestService) proxy_factory.get(new InetSocketAddress(port));
         remote_service.throwException();
     }
 
     @Override
     public Integer addOnRemote(final Integer a, final Integer b, final Integer port) throws JsonRpcException {
 
-        final JsonRpcTestService remote_service = proxy_factory.get(new InetSocketAddress(port));
+        final TestService remote_service = (TestService) proxy_factory.get(new InetSocketAddress(port));
         return remote_service.add(a, b);
     }
 
     @Override
     public TestObject getObjectOnRemote(final Integer port) throws JsonRpcException {
 
-        final JsonRpcTestService remote_service = proxy_factory.get(new InetSocketAddress(port));
+        final TestService remote_service = (TestService) proxy_factory.get(new InetSocketAddress(port));
         return remote_service.getObject();
     }
 }

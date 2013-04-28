@@ -23,23 +23,23 @@ import junit.framework.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
-import uk.ac.standrews.cs.jetson.JsonRpcMessage;
+import uk.ac.standrews.cs.jetson.Message;
 
-public class JsonRpcMessageTest {
+public class MessageTest {
 
-    JsonRpcMessage message;
+    Message message;
 
     @Before
     public void setUp() throws Exception {
 
-        message = new JsonRpcMessage() {
+        message = new Message() {
         };
     }
 
     @Test
     public void testDefaultVersion() {
 
-        Assert.assertEquals(JsonRpcMessage.DEFAULT_VERSION, message.getVersion());
+        Assert.assertEquals(Message.DEFAULT_VERSION, message.getVersion());
     }
 
 }

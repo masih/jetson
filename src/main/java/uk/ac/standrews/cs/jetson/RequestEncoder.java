@@ -4,11 +4,9 @@ import io.netty.buffer.ByteBufOutputStream;
 import io.netty.channel.ChannelHandler.Sharable;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelOutboundMessageHandlerAdapter;
-import io.netty.util.AttributeKey;
 
 import java.io.IOException;
 import java.lang.reflect.Method;
-import java.util.concurrent.CountDownLatch;
 import java.util.logging.Logger;
 
 import uk.ac.standrews.cs.jetson.exception.InternalException;
@@ -21,25 +19,20 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
 
 @Sharable
-class JsonRpcRequestEncoder extends ChannelOutboundMessageHandlerAdapter<JsonRpcRequest> {
+class RequestEncoder extends ChannelOutboundMessageHandlerAdapter<Request> {
 
-    private static final Logger LOGGER = Logger.getLogger(JsonRpcRequestEncoder.class.getName());
+    private static final Logger LOGGER = Logger.getLogger(RequestEncoder.class.getName());
     private final JsonFactory json_factory;
 
-    static final AttributeKey<CountDownLatch> RESPONSE_LATCH_ATTRIBUTE = new AttributeKey<CountDownLatch>("response_latch");
-
-    JsonRpcRequestEncoder(final JsonFactory json_factory) {
+    RequestEncoder(final JsonFactory json_factory) {
 
         this.json_factory = json_factory;
 
     }
 
     @Override
-    public void flush(final ChannelHandlerContext ctx, final JsonRpcRequest request) throws Exception {
+    public void flush(final ChannelHandlerContext ctx, final Request request) throws Exception {
 
-        ctx.channel().attr(JsonRpcResponseDecoder.REQUEST_ID_ATTRIBUTE).set(request.getId());
-        ctx.channel().attr(JsonRpcResponseDecoder.RETURN_TYPE_ATTRIBUTE).set(request.getMethod().getGenericReturnType());
-        ctx.channel().attr(RESPONSE_LATCH_ATTRIBUTE).set(new CountDownLatch(1));
         final ByteBufOutputStream out = new ByteBufOutputStream(ctx.nextOutboundByteBuffer());
         JsonGenerator generator = null;
         try {
@@ -49,9 +42,9 @@ class JsonRpcRequestEncoder extends ChannelOutboundMessageHandlerAdapter<JsonRpc
 
             final ObjectMapper mapper = (ObjectMapper) generator.getCodec();
             generator.writeStartObject();
-            generator.writeObjectField(JsonRpcMessage.VERSION_KEY, request.getVersion());
-            generator.writeObjectField(JsonRpcRequest.METHOD_NAME_KEY, request.getMethodName());
-            generator.writeArrayFieldStart(JsonRpcRequest.PARAMETERS_KEY);
+            generator.writeObjectField(Message.VERSION_KEY, request.getVersion());
+            generator.writeObjectField(Request.METHOD_NAME_KEY, request.getMethodName());
+            generator.writeArrayFieldStart(Request.PARAMETERS_KEY);
             if (request.getParameters() != null) {
                 int i = 0;
                 for (final Object param : request.getParameters()) {
@@ -67,7 +60,7 @@ class JsonRpcRequestEncoder extends ChannelOutboundMessageHandlerAdapter<JsonRpc
                 }
             }
             generator.writeEndArray();
-            generator.writeObjectField(JsonRpcMessage.ID_KEY, request.getId());
+            generator.writeObjectField(Message.ID_KEY, request.getId());
             generator.writeEndObject();
             generator.writeRaw('\n');
             generator.flush();

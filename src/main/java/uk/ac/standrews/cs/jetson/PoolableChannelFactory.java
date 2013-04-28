@@ -6,6 +6,7 @@ import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelFutureListener;
 
 import java.net.InetSocketAddress;
+import java.util.concurrent.CyclicBarrier;
 
 import org.apache.commons.pool.BasePoolableObjectFactory;
 
@@ -25,8 +26,16 @@ class PoolableChannelFactory extends BasePoolableObjectFactory<Channel> {
 
         final ChannelFuture connect_future = bootstrap.connect(address);
         connect_future.addListener(ChannelFutureListener.CLOSE_ON_FAILURE);
-        connect_future.await().get();
-        return connect_future.sync().channel();
+        final Channel channel = connect_future.sync().channel();
+        configureChannel(channel);
+        return channel;
+    }
+
+    private void configureChannel(final Channel channel) {
+
+        channel.attr(ClientHandler.RESPONSE_BARRIER_ATTRIBUTE).set(new CyclicBarrier(2));
+        channel.attr(ClientHandler.REQUEST_ATTRIBUTE).set(new Request());
+        channel.attr(ClientHandler.RESPONSE_ATTRIBUTE).set(new Response());
     }
 
     @Override
@@ -38,8 +47,9 @@ class PoolableChannelFactory extends BasePoolableObjectFactory<Channel> {
     @Override
     public void passivateObject(final Channel channel) throws Exception {
 
-        channel.attr(JsonRpcClientHandler.RESPONSE_ATTRIBUTE).remove();
-        channel.attr(JsonRpcRequestEncoder.RESPONSE_LATCH_ATTRIBUTE).remove();
+        channel.attr(ClientHandler.REQUEST_ATTRIBUTE).get().reset();
+        channel.attr(ClientHandler.RESPONSE_BARRIER_ATTRIBUTE).get().reset();
+        channel.attr(ClientHandler.RESPONSE_ATTRIBUTE).get().reset();
     }
 
     @Override
