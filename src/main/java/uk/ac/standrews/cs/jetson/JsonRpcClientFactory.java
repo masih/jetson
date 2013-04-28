@@ -1,3 +1,21 @@
+/*
+ * Copyright 2013 Masih Hajiarabderkani
+ * 
+ * This file is part of Jetson.
+ * 
+ * Jetson is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ * 
+ * Jetson is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License
+ * along with Jetson.  If not, see <http://www.gnu.org/licenses/>.
+ */
 package uk.ac.standrews.cs.jetson;
 
 import io.netty.bootstrap.Bootstrap;
@@ -25,12 +43,15 @@ import uk.ac.standrews.cs.jetson.exception.JsonRpcException;
 import uk.ac.standrews.cs.jetson.exception.JsonRpcExceptions;
 import uk.ac.standrews.cs.jetson.exception.TransportException;
 import uk.ac.standrews.cs.jetson.exception.UnexpectedException;
-import uk.ac.standrews.cs.jetson.pool.ChannelPool;
 import uk.ac.standrews.cs.jetson.util.ReflectionUtil;
 
 import com.fasterxml.jackson.core.JsonFactory;
 
-public class JsonRpcProxyFactory {
+/**
+ * A factory for creating a JSON RPC proxy that is able to communicate with a JSON RPC server.
+ * @author Masih Hajiarabderkani (mh638@st-andrews.ac.uk)
+ */
+public class JsonRpcClientFactory {
 
     private final Map<Method, String> dispatch;
     private final AtomicLong next_request_id;
@@ -38,7 +59,7 @@ public class JsonRpcProxyFactory {
     private final ClassLoader class_loader;
     private final Class<?>[] interfaces;
 
-    private static final Map<InetSocketAddress, Object> PROXY_MAP = new HashMap<InetSocketAddress, Object>();
+    private static final Map<InetSocketAddress, Object> ADDRESS_TO_PROXY_MAP = new HashMap<InetSocketAddress, Object>();
 
     private static final EventLoopGroup GLOBAL_CLIENT_WORKER_GROUP = new NioEventLoopGroup();
 
@@ -48,12 +69,12 @@ public class JsonRpcProxyFactory {
      * @param service_interface the interface presenting the remote service
      * @param json_factory the provider of JSON serialiser and deserialisers
      */
-    public JsonRpcProxyFactory(final Class<?> service_interface, final JsonFactory json_factory) {
+    public JsonRpcClientFactory(final Class<?> service_interface, final JsonFactory json_factory) {
 
         this(service_interface, json_factory, ClassLoader.getSystemClassLoader());
     }
 
-    public JsonRpcProxyFactory(final Class<?> service_interface, final JsonFactory json_factory, final ClassLoader class_loader) {
+    public JsonRpcClientFactory(final Class<?> service_interface, final JsonFactory json_factory, final ClassLoader class_loader) {
 
         dispatch = ReflectionUtil.mapMethodsToNames(service_interface);
         next_request_id = new AtomicLong();
@@ -61,17 +82,17 @@ public class JsonRpcProxyFactory {
         this.interfaces = new Class<?>[]{service_interface};
 
         bootstrap = new Bootstrap();
-        bootstrap.group(GLOBAL_CLIENT_WORKER_GROUP).channel(NioSocketChannel.class).handler(new JsonRpcProxyInitializer(json_factory));
+        bootstrap.group(GLOBAL_CLIENT_WORKER_GROUP).channel(NioSocketChannel.class).handler(new JsonRpcClientChannelInitializer(json_factory));
 
     }
 
     public synchronized <T> T get(final InetSocketAddress address) {
 
-        if (PROXY_MAP.containsKey(address)) { return (T) PROXY_MAP.get(address); }
+        if (ADDRESS_TO_PROXY_MAP.containsKey(address)) { return (T) ADDRESS_TO_PROXY_MAP.get(address); }
 
         final JsonRpcInvocationHandler handler = createJsonRpcInvocationHandler(address);
         final Object proxy = createProxy(handler);
-        PROXY_MAP.put(address, proxy);
+        ADDRESS_TO_PROXY_MAP.put(address, proxy);
         return (T) proxy;
     }
 
@@ -86,7 +107,7 @@ public class JsonRpcProxyFactory {
         return new JsonRpcInvocationHandler(address);
     }
 
-    private class JsonRpcInvocationHandler implements InvocationHandler {
+    protected class JsonRpcInvocationHandler implements InvocationHandler {
 
         private final InetSocketAddress address;
         private final ChannelPool channel_pool;
@@ -126,7 +147,7 @@ public class JsonRpcProxyFactory {
                 final ChannelFuture lastWriteFuture = channel.write(request);
                 try {
                     lastWriteFuture.sync();
-                    channel.attr(JsonRpcRequestEncoder.RESPONSE_LATCH).get().await();
+                    channel.attr(JsonRpcRequestEncoder.RESPONSE_LATCH_ATTRIBUTE).get().await();
                 }
                 catch (final Exception e) {
                     throw new InternalException(e);

@@ -14,15 +14,15 @@ import uk.ac.standrews.cs.jetson.exception.TransportException;
 import uk.ac.standrews.cs.jetson.exception.UnexpectedException;
 
 @Sharable
-public class JsonRpcClientHandler extends ChannelInboundMessageHandlerAdapter<JsonRpcResponse> {
+class JsonRpcClientHandler extends ChannelInboundMessageHandlerAdapter<JsonRpcResponse> {
 
-    public static final AttributeKey<JsonRpcResponse> RESPONSE_ATTRIBUTE = new AttributeKey<JsonRpcResponse>("response");
+    static final AttributeKey<JsonRpcResponse> RESPONSE_ATTRIBUTE = new AttributeKey<JsonRpcResponse>("response");
 
     @Override
     public void messageReceived(final ChannelHandlerContext ctx, final JsonRpcResponse response) throws Exception {
 
         ctx.channel().attr(RESPONSE_ATTRIBUTE).set(response);
-        ctx.channel().attr(JsonRpcRequestEncoder.RESPONSE_LATCH).get().countDown();
+        ctx.channel().attr(JsonRpcRequestEncoder.RESPONSE_LATCH_ATTRIBUTE).get().countDown();
     }
 
     @Override
@@ -34,7 +34,7 @@ public class JsonRpcClientHandler extends ChannelInboundMessageHandlerAdapter<Js
     @Override
     public void exceptionCaught(final ChannelHandlerContext ctx, final Throwable cause) {
 
-        final CountDownLatch latch = ctx.channel().attr(JsonRpcRequestEncoder.RESPONSE_LATCH).get();
+        final CountDownLatch latch = ctx.channel().attr(JsonRpcRequestEncoder.RESPONSE_LATCH_ATTRIBUTE).get();
         if (latch != null) {
             final long request_id = ctx.channel().attr(JsonRpcResponseDecoder.REQUEST_ID_ATTRIBUTE).get();
             final JsonRpcError error;

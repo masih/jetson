@@ -3,7 +3,7 @@ package uk.ac.standrews.cs.jetson;
 import java.net.InetSocketAddress;
 import java.util.logging.Logger;
 
-import uk.ac.standrews.cs.jetson.JsonRpcProxyFactory;
+import uk.ac.standrews.cs.jetson.JsonRpcClientFactory;
 import uk.ac.standrews.cs.jetson.exception.JsonRpcException;
 
 public class NormalOperationNIOTestService implements JsonRpcTestService {
@@ -11,9 +11,9 @@ public class NormalOperationNIOTestService implements JsonRpcTestService {
     private static final Logger LOGGER = Logger.getLogger(NormalOperationNIOTestService.class.getName());
     public static final Exception TEST_EXCEPTION = new Exception("test exception");
     public static final String TEST_OBJECT_MESSAGE = "test message";
-    private final JsonRpcProxyFactory proxy_factory;
+    private final JsonRpcClientFactory proxy_factory;
 
-    public NormalOperationNIOTestService(final JsonRpcProxyFactory proxy_factory) {
+    public NormalOperationNIOTestService(final JsonRpcClientFactory proxy_factory) {
 
         this.proxy_factory = proxy_factory;
     }

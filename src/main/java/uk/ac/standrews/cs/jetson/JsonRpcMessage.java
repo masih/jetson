@@ -29,9 +29,9 @@ import com.fasterxml.jackson.annotation.JsonProperty;
  */
 public abstract class JsonRpcMessage {
 
-    static final String ID_KEY = "id";
-    static final String VERSION_KEY = "jsonrpc";
-    static final String DEFAULT_VERSION = "2.0";
+    protected static final String ID_KEY = "id";
+    protected static final String VERSION_KEY = "jsonrpc";
+    protected static final String DEFAULT_VERSION = "2.0";
 
     private String version;
     private Long id;

@@ -1,4 +1,4 @@
-package uk.ac.standrews.cs.jetson.pool;
+package uk.ac.standrews.cs.jetson;
 
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.Channel;
@@ -9,15 +9,12 @@ import java.net.InetSocketAddress;
 
 import org.apache.commons.pool.BasePoolableObjectFactory;
 
-import uk.ac.standrews.cs.jetson.JsonRpcClientHandler;
-import uk.ac.standrews.cs.jetson.JsonRpcRequestEncoder;
-
-public class PoolableChannelFactory extends BasePoolableObjectFactory<Channel> {
+class PoolableChannelFactory extends BasePoolableObjectFactory<Channel> {
 
     private final Bootstrap bootstrap;
     private final InetSocketAddress address;
 
-    public PoolableChannelFactory(final Bootstrap bootstrap, final InetSocketAddress address) {
+    PoolableChannelFactory(final Bootstrap bootstrap, final InetSocketAddress address) {
 
         this.bootstrap = bootstrap;
         this.address = address;
@@ -42,7 +39,7 @@ public class PoolableChannelFactory extends BasePoolableObjectFactory<Channel> {
     public void passivateObject(final Channel channel) throws Exception {
 
         channel.attr(JsonRpcClientHandler.RESPONSE_ATTRIBUTE).remove();
-        channel.attr(JsonRpcRequestEncoder.RESPONSE_LATCH).remove();
+        channel.attr(JsonRpcRequestEncoder.RESPONSE_LATCH_ATTRIBUTE).remove();
     }
 
     @Override

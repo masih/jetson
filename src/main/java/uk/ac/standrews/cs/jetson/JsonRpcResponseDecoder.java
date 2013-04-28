@@ -9,7 +9,6 @@ import io.netty.util.AttributeKey;
 
 import java.io.IOException;
 import java.lang.reflect.Type;
-import java.util.logging.Logger;
 
 import uk.ac.standrews.cs.jetson.JsonRpcResponse.JsonRpcResponseError;
 import uk.ac.standrews.cs.jetson.JsonRpcResponse.JsonRpcResponseResult;
@@ -26,9 +25,7 @@ import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 @Sharable
-public class JsonRpcResponseDecoder extends MessageToMessageDecoder<ByteBuf> {
-
-    private static final Logger LOGGER = Logger.getLogger(JsonRpcResponseDecoder.class.getName());
+class JsonRpcResponseDecoder extends MessageToMessageDecoder<ByteBuf> {
 
     static final String REQUEST_ID_ATTR_NAME = "request_id";
     static final AttributeKey<Long> REQUEST_ID_ATTRIBUTE = new AttributeKey<Long>(REQUEST_ID_ATTR_NAME);
@@ -37,12 +34,10 @@ public class JsonRpcResponseDecoder extends MessageToMessageDecoder<ByteBuf> {
 
     private final JsonFactory json_factory;
 
-    public JsonRpcResponseDecoder(final JsonFactory json_factory) {
+    JsonRpcResponseDecoder(final JsonFactory json_factory) {
 
         this.json_factory = json_factory;
     }
-
-
 
     @Override
     protected JsonRpcResponse decode(final ChannelHandlerContext ctx, final ByteBuf msg) throws Exception {

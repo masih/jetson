@@ -23,13 +23,13 @@ import uk.ac.standrews.cs.jetson.exception.ServerRuntimeException;
 import uk.ac.standrews.cs.jetson.exception.TransportException;
 
 @Sharable
-public class JsonRpcServerHandler extends ChannelInboundMessageHandlerAdapter<JsonRpcRequest> {
+class JsonRpcServerHandler extends ChannelInboundMessageHandlerAdapter<JsonRpcRequest> {
 
     private static final Logger LOGGER = Logger.getLogger(JsonRpcServerHandler.class.getName());
     private final Object service;
     private final ChannelGroup channel_group;
 
-    public JsonRpcServerHandler(final ChannelGroup channel_group, final Object service) {
+    JsonRpcServerHandler(final ChannelGroup channel_group, final Object service) {
 
         this.channel_group = channel_group;
         this.service = service;

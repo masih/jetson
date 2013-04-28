@@ -8,13 +8,13 @@ import io.netty.handler.codec.Delimiters;
 
 import com.fasterxml.jackson.core.JsonFactory;
 
-public class JsonRpcProxyInitializer extends ChannelInitializer<SocketChannel> {
+class JsonRpcClientChannelInitializer extends ChannelInitializer<SocketChannel> {
 
     private final JsonRpcRequestEncoder request_encoder;
     private final JsonRpcResponseDecoder response_decoder;
     private final JsonRpcClientHandler client_handler;
 
-    public JsonRpcProxyInitializer(final JsonFactory json_factory) {
+    JsonRpcClientChannelInitializer(final JsonFactory json_factory) {
 
         response_decoder = new JsonRpcResponseDecoder(json_factory);
         request_encoder = new JsonRpcRequestEncoder(json_factory);

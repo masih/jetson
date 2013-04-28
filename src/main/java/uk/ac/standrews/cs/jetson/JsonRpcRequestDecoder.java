@@ -25,7 +25,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.JsonToken;
 
 @Sharable
-public class JsonRpcRequestDecoder extends MessageToMessageDecoder<ByteBuf> {
+class JsonRpcRequestDecoder extends MessageToMessageDecoder<ByteBuf> {
 
     private static final Logger LOGGER = Logger.getLogger(JsonRpcRequestDecoder.class.getName());
 
@@ -33,7 +33,7 @@ public class JsonRpcRequestDecoder extends MessageToMessageDecoder<ByteBuf> {
 
     private final JsonFactory json_factory;
 
-    public JsonRpcRequestDecoder(final JsonFactory json_factory, final Map<String, Method> dispatch) {
+    JsonRpcRequestDecoder(final JsonFactory json_factory, final Map<String, Method> dispatch) {
 
         this.json_factory = json_factory;
         this.dispatch = dispatch;
@@ -84,28 +84,28 @@ public class JsonRpcRequestDecoder extends MessageToMessageDecoder<ByteBuf> {
         }
     }
 
-    private Long readAndValidateId(final JsonParser parser) throws JsonParseException, IOException {
+    private Long readAndValidateId(final JsonParser parser) throws IOException {
 
         final Long id = readValue(parser, JsonRpcMessage.ID_KEY, Long.class);
         if (id == null) { throw new InvalidResponseException("request id of null is not supported"); }
         return id;
     }
 
-    private String readAndValidateMethodName(final JsonParser parser) throws JsonParseException, IOException {
+    private String readAndValidateMethodName(final JsonParser parser) throws  IOException {
 
         final String method_name = readValue(parser, JsonRpcRequest.METHOD_NAME_KEY, String.class);
         if (method_name == null) { throw new InvalidRequestException("method name cannot be null"); }
         return method_name;
     }
 
-    private String readAndValidateVersion(final JsonParser parser) throws JsonParseException, IOException {
+    private String readAndValidateVersion(final JsonParser parser) throws  IOException {
 
         final String version = readValue(parser, JsonRpcMessage.VERSION_KEY, String.class);
         if (version == null || !version.equals(JsonRpcMessage.DEFAULT_VERSION)) { throw new InvalidRequestException("version must be equal to " + JsonRpcMessage.DEFAULT_VERSION); }
         return version;
     }
 
-    private <Value> Value readValue(final JsonParser parser, final String expected_key, final Class<Value> value_type) throws JsonParseException, IOException {
+    private <Value> Value readValue(final JsonParser parser, final String expected_key, final Class<Value> value_type) throws  IOException {
 
         if (parser.nextToken() == JsonToken.FIELD_NAME && expected_key.equals(parser.getCurrentName())) {
             parser.nextToken();
@@ -114,7 +114,7 @@ public class JsonRpcRequestDecoder extends MessageToMessageDecoder<ByteBuf> {
         throw new InvalidRequestException("expected key " + expected_key);
     }
 
-    private Object[] readRequestParameters(final JsonParser parser, final String method_name) throws IOException, JsonProcessingException, JsonParseException {
+    private Object[] readRequestParameters(final JsonParser parser, final String method_name) throws IOException {
 
         if (parser.nextToken() != JsonToken.FIELD_NAME || !JsonRpcRequest.PARAMETERS_KEY.equals(parser.getCurrentName())) { throw new InvalidRequestException("params must not be omitted"); }
         final Object[] params;
@@ -135,7 +135,7 @@ public class JsonRpcRequestDecoder extends MessageToMessageDecoder<ByteBuf> {
         return params;
     }
 
-    private Object[] readRequestParametersWithTypes(final JsonParser parser, final Class<?>[] types) throws IOException, JsonParseException, JsonProcessingException {
+    private Object[] readRequestParametersWithTypes(final JsonParser parser, final Class<?>[] types) throws IOException {
 
         final Object[] params = new Object[types.length];
         int index = 0;
@@ -147,7 +147,7 @@ public class JsonRpcRequestDecoder extends MessageToMessageDecoder<ByteBuf> {
         return params;
     }
 
-    private Object[] readRequestParametersWithoutTypeInformation(final JsonParser parser) throws IOException, JsonProcessingException {
+    private Object[] readRequestParametersWithoutTypeInformation(final JsonParser parser) throws IOException {
 
         parser.nextToken();
         return parser.readValueAs(Object[].class);

@@ -22,7 +22,7 @@ public class JsonRpcServer {
 
     private static final Logger LOGGER = Logger.getLogger(JsonRpcServer.class.getName());
     private static final NioEventLoopGroup GLOBAL_SERVER_THREADS_GROUP = new NioEventLoopGroup();
-    private static final NioEventLoopGroup GLOBAL_SERVER_WORKER_THREADS_GROUP = new NioEventLoopGroup(500);
+    private static final NioEventLoopGroup GLOBAL_SERVER_WORKER_THREADS_GROUP = new NioEventLoopGroup(200);
 
     private final Map<String, Method> dispatch;
     private volatile InetSocketAddress endpoint;
