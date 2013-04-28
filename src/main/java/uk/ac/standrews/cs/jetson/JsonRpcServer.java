@@ -29,6 +29,7 @@ public class JsonRpcServer {
     private final ServerBootstrap bootstrap;
     private ChannelFuture server_channel_future;
     private final DefaultChannelGroup channel_group;
+    private volatile boolean exposed;
 
     public <T> JsonRpcServer(final Class<T> service_interface, final T service, final JsonFactory json_factory) {
 
@@ -51,6 +52,7 @@ public class JsonRpcServer {
             try {
                 server_channel_future = bootstrap.bind(endpoint).sync();
                 endpoint = (InetSocketAddress) server_channel_future.channel().localAddress();
+                exposed = true;
             }
             catch (final InterruptedException e) {
                 throw new IOException(e);
@@ -66,6 +68,7 @@ public class JsonRpcServer {
                 server_channel_future.cancel(true);
                 server_channel_future.channel().disconnect().sync();
                 server_channel_future.channel().closeFuture().sync();
+                exposed = false;
             }
             catch (final InterruptedException e) {
                 throw new IOException(e);
@@ -75,7 +78,7 @@ public class JsonRpcServer {
 
     public boolean isExposed() {
 
-        return server_channel_future != null && server_channel_future.channel().isOpen();
+        return exposed;
     }
 
     public InetSocketAddress getLocalSocketAddress() {
