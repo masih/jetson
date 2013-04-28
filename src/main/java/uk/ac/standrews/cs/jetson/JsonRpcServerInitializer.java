@@ -12,13 +12,13 @@ import java.util.Map;
 
 import com.fasterxml.jackson.core.JsonFactory;
 
-public class JsonRpcServerPipelineFactory extends ChannelInitializer<SocketChannel> {
+public class JsonRpcServerInitializer extends ChannelInitializer<SocketChannel> {
 
     private final JsonRpcRequestDecoder request_decoder;
     private final JsonRpcResponseEncoder response_encoder;
     private final JsonRpcServerHandler server_handler;
 
-    public JsonRpcServerPipelineFactory(final ChannelGroup channel_group, final Object service, final JsonFactory json_factory, final Map<String, Method> dispatch) {
+    public JsonRpcServerInitializer(final ChannelGroup channel_group, final Object service, final JsonFactory json_factory, final Map<String, Method> dispatch) {
 
         request_decoder = new JsonRpcRequestDecoder(json_factory, dispatch);
         response_encoder = new JsonRpcResponseEncoder(json_factory);
