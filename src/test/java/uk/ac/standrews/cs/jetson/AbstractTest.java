@@ -28,7 +28,7 @@ import org.junit.Before;
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-public abstract class AbstractJsonRpcNIOTest<TestService> {
+public abstract class AbstractTest<TestService> {
 
     protected JsonRpcServer server;
     protected InetSocketAddress server_address;
@@ -37,18 +37,18 @@ public abstract class AbstractJsonRpcNIOTest<TestService> {
     protected JsonFactory json_factory;
     protected ExecutorService executor;
     protected TestService client;
-    protected JsonRpcClientFactory proxy_factory;
+    protected ClientFactory proxy_factory;
 
     @Before
     public void setUp() throws Exception {
 
         initJsonFactory();
-        proxy_factory = new JsonRpcClientFactory(getServiceType(), json_factory);
+        proxy_factory = new ClientFactory(getServiceType(), json_factory);
         server = startJsonRpcTestServer();
         server_address = server.getLocalSocketAddress();
         temp_server = startJsonRpcTestServer();
         temp_server_port = temp_server.getLocalSocketAddress().getPort();
-        client = proxy_factory.get(server_address);
+        client = (TestService) proxy_factory.get(server_address);
     }
 
     protected JsonRpcServer startJsonRpcTestServer() throws IOException {

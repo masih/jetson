@@ -16,6 +16,11 @@
 	<url>https://builds.cs.st-andrews.ac.uk/job/jetson</url>
 	<description>A JSON RPC framework that automatically generates RPC proxies using Java Reflection and uses Jackson streaming API to serialize/deserialize Java objects to/from JSON.</description>
 
+	<organization>
+		<name>Staticiser</name>
+		<url>http://staticiser.com</url>
+	</organization>
+
 	<properties>
 		<repository.type>hg</repository.type>
 		<repository.location>http://quicksilver.hg.cs.st-andrews.ac.uk/jetson</repository.location>
@@ -30,9 +35,9 @@
 		<developer>
 			<id>masih</id>
 			<name>Masih Hajiarabderkani</name>
-			<email>mh638@st-andrews.ac.uk</email>
-			<organization>School of Computer Science at University of St Andrews</organization>
-			<organizationUrl>http://www.cs.st-andrews.ac.uk</organizationUrl>
+			<email>m@staticiser.com</email>
+			<organization>Staticiser</organization>
+			<organizationUrl>http://staticiser.com</organizationUrl>
 			<url>http://masih.host.cs.st-andrews.ac.uk</url>
 			<roles>
 				<role>architect</role>

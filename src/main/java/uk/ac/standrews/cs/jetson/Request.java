@@ -20,31 +20,20 @@ package uk.ac.standrews.cs.jetson;
 
 import java.lang.reflect.Method;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonInclude.Include;
-import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-
-/**
- * The Class JsonRpcRequest.
- * @author Masih Hajiarabderkani (mh638@st-andrews.ac.uk)
- */
-@JsonPropertyOrder({JsonRpcMessage.VERSION_KEY, JsonRpcRequest.METHOD_NAME_KEY, JsonRpcRequest.PARAMETERS_KEY, JsonRpcMessage.ID_KEY})
-public class JsonRpcRequest extends JsonRpcMessage {
+class Request extends Message {
 
     static final String PARAMETERS_KEY = "params";
     static final String METHOD_NAME_KEY = "method";
 
     private String method_name;
     private Object[] params;
-    private Method method;
+    private transient Method method;
 
-    JsonRpcRequest() {
+    Request() {
 
     }
 
-    JsonRpcRequest(final Long id, final Method target_method, final String method_name, final Object... params) {
+    Request(final Long id, final Method target_method, final String method_name, final Object[] params) {
 
         setId(id);
         setMethod(target_method);
@@ -52,30 +41,25 @@ public class JsonRpcRequest extends JsonRpcMessage {
         setParams(params);
     }
 
+    @Override
+    protected void reset() {
+
+        super.reset();
+        setMethod(null);
+        setMethodName(null);
+        setParams(null);
+    }
+
     void setMethod(final Method target_method) {
 
         this.method = target_method;
     }
 
-    /**
-     * Gets the method name.
-     *
-     * @return the method name
-     */
-    @JsonProperty(METHOD_NAME_KEY)
-    @JsonInclude(Include.ALWAYS)
     String getMethodName() {
 
         return method_name;
     }
 
-    /**
-     * Gets the parameters.
-     *
-     * @return the parameters
-     */
-    @JsonProperty(PARAMETERS_KEY)
-    @JsonInclude(Include.NON_NULL)
     Object[] getParameters() {
 
         return params == null ? null : params.clone();
@@ -86,17 +70,11 @@ public class JsonRpcRequest extends JsonRpcMessage {
         this.method_name = method_name;
     }
 
-    void setParams(final Object... params) {
+    void setParams(final Object[] params) {
 
         this.params = params;
     }
 
-    /**
-     * Gets the method.
-     *
-     * @return the method
-     */
-    @JsonIgnore
     Method getMethod() {
 
         return method;

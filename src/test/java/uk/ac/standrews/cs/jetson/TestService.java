@@ -20,7 +20,7 @@ package uk.ac.standrews.cs.jetson;
 
 import uk.ac.standrews.cs.jetson.exception.JsonRpcException;
 
-public interface JsonRpcTestService {
+public interface TestService {
 
     void doVoidWithNoParams() throws JsonRpcException;
 
@@ -42,7 +42,7 @@ public interface JsonRpcTestService {
 
     Integer add(Integer a, Integer b) throws JsonRpcException;
 
-    Integer addOnRemote(Integer a, Integer b,Integer port) throws JsonRpcException;
+    Integer addOnRemote(Integer a, Integer b, Integer port) throws JsonRpcException;
 
     TestObject getObject() throws JsonRpcException;
 

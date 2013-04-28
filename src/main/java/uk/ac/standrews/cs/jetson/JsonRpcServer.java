@@ -37,7 +37,7 @@ public class JsonRpcServer {
         channel_group = new DefaultChannelGroup();
         bootstrap = new ServerBootstrap();
         bootstrap.group(GLOBAL_SERVER_THREADS_GROUP, GLOBAL_SERVER_WORKER_THREADS_GROUP).channel(NioServerSocketChannel.class).childOption(ChannelOption.SO_KEEPALIVE, true).childOption(ChannelOption.TCP_NODELAY, true)
-        .childHandler(new JsonRpcServerInitializer(channel_group, service, json_factory, dispatch));
+        .childHandler(new ServerChannelInitializer(channel_group, service, json_factory, dispatch));
         endpoint = new InetSocketAddress(0);
     }
 

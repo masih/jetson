@@ -1,5 +1,6 @@
 package uk.ac.standrews.cs.jetson;
 
+import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandler.Sharable;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundMessageHandlerAdapter;
@@ -7,12 +8,9 @@ import io.netty.channel.group.ChannelGroup;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.nio.channels.ClosedChannelException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import uk.ac.standrews.cs.jetson.JsonRpcResponse.JsonRpcResponseError;
-import uk.ac.standrews.cs.jetson.JsonRpcResponse.JsonRpcResponseResult;
 import uk.ac.standrews.cs.jetson.exception.AccessException;
 import uk.ac.standrews.cs.jetson.exception.InternalException;
 import uk.ac.standrews.cs.jetson.exception.InvalidParameterException;
@@ -20,16 +18,15 @@ import uk.ac.standrews.cs.jetson.exception.InvocationException;
 import uk.ac.standrews.cs.jetson.exception.JsonRpcException;
 import uk.ac.standrews.cs.jetson.exception.ServerException;
 import uk.ac.standrews.cs.jetson.exception.ServerRuntimeException;
-import uk.ac.standrews.cs.jetson.exception.TransportException;
 
 @Sharable
-class JsonRpcServerHandler extends ChannelInboundMessageHandlerAdapter<JsonRpcRequest> {
+class ServerHandler extends ChannelInboundMessageHandlerAdapter<Request> {
 
-    private static final Logger LOGGER = Logger.getLogger(JsonRpcServerHandler.class.getName());
+    private static final Logger LOGGER = Logger.getLogger(ServerHandler.class.getName());
     private final Object service;
     private final ChannelGroup channel_group;
 
-    JsonRpcServerHandler(final ChannelGroup channel_group, final Object service) {
+    ServerHandler(final ChannelGroup channel_group, final Object service) {
 
         this.channel_group = channel_group;
         this.service = service;
@@ -38,31 +35,41 @@ class JsonRpcServerHandler extends ChannelInboundMessageHandlerAdapter<JsonRpcRe
     @Override
     public void channelActive(final ChannelHandlerContext ctx) throws Exception {
 
-        channel_group.add(ctx.channel());
+        final Channel channel = ctx.channel();
+        channel.attr(ClientHandler.RESPONSE_ATTRIBUTE).set(new Response());
+        channel_group.add(channel);
     }
 
     @Override
     public void channelInactive(final ChannelHandlerContext ctx) throws Exception {
 
-        exceptionCaught(ctx, new TransportException(new ClosedChannelException()));
+        ctx.channel().attr(ClientHandler.RESPONSE_ATTRIBUTE).remove();
+        ctx.close();
     }
 
     @Override
-    public void messageReceived(final ChannelHandlerContext ctx, final JsonRpcRequest request) throws Exception {
+    public void messageReceived(final ChannelHandlerContext ctx, final Request request) throws Exception {
 
-        final JsonRpcResponse response = handleRequest(request);
+        final Object result = handleRequest(request);
+        final Response response = ctx.channel().attr(ClientHandler.RESPONSE_ATTRIBUTE).get();
+        response.reset();
+        response.setId(request.getId());
+        response.setResult(result);
         ctx.write(response);
     }
 
     @Override
     public void exceptionCaught(final ChannelHandlerContext ctx, final Throwable cause) throws Exception {
 
+        //        cause.printStackTrace();
         if (ctx.channel().isOpen()) {
-            final long current_request_id = ctx.channel().attr(JsonRpcResponseDecoder.REQUEST_ID_ATTRIBUTE).get();
+            final Long current_request_id = ctx.channel().attr(ClientHandler.REQUEST_ATTRIBUTE).get().getId();
+            final Response response = ctx.channel().attr(ClientHandler.RESPONSE_ATTRIBUTE).get();
             final JsonRpcException exception = JsonRpcException.class.isInstance(cause) ? JsonRpcException.class.cast(cause) : new InternalException(cause);
-            final JsonRpcResponseError error = new JsonRpcResponseError(current_request_id, exception);
+            response.setError(exception);
+            response.setId(current_request_id);
             try {
-                ctx.write(error);
+                ctx.write(response);
             }
             catch (final Throwable e) {
                 LOGGER.log(Level.FINE, "failed to notify JSON RPC error", e);
@@ -74,14 +81,13 @@ class JsonRpcServerHandler extends ChannelInboundMessageHandlerAdapter<JsonRpcRe
         }
     }
 
-    private JsonRpcResponseResult handleRequest(final JsonRpcRequest request) throws ServerException {
+    private Object handleRequest(final Request request) throws ServerException {
 
         final Method method = request.getMethod();
         final Object[] parameters = request.getParameters();
 
         try {
-            final Object result = invoke(method, parameters);
-            return new JsonRpcResponseResult(request.getId(), result);
+            return invoke(method, parameters);
         }
         catch (final IllegalArgumentException e) {
             throw new InvalidParameterException(e);

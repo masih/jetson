@@ -18,16 +18,12 @@
  */
 package uk.ac.standrews.cs.jetson;
 
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonInclude.Include;
-import com.fasterxml.jackson.annotation.JsonProperty;
-
 /**
  * The base class for any exchanged JSON RPC message.
  * 
  * @author Masih Hajiarabderkani (mh638@st-andrews.ac.uk)
  */
-public abstract class JsonRpcMessage {
+public abstract class Message {
 
     protected static final String ID_KEY = "id";
     protected static final String VERSION_KEY = "jsonrpc";
@@ -36,13 +32,11 @@ public abstract class JsonRpcMessage {
     private String version;
     private Long id;
 
-    JsonRpcMessage() {
+    Message() {
 
-        setVersion(DEFAULT_VERSION);
+        resetVersion();
     }
 
-    @JsonProperty(ID_KEY)
-    @JsonInclude(Include.ALWAYS)
     Long getId() {
 
         return id;
@@ -53,8 +47,6 @@ public abstract class JsonRpcMessage {
         this.id = id;
     }
 
-    @JsonProperty(VERSION_KEY)
-    @JsonInclude(Include.ALWAYS)
     String getVersion() {
 
         return version;
@@ -64,4 +56,16 @@ public abstract class JsonRpcMessage {
 
         this.version = version;
     }
+
+    protected void reset() {
+
+        resetVersion();
+        setId(null);
+    }
+
+    private void resetVersion() {
+
+        setVersion(DEFAULT_VERSION);
+    }
+
 }

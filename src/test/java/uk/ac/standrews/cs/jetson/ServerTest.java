@@ -10,7 +10,7 @@ import org.junit.Test;
 
 import uk.ac.standrews.cs.jetson.exception.JsonRpcException;
 
-public class JsonRpcServerTest extends AbstractJsonRpcNIOTest<JsonRpcTestService> {
+public class ServerTest extends AbstractTest<TestService> {
 
     @Test
     public void testExposure() throws IOException {
@@ -71,15 +71,15 @@ public class JsonRpcServerTest extends AbstractJsonRpcNIOTest<JsonRpcTestService
     }
 
     @Override
-    protected Class<JsonRpcTestService> getServiceType() {
+    protected Class<TestService> getServiceType() {
 
-        return JsonRpcTestService.class;
+        return TestService.class;
     }
 
     @Override
-    protected JsonRpcTestService getService() {
+    protected TestService getService() {
 
-        return new NormalOperationNIOTestService(proxy_factory);
+        return new NormalOperationTestService(proxy_factory);
     }
 
 }

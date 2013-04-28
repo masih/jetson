@@ -6,47 +6,41 @@ import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelOutboundMessageHandlerAdapter;
 
 import java.io.IOException;
-import java.util.logging.Logger;
 
-import uk.ac.standrews.cs.jetson.JsonRpcResponse.JsonRpcResponseError;
-import uk.ac.standrews.cs.jetson.JsonRpcResponse.JsonRpcResponseResult;
 import uk.ac.standrews.cs.jetson.exception.InternalException;
-import uk.ac.standrews.cs.jetson.exception.JsonRpcError;
 
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonGenerator;
 
 @Sharable
-class JsonRpcResponseEncoder extends ChannelOutboundMessageHandlerAdapter<JsonRpcResponse> {
+class ResponseEncoder extends ChannelOutboundMessageHandlerAdapter<Response> {
 
-    private static final Logger LOGGER = Logger.getLogger(JsonRpcResponseEncoder.class.getName());
     private final JsonFactory json_factory;
 
-    JsonRpcResponseEncoder(final JsonFactory json_factory) {
+    ResponseEncoder(final JsonFactory json_factory) {
 
         this.json_factory = json_factory;
     }
 
     @Override
-    public void flush(final ChannelHandlerContext ctx, final JsonRpcResponse response) throws Exception {
+    public void flush(final ChannelHandlerContext ctx, final Response response) throws Exception {
 
         JsonGenerator generator = null;
         try {
             generator = json_factory.createGenerator(new ByteBufOutputStream(ctx.nextOutboundByteBuffer()));
             generator.writeStartObject();
-            generator.writeObjectField(JsonRpcMessage.VERSION_KEY, response.getVersion());
-            if (response instanceof JsonRpcResponseResult) {
-                generator.writeObjectField(JsonRpcResponse.RESULT_KEY, ((JsonRpcResponseResult) response).getResult());
+            generator.writeObjectField(Message.VERSION_KEY, response.getVersion());
+            if (!response.isError()) {
+                generator.writeObjectField(Response.RESULT_KEY, response.getResult());
             }
             else {
-                final JsonRpcError error = ((JsonRpcResponseError) response).getError();
-                LOGGER.fine("error occured on server " + error);
-                generator.writeObjectField(JsonRpcResponse.ERROR_KEY, error);
+                generator.writeObjectField(Response.ERROR_KEY, response.getError());
             }
-            generator.writeObjectField(JsonRpcMessage.ID_KEY, response.getId());
+            generator.writeObjectField(Message.ID_KEY, response.getId());
             generator.writeEndObject();
             generator.writeRaw('\n');
             generator.flush();
+            generator.close();
         }
         catch (final IOException e) {
             throw new InternalException(e);

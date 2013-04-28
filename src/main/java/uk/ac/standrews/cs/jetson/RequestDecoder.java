@@ -25,39 +25,35 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.JsonToken;
 
 @Sharable
-class JsonRpcRequestDecoder extends MessageToMessageDecoder<ByteBuf> {
+class RequestDecoder extends MessageToMessageDecoder<ByteBuf> {
 
-    private static final Logger LOGGER = Logger.getLogger(JsonRpcRequestDecoder.class.getName());
+    private static final Logger LOGGER = Logger.getLogger(RequestDecoder.class.getName());
 
     private final Map<String, Method> dispatch;
 
     private final JsonFactory json_factory;
 
-    JsonRpcRequestDecoder(final JsonFactory json_factory, final Map<String, Method> dispatch) {
+    RequestDecoder(final JsonFactory json_factory, final Map<String, Method> dispatch) {
 
         this.json_factory = json_factory;
         this.dispatch = dispatch;
     }
 
     @Override
-    protected JsonRpcRequest decode(final ChannelHandlerContext ctx, final ByteBuf msg) throws Exception {
+    protected Request decode(final ChannelHandlerContext ctx, final ByteBuf msg) throws Exception {
 
         JsonParser parser = null;
         try {
             parser = json_factory.createParser(new ByteBufInputStream(msg));
-            final JsonRpcRequest request = new JsonRpcRequest();
             parser.nextToken();
             final String version = readAndValidateVersion(parser);
             final String method_name = readAndValidateMethodName(parser);
             final Object[] params = readRequestParameters(parser, method_name);
             final Long id = readAndValidateId(parser);
+            final Request request = new Request(id, findServiceMethodByName(method_name), method_name, params);
             request.setVersion(version);
-            request.setMethod(findServiceMethodByName(method_name));
-            request.setMethodName(method_name);
-            request.setId(id);
-            request.setParams(params);
             parser.nextToken();
-            ctx.channel().attr(JsonRpcResponseDecoder.REQUEST_ID_ATTRIBUTE).set(request.getId());
+            ctx.channel().attr(ClientHandler.REQUEST_ATTRIBUTE).set(request);
             return request;
         }
         catch (final JsonParseException e) {
@@ -86,26 +82,26 @@ class JsonRpcRequestDecoder extends MessageToMessageDecoder<ByteBuf> {
 
     private Long readAndValidateId(final JsonParser parser) throws IOException {
 
-        final Long id = readValue(parser, JsonRpcMessage.ID_KEY, Long.class);
+        final Long id = readValue(parser, Message.ID_KEY, Long.class);
         if (id == null) { throw new InvalidResponseException("request id of null is not supported"); }
         return id;
     }
 
-    private String readAndValidateMethodName(final JsonParser parser) throws  IOException {
+    private String readAndValidateMethodName(final JsonParser parser) throws IOException {
 
-        final String method_name = readValue(parser, JsonRpcRequest.METHOD_NAME_KEY, String.class);
+        final String method_name = readValue(parser, Request.METHOD_NAME_KEY, String.class);
         if (method_name == null) { throw new InvalidRequestException("method name cannot be null"); }
         return method_name;
     }
 
-    private String readAndValidateVersion(final JsonParser parser) throws  IOException {
+    private String readAndValidateVersion(final JsonParser parser) throws IOException {
 
-        final String version = readValue(parser, JsonRpcMessage.VERSION_KEY, String.class);
-        if (version == null || !version.equals(JsonRpcMessage.DEFAULT_VERSION)) { throw new InvalidRequestException("version must be equal to " + JsonRpcMessage.DEFAULT_VERSION); }
+        final String version = readValue(parser, Message.VERSION_KEY, String.class);
+        if (version == null || !version.equals(Message.DEFAULT_VERSION)) { throw new InvalidRequestException("version must be equal to " + Message.DEFAULT_VERSION); }
         return version;
     }
 
-    private <Value> Value readValue(final JsonParser parser, final String expected_key, final Class<Value> value_type) throws  IOException {
+    private <Value> Value readValue(final JsonParser parser, final String expected_key, final Class<Value> value_type) throws IOException {
 
         if (parser.nextToken() == JsonToken.FIELD_NAME && expected_key.equals(parser.getCurrentName())) {
             parser.nextToken();
@@ -116,7 +112,7 @@ class JsonRpcRequestDecoder extends MessageToMessageDecoder<ByteBuf> {
 
     private Object[] readRequestParameters(final JsonParser parser, final String method_name) throws IOException {
 
-        if (parser.nextToken() != JsonToken.FIELD_NAME || !JsonRpcRequest.PARAMETERS_KEY.equals(parser.getCurrentName())) { throw new InvalidRequestException("params must not be omitted"); }
+        if (parser.nextToken() != JsonToken.FIELD_NAME || !Request.PARAMETERS_KEY.equals(parser.getCurrentName())) { throw new InvalidRequestException("params must not be omitted"); }
         final Object[] params;
         if (method_name == null) {
             LOGGER.warning("unspecified method name, or params is passed before method name in JSON request; deserializing parameters without type information.");

@@ -20,7 +20,6 @@ package uk.ac.standrews.cs.jetson;
 
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.Channel;
-import io.netty.channel.ChannelFuture;
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioSocketChannel;
@@ -32,11 +31,10 @@ import java.lang.reflect.Proxy;
 import java.net.InetSocketAddress;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.BrokenBarrierException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicLong;
 
-import uk.ac.standrews.cs.jetson.JsonRpcResponse.JsonRpcResponseError;
-import uk.ac.standrews.cs.jetson.JsonRpcResponse.JsonRpcResponseResult;
 import uk.ac.standrews.cs.jetson.exception.InternalException;
 import uk.ac.standrews.cs.jetson.exception.InvocationException;
 import uk.ac.standrews.cs.jetson.exception.JsonRpcException;
@@ -48,10 +46,11 @@ import uk.ac.standrews.cs.jetson.util.ReflectionUtil;
 import com.fasterxml.jackson.core.JsonFactory;
 
 /**
- * A factory for creating a JSON RPC proxy that is able to communicate with a JSON RPC server.
+ * A factory for creating JSON RPC clients.
+ * 
  * @author Masih Hajiarabderkani (mh638@st-andrews.ac.uk)
  */
-public class JsonRpcClientFactory {
+public class ClientFactory<Service> {
 
     private final Map<Method, String> dispatch;
     private final AtomicLong next_request_id;
@@ -59,47 +58,55 @@ public class JsonRpcClientFactory {
     private final ClassLoader class_loader;
     private final Class<?>[] interfaces;
 
-    private static final Map<InetSocketAddress, Object> ADDRESS_TO_PROXY_MAP = new HashMap<InetSocketAddress, Object>();
-
+    private final Map<InetSocketAddress, Service> ADDRESS_TO_PROXY_MAP = new HashMap<InetSocketAddress, Service>();
     private static final EventLoopGroup GLOBAL_CLIENT_WORKER_GROUP = new NioEventLoopGroup();
 
     /**
-     * Instantiates a new JSON RPC proxy factory. The {@link ClassLoader#getSystemClassLoader() system class loader} used for constructing new proxy instances.
+     * Instantiates a new JSON RPC client factory. The {@link ClassLoader#getSystemClassLoader() system class loader} used for constructing new proxy instances.
      *
      * @param service_interface the interface presenting the remote service
      * @param json_factory the provider of JSON serialiser and deserialisers
      */
-    public JsonRpcClientFactory(final Class<?> service_interface, final JsonFactory json_factory) {
+    public ClientFactory(final Class<Service> service_interface, final JsonFactory json_factory) {
 
         this(service_interface, json_factory, ClassLoader.getSystemClassLoader());
     }
 
-    public JsonRpcClientFactory(final Class<?> service_interface, final JsonFactory json_factory, final ClassLoader class_loader) {
+    public ClientFactory(final Class<?> service_interface, final JsonFactory json_factory, final ClassLoader class_loader) {
 
         dispatch = ReflectionUtil.mapMethodsToNames(service_interface);
         next_request_id = new AtomicLong();
         this.class_loader = class_loader;
         this.interfaces = new Class<?>[]{service_interface};
-
         bootstrap = new Bootstrap();
-        bootstrap.group(GLOBAL_CLIENT_WORKER_GROUP).channel(NioSocketChannel.class).handler(new JsonRpcClientChannelInitializer(json_factory));
-
+        configure(json_factory);
     }
 
-    public synchronized <T> T get(final InetSocketAddress address) {
+    private void configure(final JsonFactory json_factory) {
 
-        if (ADDRESS_TO_PROXY_MAP.containsKey(address)) { return (T) ADDRESS_TO_PROXY_MAP.get(address); }
+        bootstrap.group(GLOBAL_CLIENT_WORKER_GROUP);
+        bootstrap.channel(NioSocketChannel.class);
+        bootstrap.handler(createClientChannelInitializer(json_factory));
+    }
 
+    protected ClientChannelInitializer createClientChannelInitializer(final JsonFactory json_factory) {
+
+        return new ClientChannelInitializer(json_factory);
+    }
+
+    public synchronized Service get(final InetSocketAddress address) {
+
+        if (ADDRESS_TO_PROXY_MAP.containsKey(address)) { return ADDRESS_TO_PROXY_MAP.get(address); }
         final JsonRpcInvocationHandler handler = createJsonRpcInvocationHandler(address);
-        final Object proxy = createProxy(handler);
+        final Service proxy = createProxy(handler);
         ADDRESS_TO_PROXY_MAP.put(address, proxy);
-        return (T) proxy;
+        return proxy;
     }
 
     @SuppressWarnings("unchecked")
-    protected Object createProxy(final JsonRpcInvocationHandler handler) {
+    protected Service createProxy(final JsonRpcInvocationHandler handler) {
 
-        return Proxy.newProxyInstance(class_loader, interfaces, handler);
+        return (Service) Proxy.newProxyInstance(class_loader, interfaces, handler);
     }
 
     protected JsonRpcInvocationHandler createJsonRpcInvocationHandler(final InetSocketAddress address) {
@@ -127,9 +134,62 @@ public class JsonRpcClientFactory {
         @Override
         public Object invoke(final Object proxy, final Method method, final Object[] params) throws Throwable {
 
-            final Channel channel;
+            final Channel channel = borrowChannel();
             try {
-                channel = channel_pool.borrowObject();
+                final Request request = createRequest(channel, method, params);
+                writeRequest(channel, request);
+                final Response response = readResponse(channel);
+                if (response.isError()) {
+                    final JsonRpcException exception = JsonRpcExceptions.fromJsonRpcError(response.getError());
+                    throw !isInvocationException(exception) ? exception : reconstructException(method.getExceptionTypes(), castToInvovationException(exception));
+                }
+
+                return response.getResult();
+            }
+            finally {
+                returnChannel(channel);
+            }
+        }
+
+        private Response readResponse(final Channel channel) throws InternalException {
+
+            try {
+                channel.attr(ClientHandler.RESPONSE_BARRIER_ATTRIBUTE).get().await();
+            }
+            catch (final InterruptedException e) {
+                throw new InternalException(e);
+            }
+            catch (final BrokenBarrierException e) {
+                // ignore
+            }
+            final Response response = channel.attr(ClientHandler.RESPONSE_ATTRIBUTE).get();
+            return response;
+        }
+
+        private void writeRequest(final Channel channel, final Request request) throws InternalException {
+
+            try {
+                channel.write(request).sync();
+            }
+            catch (final Exception e) {
+                throw new InternalException(e);
+            }
+        }
+
+        private void returnChannel(final Channel channel) throws InternalException {
+
+            try {
+                channel_pool.returnObject(channel);
+            }
+            catch (final Exception e) {
+                throw new InternalException(e);
+            }
+        }
+
+        private Channel borrowChannel() throws InternalException, TransportException {
+
+            try {
+                return channel_pool.borrowObject();
             }
             catch (final InterruptedException e) {
                 throw new InternalException(e);
@@ -141,33 +201,6 @@ public class JsonRpcClientFactory {
             }
             catch (final Exception e) {
                 throw new InternalException(e);
-            }
-            try {
-                final JsonRpcRequest request = createJsonRpcRequest(method, params);
-                final ChannelFuture lastWriteFuture = channel.write(request);
-                try {
-                    lastWriteFuture.sync();
-                    channel.attr(JsonRpcRequestEncoder.RESPONSE_LATCH_ATTRIBUTE).get().await();
-                }
-                catch (final Exception e) {
-                    throw new InternalException(e);
-                }
-                final JsonRpcResponse response = channel.attr(JsonRpcClientHandler.RESPONSE_ATTRIBUTE).get();
-                if (isResponseError(response)) {
-                    final JsonRpcResponseError response_error = toJsonRpcResponseError(response);
-                    final JsonRpcException exception = JsonRpcExceptions.fromJsonRpcError(response_error.getError());
-                    throw !isInvocationException(exception) ? exception : reconstructException(method.getExceptionTypes(), castToInvovationException(exception));
-                }
-
-                return JsonRpcResponseResult.class.cast(response).getResult();
-            }
-            finally {
-                try {
-                    channel_pool.returnObject(channel);
-                }
-                catch (final Exception e) {
-                    throw new InternalException(e);
-                }
             }
         }
     }
@@ -208,21 +241,14 @@ public class JsonRpcClientFactory {
         return InvocationException.class.isInstance(exception);
     }
 
-    private JsonRpcResponseError toJsonRpcResponseError(final JsonRpcResponse response) {
+    private Request createRequest(final Channel channel, final Method method, final Object[] params) {
 
-        return JsonRpcResponseError.class.cast(response);
-    }
-
-    private boolean isResponseError(final JsonRpcResponse response) {
-
-        return JsonRpcResponseError.class.isInstance(response);
-    }
-
-    private JsonRpcRequest createJsonRpcRequest(final Method method, final Object[] params) {
-
-        final Long request_id = generateRequestId();
-        final String json_rpc_method_name = getJsonRpcMethodName(method);
-        return new JsonRpcRequest(request_id, method, json_rpc_method_name, params);
+        final Request request = channel.attr(ClientHandler.REQUEST_ATTRIBUTE).get();
+        request.setId(generateRequestId());
+        request.setMethodName(getJsonRpcMethodName(method));
+        request.setMethod(method);
+        request.setParams(params);
+        return request;
     }
 
     private Long generateRequestId() {
