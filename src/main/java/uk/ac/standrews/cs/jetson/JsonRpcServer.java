@@ -2,6 +2,7 @@ package uk.ac.standrews.cs.jetson;
 
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.ChannelFuture;
+import io.netty.channel.ChannelOption;
 import io.netty.channel.group.DefaultChannelGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
@@ -21,7 +22,7 @@ public class JsonRpcServer {
 
     private static final Logger LOGGER = Logger.getLogger(JsonRpcServer.class.getName());
     private static final NioEventLoopGroup GLOBAL_SERVER_THREADS_GROUP = new NioEventLoopGroup();
-    private static final NioEventLoopGroup GLOBAL_SERVER_WORKER_THREADS_GROUP = new NioEventLoopGroup(200);
+    private static final NioEventLoopGroup GLOBAL_SERVER_WORKER_THREADS_GROUP = new NioEventLoopGroup(500);
 
     private final Map<String, Method> dispatch;
     private volatile InetSocketAddress endpoint;
@@ -34,7 +35,8 @@ public class JsonRpcServer {
         dispatch = ReflectionUtil.mapNamesToMethods(service_interface);
         channel_group = new DefaultChannelGroup();
         bootstrap = new ServerBootstrap();
-        bootstrap.group(GLOBAL_SERVER_THREADS_GROUP, GLOBAL_SERVER_WORKER_THREADS_GROUP).channel(NioServerSocketChannel.class).childHandler(new JsonRpcServerPipelineFactory(channel_group, service, json_factory, dispatch));
+        bootstrap.group(GLOBAL_SERVER_THREADS_GROUP, GLOBAL_SERVER_WORKER_THREADS_GROUP).channel(NioServerSocketChannel.class).childOption(ChannelOption.SO_KEEPALIVE, true).childOption(ChannelOption.TCP_NODELAY, true)
+        .childHandler(new JsonRpcServerInitializer(channel_group, service, json_factory, dispatch));
         endpoint = new InetSocketAddress(0);
     }
 

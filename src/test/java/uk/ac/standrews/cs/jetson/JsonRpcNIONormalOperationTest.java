@@ -21,6 +21,7 @@ package uk.ac.standrews.cs.jetson;
 import static org.junit.Assert.fail;
 
 import java.io.IOException;
+import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Callable;
@@ -108,6 +109,11 @@ public class JsonRpcNIONormalOperationTest extends AbstractJsonRpcNIOTest<JsonRp
     @Test
     public void testAdd() throws JsonRpcException {
 
+        testAddOnClient(client);
+    }
+
+    private void testAddOnClient(final JsonRpcTestService client) throws JsonRpcException {
+
         final Integer three = client.add(1, 2);
         Assert.assertEquals(new Integer(1 + 2), three);
         final Integer eleven = client.add(12, -1);
@@ -120,6 +126,11 @@ public class JsonRpcNIONormalOperationTest extends AbstractJsonRpcNIOTest<JsonRp
 
     @Test
     public void testAddOnRemote() throws JsonRpcException {
+
+        testAddOnRemoteClient(client);
+    }
+
+    private void testAddOnRemoteClient(final JsonRpcTestService client) throws JsonRpcException {
 
         final Integer three = client.addOnRemote(1, 2, temp_server_port);
         Assert.assertEquals(new Integer(1 + 2), three);
@@ -151,13 +162,13 @@ public class JsonRpcNIONormalOperationTest extends AbstractJsonRpcNIOTest<JsonRp
     }
 
     @Test
-    public void testConcurrentConnections() throws JsonRpcException, InterruptedException, ExecutionException {
+    public void testConcurrentClients() throws JsonRpcException, InterruptedException, ExecutionException {
 
         final ExecutorService executor = Executors.newCachedThreadPool();
         try {
             final CountDownLatch start_latch = new CountDownLatch(1);
             final List<Future<Void>> future_concurrent_tests = new ArrayList<Future<Void>>();
-            for (int i = 0; i < 1; i++) {
+            for (int i = 0; i < 100; i++) {
                 future_concurrent_tests.add(executor.submit(new Callable<Void>() {
 
                     @Override
@@ -177,6 +188,45 @@ public class JsonRpcNIONormalOperationTest extends AbstractJsonRpcNIOTest<JsonRp
                         testSayTrue();
                         testThrowException();
                         testThrowExceptionOnRemote();
+                        return null;
+                    }
+                }));
+            }
+            start_latch.countDown();
+            for (final Future<Void> f : future_concurrent_tests) {
+                f.get();
+            }
+        }
+        finally {
+            executor.shutdown();
+        }
+    }
+
+    @Test
+    public void testConcurrentServers() throws JsonRpcException, InterruptedException, ExecutionException {
+
+        final ExecutorService executor = Executors.newCachedThreadPool();
+        try {
+            final CountDownLatch start_latch = new CountDownLatch(1);
+            final List<Future<Void>> future_concurrent_tests = new ArrayList<Future<Void>>();
+            for (int i = 0; i < 100; i++) {
+                future_concurrent_tests.add(executor.submit(new Callable<Void>() {
+
+                    @Override
+                    public Void call() throws Exception {
+
+                        start_latch.await();
+                        final JsonRpcServer server = startJsonRpcTestServer();
+                        final InetSocketAddress server_address = server.getLocalSocketAddress();
+                        final JsonRpcTestService client = proxy_factory.get(server_address);
+
+                        try {
+                            testAddOnClient(client);
+                            testAddOnRemoteClient(client);
+                        }
+                        finally {
+                            server.shutdown();
+                        }
                         return null;
                     }
                 }));

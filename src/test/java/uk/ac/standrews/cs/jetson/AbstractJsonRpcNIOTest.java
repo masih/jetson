@@ -18,6 +18,7 @@
  */
 package uk.ac.standrews.cs.jetson;
 
+import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.util.concurrent.ExecutorService;
 
@@ -43,13 +44,18 @@ public abstract class AbstractJsonRpcNIOTest<TestService> {
 
         initJsonFactory();
         proxy_factory = new JsonRpcProxyFactory(getServiceType(), json_factory);
-        server = new JsonRpcServer(getServiceType(), getService(), json_factory);
-        server.expose();
+        server = startJsonRpcTestServer();
         server_address = server.getLocalSocketAddress();
-        temp_server = new JsonRpcServer(getServiceType(), getService(), json_factory);
-        temp_server.expose();
+        temp_server = startJsonRpcTestServer();
         temp_server_port = temp_server.getLocalSocketAddress().getPort();
         client = proxy_factory.get(server_address);
+    }
+
+    protected JsonRpcServer startJsonRpcTestServer() throws IOException {
+
+        final JsonRpcServer server = new JsonRpcServer(getServiceType(), getService(), json_factory);
+        server.expose();
+        return server;
     }
 
     protected abstract Class<TestService> getServiceType();
