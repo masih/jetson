@@ -19,6 +19,7 @@
 package uk.ac.standrews.cs.jetson;
 
 import java.lang.reflect.Method;
+import java.util.Arrays;
 
 class Request extends Message {
 
@@ -78,5 +79,11 @@ class Request extends Message {
     Method getMethod() {
 
         return method;
+    }
+
+    @Override
+    public String toString() {
+
+        return "Request [method_name=" + method_name + ", params=" + Arrays.toString(params) + ", method=" + method + ", getId()=" + getId() + ", getVersion()=" + getVersion() + "]";
     }
 }

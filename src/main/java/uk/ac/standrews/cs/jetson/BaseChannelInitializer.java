@@ -25,10 +25,14 @@ import io.netty.handler.timeout.WriteTimeoutHandler;
 
 import java.util.concurrent.TimeUnit;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 abstract class BaseChannelInitializer extends ChannelInitializer<SocketChannel> {
 
-    private static final long DEFAULT_READ_TIMEOUT_IN_SECONDS = 300;
-    private static final long DEFAULT_WRITE_TIMEOUT_IN_SECONDS = 300;
+    private static final Logger LOGGER = LoggerFactory.getLogger(BaseChannelInitializer.class);
+    private static final long DEFAULT_READ_TIMEOUT_IN_SECONDS = 15;
+    private static final long DEFAULT_WRITE_TIMEOUT_IN_SECONDS = 15;
     private final long read_timeout;
     private final long write_timeout;
     private final TimeUnit timeout_unit;
@@ -58,8 +62,8 @@ abstract class BaseChannelInitializer extends ChannelInitializer<SocketChannel> 
     @Override
     public void initChannel(final SocketChannel channel) throws Exception {
 
-        channel.pipeline().addLast("read_timeout", createWriteTimeoutHandler());
-        channel.pipeline().addLast("write_timeout", createReadTimeoutHandler());
+        channel.pipeline().addLast("write_timeout", createWriteTimeoutHandler());
+        channel.pipeline().addLast("read_timeout", createReadTimeoutHandler());
         channel.pipeline().addLast(FrameDecoder.NAME, createFrameDecoder());
     }
 

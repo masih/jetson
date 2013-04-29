@@ -23,24 +23,29 @@ import io.netty.channel.ChannelHandler.Sharable;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundMessageHandlerAdapter;
 import io.netty.channel.group.ChannelGroup;
+import io.netty.handler.timeout.TimeoutException;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import uk.ac.standrews.cs.jetson.exception.AccessException;
 import uk.ac.standrews.cs.jetson.exception.InternalException;
 import uk.ac.standrews.cs.jetson.exception.InvalidParameterException;
 import uk.ac.standrews.cs.jetson.exception.InvocationException;
+import uk.ac.standrews.cs.jetson.exception.JsonRpcError;
 import uk.ac.standrews.cs.jetson.exception.JsonRpcException;
 import uk.ac.standrews.cs.jetson.exception.ServerException;
 import uk.ac.standrews.cs.jetson.exception.ServerRuntimeException;
+import uk.ac.standrews.cs.jetson.exception.TransportException;
+import uk.ac.standrews.cs.jetson.exception.UnexpectedException;
 
 @Sharable
 class ServerHandler extends ChannelInboundMessageHandlerAdapter<Request> {
 
-    private static final Logger LOGGER = Logger.getLogger(ServerHandler.class.getName());
+    private static final Logger LOGGER = LoggerFactory.getLogger(ServerHandler.class);
     private final Object service;
     private final ChannelGroup channel_group;
 
@@ -56,6 +61,7 @@ class ServerHandler extends ChannelInboundMessageHandlerAdapter<Request> {
         final Channel channel = ctx.channel();
         channel.attr(ClientHandler.RESPONSE_ATTRIBUTE).set(new Response());
         channel_group.add(channel);
+        super.channelActive(ctx);
     }
 
     @Override
@@ -63,6 +69,7 @@ class ServerHandler extends ChannelInboundMessageHandlerAdapter<Request> {
 
         ctx.channel().attr(ClientHandler.RESPONSE_ATTRIBUTE).remove();
         ctx.close();
+        super.channelActive(ctx);
     }
 
     @Override
@@ -79,18 +86,27 @@ class ServerHandler extends ChannelInboundMessageHandlerAdapter<Request> {
     @Override
     public void exceptionCaught(final ChannelHandlerContext ctx, final Throwable cause) throws Exception {
 
-        //        cause.printStackTrace();
+        LOGGER.info("caught on server handler {}", cause.getMessage(), cause);
         if (ctx.channel().isOpen()) {
             final Long current_request_id = ctx.channel().attr(ClientHandler.REQUEST_ATTRIBUTE).get().getId();
             final Response response = ctx.channel().attr(ClientHandler.RESPONSE_ATTRIBUTE).get();
-            final JsonRpcException exception = JsonRpcException.class.isInstance(cause) ? JsonRpcException.class.cast(cause) : new InternalException(cause);
-            response.setError(exception);
+            final JsonRpcError error;
+            if (cause instanceof JsonRpcException) {
+                error = JsonRpcException.class.cast(cause);
+            }
+            else if (cause instanceof TimeoutException) {
+                error = new TransportException(cause);
+            }
+            else {
+                error = new UnexpectedException(cause);
+            }
+            response.setError(error);
             response.setId(current_request_id);
             try {
                 ctx.write(response);
             }
             catch (final Throwable e) {
-                LOGGER.log(Level.FINE, "failed to notify JSON RPC error", e);
+                LOGGER.warn("failed to notify JSON RPC error", e);
                 ctx.close();
             }
         }
