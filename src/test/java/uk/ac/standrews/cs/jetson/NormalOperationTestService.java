@@ -98,4 +98,10 @@ public class NormalOperationTestService implements TestService {
         final TestService remote_service = (TestService) proxy_factory.get(new InetSocketAddress(port));
         return remote_service.getObject();
     }
+
+    @Override
+    public String concatinate(final String text, final Integer integer, final TestObject object, final char character) throws JsonRpcException {
+
+        return text + integer + object + character;
+    }
 }
