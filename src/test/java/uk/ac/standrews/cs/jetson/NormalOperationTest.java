@@ -35,6 +35,7 @@ import junit.framework.Assert;
 
 import org.junit.Test;
 
+import uk.ac.standrews.cs.jetson.TestService.TestObject;
 import uk.ac.standrews.cs.jetson.exception.JsonRpcException;
 
 public class NormalOperationTest extends AbstractTest<TestService> {
@@ -159,6 +160,17 @@ public class NormalOperationTest extends AbstractTest<TestService> {
     public void testGetObjectOnRemote() throws IOException {
 
         Assert.assertEquals(NormalOperationTestService.TEST_OBJECT_MESSAGE, client.getObjectOnRemote(temp_server_port).getMessage());
+    }
+
+    @Test
+    public void testConcatinate() throws JsonRpcException {
+
+        final String text = "ssss";
+        final int integer = 8852456;
+        final TestObject object = new TestObject("X_1_23");
+        final char character = '=';
+        final String result = client.concatinate(text, integer, object, character);
+        Assert.assertEquals(text + integer + object + character, result);
     }
 
     @Test

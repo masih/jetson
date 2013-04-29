@@ -48,6 +48,8 @@ public interface TestService {
 
     TestObject getObjectOnRemote(Integer port) throws JsonRpcException;
 
+    String concatinate(final String text, final Integer integer, final TestObject object, final char character) throws JsonRpcException;
+
     public class TestObject {
 
         private String message;
@@ -69,6 +71,12 @@ public interface TestService {
         public void setMessage(final String message) {
 
             this.message = message;
+        }
+
+        @Override
+        public String toString() {
+
+            return message;
         }
     }
 }

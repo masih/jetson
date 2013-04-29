@@ -168,12 +168,15 @@ public class ClientFactory<Service> {
             return response;
         }
 
-        private void writeRequest(final Channel channel, final Request request) throws InternalException {
+        private void writeRequest(final Channel channel, final Request request) throws JsonRpcException {
 
             try {
                 channel.write(request).sync();
             }
             catch (final Exception e) {
+                if (e instanceof JsonRpcException) { throw JsonRpcException.class.cast(e); }
+                final Throwable cause = e.getCause();
+                if (cause != null && cause instanceof JsonRpcException) { throw JsonRpcException.class.cast(cause); }
                 throw new InternalException(e);
             }
         }
