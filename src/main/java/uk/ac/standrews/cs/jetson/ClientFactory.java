@@ -46,8 +46,9 @@ import uk.ac.standrews.cs.jetson.util.ReflectionUtil;
 import com.fasterxml.jackson.core.JsonFactory;
 
 /**
- * A factory for creating JSON RPC clients.
- * 
+ * A factory for creating JSON RPC clients. This class is thread-safe.
+ *
+ * @param <Service> the type of the remote service
  * @author Masih Hajiarabderkani (mh638@st-andrews.ac.uk)
  */
 public class ClientFactory<Service> {
@@ -58,25 +59,20 @@ public class ClientFactory<Service> {
     private final ClassLoader class_loader;
     private final Class<?>[] interfaces;
 
-    private final Map<InetSocketAddress, Service> ADDRESS_TO_PROXY_MAP = new HashMap<InetSocketAddress, Service>();
+    private final Map<InetSocketAddress, Service> address_to_proxy_map = new HashMap<InetSocketAddress, Service>();
     private static final EventLoopGroup GLOBAL_CLIENT_WORKER_GROUP = new NioEventLoopGroup();
 
     /**
      * Instantiates a new JSON RPC client factory. The {@link ClassLoader#getSystemClassLoader() system class loader} used for constructing new proxy instances.
      *
      * @param service_interface the interface presenting the remote service
-     * @param json_factory the provider of JSON serialiser and deserialisers
+     * @param json_factory the provider of JSON serialiser and deserialiser
      */
-    public ClientFactory(final Class<Service> service_interface, final JsonFactory json_factory) {
-
-        this(service_interface, json_factory, ClassLoader.getSystemClassLoader());
-    }
-
-    public ClientFactory(final Class<?> service_interface, final JsonFactory json_factory, final ClassLoader class_loader) {
+    public ClientFactory(final Class<?> service_interface, final JsonFactory json_factory) {
 
         dispatch = ReflectionUtil.mapMethodsToNames(service_interface);
         next_request_id = new AtomicLong();
-        this.class_loader = class_loader;
+        this.class_loader = ClassLoader.getSystemClassLoader();
         this.interfaces = new Class<?>[]{service_interface};
         bootstrap = new Bootstrap();
         configure(json_factory);
@@ -94,12 +90,18 @@ public class ClientFactory<Service> {
         return new ClientChannelInitializer(json_factory);
     }
 
+    /**
+     * Gets a proxy to the remote service.
+     *
+     * @param address the address
+     * @return the service
+     */
     public synchronized Service get(final InetSocketAddress address) {
 
-        if (ADDRESS_TO_PROXY_MAP.containsKey(address)) { return ADDRESS_TO_PROXY_MAP.get(address); }
+        if (address_to_proxy_map.containsKey(address)) { return address_to_proxy_map.get(address); }
         final JsonRpcInvocationHandler handler = createJsonRpcInvocationHandler(address);
         final Service proxy = createProxy(handler);
-        ADDRESS_TO_PROXY_MAP.put(address, proxy);
+        address_to_proxy_map.put(address, proxy);
         return proxy;
     }
 

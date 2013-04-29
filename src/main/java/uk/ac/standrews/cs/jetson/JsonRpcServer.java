@@ -1,3 +1,21 @@
+/*
+ * Copyright 2013 Masih Hajiarabderkani
+ * 
+ * This file is part of Jetson.
+ * 
+ * Jetson is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ * 
+ * Jetson is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License
+ * along with Jetson.  If not, see <http://www.gnu.org/licenses/>.
+ */
 package uk.ac.standrews.cs.jetson;
 
 import io.netty.bootstrap.ServerBootstrap;
@@ -11,16 +29,20 @@ import java.io.IOException;
 import java.lang.reflect.Method;
 import java.net.InetSocketAddress;
 import java.util.Map;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import uk.ac.standrews.cs.jetson.util.ReflectionUtil;
 
 import com.fasterxml.jackson.core.JsonFactory;
 
+/**
+ * The Class JsonRpcServer.
+ */
 public class JsonRpcServer {
 
-    private static final Logger LOGGER = Logger.getLogger(JsonRpcServer.class.getName());
+    private static final Logger LOGGER = LoggerFactory.getLogger(JsonRpcServer.class);
     private static final NioEventLoopGroup GLOBAL_SERVER_THREADS_GROUP = new NioEventLoopGroup();
     private static final NioEventLoopGroup GLOBAL_SERVER_WORKER_THREADS_GROUP = new NioEventLoopGroup(200);
 
@@ -92,7 +114,7 @@ public class JsonRpcServer {
             unexpose();
         }
         catch (final IOException e) {
-            LOGGER.log(Level.WARNING, "error while unexposing the server", e);
+            LOGGER.warn("error while unexposing the server", e);
         }
         //        bootstrap.shutdown();
     }

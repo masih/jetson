@@ -98,4 +98,20 @@ public class JsonRpcException extends IOException implements JsonRpcError {
 
         this.data = data;
     }
+
+    protected static String toString(final Object... messages) {
+
+        final String message;
+        if (messages != null && messages.length != 0) {
+            final StringBuilder builder = new StringBuilder();
+            for (final Object msg : messages) {
+                builder.append(msg);
+            }
+            message = builder.toString();
+        }
+        else {
+            message = null;
+        }
+        return message;
+    }
 }
