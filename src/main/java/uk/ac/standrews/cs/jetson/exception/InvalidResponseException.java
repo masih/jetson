@@ -22,7 +22,7 @@ public class InvalidResponseException extends JsonRpcException {
 
     private static final long serialVersionUID = 5797975215122969810L;
     public static final int CODE = -32501;
-    private static final String MESSAGE = "Invalid Response";
+    private static final String MESSAGE = "invalid response";
 
     public InvalidResponseException() {
 
@@ -37,5 +37,15 @@ public class InvalidResponseException extends JsonRpcException {
     public InvalidResponseException(final String message) {
 
         super(CODE, message);
+    }
+
+    public InvalidResponseException(final String message, final Throwable cause) {
+
+        super(CODE, message, cause);
+    }
+
+    public static InvalidResponseException fromMessage(final Object... messages) {
+
+        return new InvalidResponseException(toString(messages));
     }
 }

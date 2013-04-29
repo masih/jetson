@@ -34,8 +34,8 @@ public class FrameDecoder extends DelimiterBasedFrameDecoder {
     public static final int DEFAULT_MAX_FRAME_LENGTH = 8192;
 
     static final String NAME = "framer";
-
-    private static final ByteBuf[] FRAME_DELIMITER = Delimiters.lineDelimiter();
+    private static final ByteBuf[] FRAME_DELIMITER = Delimiters.nulDelimiter();
+    static final String FRAME_DELIMITER_AS_STRING = new String(FRAME_DELIMITER[0].array());
 
     /** Instantiates a new frame decoder with the maximum frame size of {@value #DEFAULT_MAX_FRAME_LENGTH}. */
     public FrameDecoder() {

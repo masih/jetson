@@ -1,3 +1,21 @@
+/*
+ * Copyright 2013 Masih Hajiarabderkani
+ * 
+ * This file is part of Jetson.
+ * 
+ * Jetson is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ * 
+ * Jetson is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License
+ * along with Jetson.  If not, see <http://www.gnu.org/licenses/>.
+ */
 package uk.ac.standrews.cs.jetson;
 
 import io.netty.buffer.ByteBuf;
@@ -8,27 +26,30 @@ import io.netty.handler.codec.MessageToMessageDecoder;
 
 import java.io.IOException;
 import java.lang.reflect.Method;
+import java.lang.reflect.Type;
 import java.util.Map;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import uk.ac.standrews.cs.jetson.exception.InternalException;
 import uk.ac.standrews.cs.jetson.exception.InvalidJsonException;
 import uk.ac.standrews.cs.jetson.exception.InvalidRequestException;
-import uk.ac.standrews.cs.jetson.exception.InvalidResponseException;
+import uk.ac.standrews.cs.jetson.exception.JsonRpcException;
 import uk.ac.standrews.cs.jetson.exception.MethodNotFoundException;
+import uk.ac.standrews.cs.jetson.util.CloseableUtil;
+import uk.ac.standrews.cs.jetson.util.JsonParserUtil;
 
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonGenerationException;
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.core.JsonToken;
 
 @Sharable
 class RequestDecoder extends MessageToMessageDecoder<ByteBuf> {
 
-    private static final Logger LOGGER = Logger.getLogger(RequestDecoder.class.getName());
-
+    private static final Logger LOGGER = LoggerFactory.getLogger(RequestDecoder.class);
     private final Map<String, Method> dispatch;
 
     private final JsonFactory json_factory;
@@ -40,7 +61,7 @@ class RequestDecoder extends MessageToMessageDecoder<ByteBuf> {
     }
 
     @Override
-    protected Request decode(final ChannelHandlerContext ctx, final ByteBuf msg) throws Exception {
+    protected Request decode(final ChannelHandlerContext ctx, final ByteBuf msg) throws JsonRpcException {
 
         JsonParser parser = null;
         try {
@@ -48,116 +69,67 @@ class RequestDecoder extends MessageToMessageDecoder<ByteBuf> {
             parser.nextToken();
             final String version = readAndValidateVersion(parser);
             final String method_name = readAndValidateMethodName(parser);
-            final Object[] params = readRequestParameters(parser, method_name);
+            final Method method = findServiceMethodByName(method_name);
+            final Object[] params = readRequestParameters(parser, method);
             final Long id = readAndValidateId(parser);
-            final Request request = new Request(id, findServiceMethodByName(method_name), method_name, params);
+            final Request request = new Request(id, method, method_name, params);
             request.setVersion(version);
             parser.nextToken();
             ctx.channel().attr(ClientHandler.REQUEST_ATTRIBUTE).set(request);
             return request;
         }
         catch (final JsonParseException e) {
+            LOGGER.debug("failed to parse request", e);
             throw new InvalidJsonException(e);
         }
         catch (final JsonGenerationException e) {
+            LOGGER.debug("failed to generate request", e);
             throw new InternalException(e);
         }
         catch (final JsonProcessingException e) {
+            LOGGER.debug("failed to decode request", e);
             throw new InvalidRequestException(e);
         }
         catch (final IOException e) {
+            LOGGER.debug("IO error occured while decoding response", e);
             throw new InternalException(e);
         }
         finally {
-            if (parser != null) {
-                try {
-                    parser.close();
-                }
-                catch (final IOException e) {
-                    throw new InternalException(e);
-                }
-            }
+            CloseableUtil.closeQuietly(parser);
         }
     }
 
     private Long readAndValidateId(final JsonParser parser) throws IOException {
 
-        final Long id = readValue(parser, Message.ID_KEY, Long.class);
-        if (id == null) { throw new InvalidResponseException("request id of null is not supported"); }
+        final Long id = JsonParserUtil.readFieldValueAs(parser, Message.ID_KEY, Long.class);
+        if (id == null) { throw new InvalidRequestException("request id of null is not supported"); }
         return id;
     }
 
     private String readAndValidateMethodName(final JsonParser parser) throws IOException {
 
-        final String method_name = readValue(parser, Request.METHOD_NAME_KEY, String.class);
+        final String method_name = JsonParserUtil.readFieldValueAs(parser, Request.METHOD_NAME_KEY, String.class);
         if (method_name == null) { throw new InvalidRequestException("method name cannot be null"); }
         return method_name;
     }
 
     private String readAndValidateVersion(final JsonParser parser) throws IOException {
 
-        final String version = readValue(parser, Message.VERSION_KEY, String.class);
+        final String version = JsonParserUtil.readFieldValueAs(parser, Message.VERSION_KEY, String.class);
         if (version == null || !version.equals(Message.DEFAULT_VERSION)) { throw new InvalidRequestException("version must be equal to " + Message.DEFAULT_VERSION); }
         return version;
     }
 
-    private <Value> Value readValue(final JsonParser parser, final String expected_key, final Class<Value> value_type) throws IOException {
+    private Object[] readRequestParameters(final JsonParser parser, final Method method) throws IOException {
 
-        if (parser.nextToken() == JsonToken.FIELD_NAME && expected_key.equals(parser.getCurrentName())) {
-            parser.nextToken();
-            return parser.readValueAs(value_type);
-        }
-        throw new InvalidRequestException("expected key " + expected_key);
-    }
-
-    private Object[] readRequestParameters(final JsonParser parser, final String method_name) throws IOException {
-
-        if (parser.nextToken() != JsonToken.FIELD_NAME || !Request.PARAMETERS_KEY.equals(parser.getCurrentName())) { throw new InvalidRequestException("params must not be omitted"); }
-        final Object[] params;
-        if (method_name == null) {
-            LOGGER.warning("unspecified method name, or params is passed before method name in JSON request; deserializing parameters without type information.");
-            params = readRequestParametersWithoutTypeInformation(parser);
-        }
-        else {
-            final Class<?>[] param_types = findParameterTypesByMethodName(method_name);
-            if (param_types == null) {
-                LOGGER.warning("no parameter types was found for method " + method_name + "; deserializing parameters without type information.");
-                return readRequestParametersWithoutTypeInformation(parser);
-            }
-            else {
-                params = readRequestParametersWithTypes(parser, param_types);
-            }
-        }
-        return params;
-    }
-
-    private Object[] readRequestParametersWithTypes(final JsonParser parser, final Class<?>[] types) throws IOException {
-
-        final Object[] params = new Object[types.length];
-        int index = 0;
-        if (parser.nextToken() != JsonToken.START_ARRAY) { throw new InvalidRequestException("expected start array"); }
-        while (parser.nextToken() != JsonToken.END_ARRAY && parser.getCurrentToken() != null) {
-            params[index] = parser.readValueAs(types[index]);
-            index++;
-        }
-        return params;
-    }
-
-    private Object[] readRequestParametersWithoutTypeInformation(final JsonParser parser) throws IOException {
-
-        parser.nextToken();
-        return parser.readValueAs(Object[].class);
+        JsonParserUtil.expectFieldName(parser, Request.PARAMETERS_KEY);
+        final Type[] param_types = method.getGenericParameterTypes();
+        return JsonParserUtil.readArrayValuesAs(parser, param_types);
     }
 
     private Method findServiceMethodByName(final String method_name) throws MethodNotFoundException {
 
         if (!dispatch.containsKey(method_name)) { throw new MethodNotFoundException(); }
         return dispatch.get(method_name);
-    }
-
-    private Class<?>[] findParameterTypesByMethodName(final String method_name) {
-
-        final Method method = dispatch.get(method_name);
-        return method != null ? method.getParameterTypes() : null;
     }
 }
