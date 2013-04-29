@@ -66,7 +66,7 @@ public class JsonParserUtil {
         if (expected_values_length != 0) {
             params = new Object[expected_values_length];
             for (int i = 0; i < expected_values_length; i++) {
-                params[i] = readValueAs(parser, expected_types[0]);
+                params[i] = readValueAs(parser, expected_types[i]);
             }
         }
         else {
