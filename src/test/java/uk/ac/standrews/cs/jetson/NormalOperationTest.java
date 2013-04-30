@@ -180,7 +180,7 @@ public class NormalOperationTest extends AbstractTest<TestService> {
         try {
             final CountDownLatch start_latch = new CountDownLatch(1);
             final List<Future<Void>> future_concurrent_tests = new ArrayList<Future<Void>>();
-            for (int i = 0; i < 10000; i++) {
+            for (int i = 0; i < 500; i++) {
                 future_concurrent_tests.add(executor.submit(new Callable<Void>() {
 
                     @Override
@@ -221,7 +221,7 @@ public class NormalOperationTest extends AbstractTest<TestService> {
         try {
             final CountDownLatch start_latch = new CountDownLatch(1);
             final List<Future<Void>> future_concurrent_tests = new ArrayList<Future<Void>>();
-            for (int i = 0; i < 5000; i++) {
+            for (int i = 0; i < 500; i++) {
                 future_concurrent_tests.add(executor.submit(new Callable<Void>() {
 
                     @Override
