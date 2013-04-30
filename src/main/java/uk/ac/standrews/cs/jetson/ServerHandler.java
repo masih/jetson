@@ -57,7 +57,7 @@ class ServerHandler extends ChannelInboundMessageHandlerAdapter<Request> {
     private final ChannelGroup channel_group;
     private static final AttributeKey<Future<Void>> PROCESSING_FUTURE_ATTRIBUTE = new AttributeKey<Future<Void>>("processing");
     //    private static final ExecutorService exec = Executors.newCachedThreadPool();
-    private static final ThreadPoolExecutor exec = new ThreadPoolExecutor(0, 800, 5, TimeUnit.SECONDS, new SynchronousQueue<Runnable>(true));
+    private static final ThreadPoolExecutor exec = new ThreadPoolExecutor(0, 300, 5, TimeUnit.SECONDS, new SynchronousQueue<Runnable>(true));
     static {
         exec.setRejectedExecutionHandler(new RejectedExecutionHandler() {
 
