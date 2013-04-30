@@ -62,6 +62,7 @@ abstract class BaseChannelInitializer extends ChannelInitializer<SocketChannel> 
     @Override
     public void initChannel(final SocketChannel channel) throws Exception {
 
+        LOGGER.debug("initialising new channel {}", channel);
         channel.pipeline().addLast("write_timeout", createWriteTimeoutHandler());
         channel.pipeline().addLast("read_timeout", createReadTimeoutHandler());
         channel.pipeline().addLast(FrameDecoder.NAME, createFrameDecoder());
