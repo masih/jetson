@@ -35,12 +35,16 @@ import java.util.concurrent.BrokenBarrierException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicLong;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import uk.ac.standrews.cs.jetson.exception.InternalException;
 import uk.ac.standrews.cs.jetson.exception.InvocationException;
 import uk.ac.standrews.cs.jetson.exception.JsonRpcException;
 import uk.ac.standrews.cs.jetson.exception.JsonRpcExceptions;
 import uk.ac.standrews.cs.jetson.exception.TransportException;
 import uk.ac.standrews.cs.jetson.exception.UnexpectedException;
+import uk.ac.standrews.cs.jetson.util.NamingThreadFactory;
 import uk.ac.standrews.cs.jetson.util.ReflectionUtil;
 
 import com.fasterxml.jackson.core.JsonFactory;
@@ -53,6 +57,7 @@ import com.fasterxml.jackson.core.JsonFactory;
  */
 public class ClientFactory<Service> {
 
+    private static final Logger LOGGER = LoggerFactory.getLogger(ClientFactory.class);
     private final Map<Method, String> dispatch;
     private final AtomicLong next_request_id;
     private final Bootstrap bootstrap;
@@ -60,7 +65,7 @@ public class ClientFactory<Service> {
     private final Class<?>[] interfaces;
 
     private final Map<InetSocketAddress, Service> address_to_proxy_map = new HashMap<InetSocketAddress, Service>();
-    private static final EventLoopGroup GLOBAL_CLIENT_WORKER_GROUP = new NioEventLoopGroup();
+    private static final EventLoopGroup GLOBAL_CLIENT_WORKER_GROUP = new NioEventLoopGroup(8, new NamingThreadFactory("client_event_loop_"));
 
     /**
      * Instantiates a new JSON RPC client factory. The {@link ClassLoader#getSystemClassLoader() system class loader} used for constructing new proxy instances.
@@ -143,9 +148,9 @@ public class ClientFactory<Service> {
                 final Response response = readResponse(channel);
                 if (response.isError()) {
                     final JsonRpcException exception = JsonRpcExceptions.fromJsonRpcError(response.getError());
+                    //                    LOGGER.info("error response " , exception);
                     throw !isInvocationException(exception) ? exception : reconstructException(method.getExceptionTypes(), castToInvovationException(exception));
                 }
-
                 return response.getResult();
             }
             finally {
@@ -162,10 +167,10 @@ public class ClientFactory<Service> {
                 throw new InternalException(e);
             }
             catch (final BrokenBarrierException e) {
-                // ignore
+                LOGGER.debug("barrier broke while waiting for response", e);
             }
-            final Response response = channel.attr(ClientHandler.RESPONSE_ATTRIBUTE).get();
-            return response;
+
+            return channel.attr(ClientHandler.RESPONSE_ATTRIBUTE).get();
         }
 
         private void writeRequest(final Channel channel, final Request request) throws JsonRpcException {

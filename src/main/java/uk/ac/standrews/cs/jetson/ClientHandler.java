@@ -53,6 +53,7 @@ class ClientHandler extends ChannelInboundMessageHandlerAdapter<Response> {
     @Override
     public void channelInactive(final ChannelHandlerContext ctx) throws Exception {
 
+        LOGGER.debug("client disconencted {}", ctx.channel().remoteAddress());
         ctx.close();
         super.channelInactive(ctx);
     }

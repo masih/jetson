@@ -24,9 +24,16 @@ import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundMessageHandlerAdapter;
 import io.netty.channel.group.ChannelGroup;
 import io.netty.handler.timeout.TimeoutException;
+import io.netty.util.AttributeKey;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.util.concurrent.Callable;
+import java.util.concurrent.Future;
+import java.util.concurrent.RejectedExecutionHandler;
+import java.util.concurrent.SynchronousQueue;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -48,6 +55,19 @@ class ServerHandler extends ChannelInboundMessageHandlerAdapter<Request> {
     private static final Logger LOGGER = LoggerFactory.getLogger(ServerHandler.class);
     private final Object service;
     private final ChannelGroup channel_group;
+    private static final AttributeKey<Future<Void>> PROCESSING_FUTURE_ATTRIBUTE = new AttributeKey<Future<Void>>("processing");
+    //    private static final ExecutorService exec = Executors.newCachedThreadPool();
+    private static final ThreadPoolExecutor exec = new ThreadPoolExecutor(0, 800, 5, TimeUnit.SECONDS, new SynchronousQueue<Runnable>(true));
+    static {
+        exec.setRejectedExecutionHandler(new RejectedExecutionHandler() {
+
+            @Override
+            public void rejectedExecution(final Runnable r, final ThreadPoolExecutor executor) {
+
+                LOGGER.info(">>>>> execution rejected , not enough threads to handle requests");
+            }
+        });
+    }
 
     ServerHandler(final ChannelGroup channel_group, final Object service) {
 
@@ -67,28 +87,54 @@ class ServerHandler extends ChannelInboundMessageHandlerAdapter<Request> {
     @Override
     public void channelInactive(final ChannelHandlerContext ctx) throws Exception {
 
+        cancelRequestProcessing(ctx);
+        ctx.channel().attr(PROCESSING_FUTURE_ATTRIBUTE).remove();
         ctx.channel().attr(ClientHandler.RESPONSE_ATTRIBUTE).remove();
         ctx.close();
         super.channelActive(ctx);
     }
 
+    private void cancelRequestProcessing(final ChannelHandlerContext ctx) {
+
+        final Future<Void> procc = ctx.channel().attr(PROCESSING_FUTURE_ATTRIBUTE).get();
+        if (procc != null) {
+            procc.cancel(true);
+        }
+    }
+
     @Override
     public void messageReceived(final ChannelHandlerContext ctx, final Request request) throws Exception {
 
-        final Object result = handleRequest(request);
-        final Response response = ctx.channel().attr(ClientHandler.RESPONSE_ATTRIBUTE).get();
-        response.reset();
-        response.setId(request.getId());
-        response.setResult(result);
-        ctx.write(response);
+        final Future<Void> processing = exec.submit(new Callable<Void>() {
+
+            @Override
+            public Void call() throws Exception {
+
+                try {
+                    final Object result = handleRequest(request);
+                    final Response response = ctx.channel().attr(ClientHandler.RESPONSE_ATTRIBUTE).get();
+                    response.reset();
+                    response.setId(request.getId());
+                    response.setResult(result);
+                    ctx.write(response);
+                }
+                catch (final Throwable e) {
+                    exceptionCaught(ctx, e);
+                }
+                return null;
+            }
+        });
+        ctx.channel().attr(PROCESSING_FUTURE_ATTRIBUTE).set(processing);
     }
 
     @Override
     public void exceptionCaught(final ChannelHandlerContext ctx, final Throwable cause) throws Exception {
 
         LOGGER.debug("caught on server handler", cause);
+        cancelRequestProcessing(ctx);
         if (ctx.channel().isOpen()) {
-            final Long current_request_id = ctx.channel().attr(ClientHandler.REQUEST_ATTRIBUTE).get().getId();
+            final Request request = ctx.channel().attr(ClientHandler.REQUEST_ATTRIBUTE).get();
+            final Long current_request_id = request.getId();
             final Response response = ctx.channel().attr(ClientHandler.RESPONSE_ATTRIBUTE).get();
             final JsonRpcError error;
             if (cause instanceof JsonRpcException) {

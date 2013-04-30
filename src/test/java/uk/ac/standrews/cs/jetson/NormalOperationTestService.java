@@ -1,13 +1,15 @@
 package uk.ac.standrews.cs.jetson;
 
 import java.net.InetSocketAddress;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import uk.ac.standrews.cs.jetson.exception.JsonRpcException;
 
 public class NormalOperationTestService implements TestService {
 
-    private static final Logger LOGGER = Logger.getLogger(NormalOperationTestService.class.getName());
+    private static final Logger LOGGER = LoggerFactory.getLogger(NormalOperationTestService.class);
     public static final Exception TEST_EXCEPTION = new Exception("test exception");
     public static final String TEST_OBJECT_MESSAGE = "test message";
     private final ClientFactory proxy_factory;
@@ -62,7 +64,7 @@ public class NormalOperationTestService implements TestService {
     @Override
     public void doVoidWithNoParams() {
 
-        LOGGER.info("doing nothing");
+        LOGGER.debug("doing nothing");
     }
 
     @Override

@@ -85,7 +85,7 @@ public class NormalOperationTest extends AbstractTest<TestService> {
     public void testThrowException() {
 
         try {
-            client.throwExceptionOnRemote(temp_server_port);
+            client.throwException();
             fail("expected exception");
         }
         catch (final Exception e) {
@@ -176,11 +176,11 @@ public class NormalOperationTest extends AbstractTest<TestService> {
     @Test
     public void testConcurrentClients() throws JsonRpcException, InterruptedException, ExecutionException {
 
-        final ExecutorService executor = Executors.newCachedThreadPool();
+        final ExecutorService executor = Executors.newFixedThreadPool(500);
         try {
             final CountDownLatch start_latch = new CountDownLatch(1);
             final List<Future<Void>> future_concurrent_tests = new ArrayList<Future<Void>>();
-            for (int i = 0; i < 100; i++) {
+            for (int i = 0; i < 10000; i++) {
                 future_concurrent_tests.add(executor.submit(new Callable<Void>() {
 
                     @Override
@@ -217,11 +217,11 @@ public class NormalOperationTest extends AbstractTest<TestService> {
     @Test
     public void testConcurrentServers() throws JsonRpcException, InterruptedException, ExecutionException {
 
-        final ExecutorService executor = Executors.newCachedThreadPool();
+        final ExecutorService executor = Executors.newFixedThreadPool(500);
         try {
             final CountDownLatch start_latch = new CountDownLatch(1);
             final List<Future<Void>> future_concurrent_tests = new ArrayList<Future<Void>>();
-            for (int i = 0; i < 100; i++) {
+            for (int i = 0; i < 5000; i++) {
                 future_concurrent_tests.add(executor.submit(new Callable<Void>() {
 
                     @Override
