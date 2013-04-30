@@ -176,7 +176,7 @@ public class NormalOperationTest extends AbstractTest<TestService> {
     @Test
     public void testConcurrentClients() throws JsonRpcException, InterruptedException, ExecutionException {
 
-        final ExecutorService executor = Executors.newFixedThreadPool(500);
+        final ExecutorService executor = Executors.newFixedThreadPool(100);
         try {
             final CountDownLatch start_latch = new CountDownLatch(1);
             final List<Future<Void>> future_concurrent_tests = new ArrayList<Future<Void>>();
@@ -217,7 +217,7 @@ public class NormalOperationTest extends AbstractTest<TestService> {
     @Test
     public void testConcurrentServers() throws JsonRpcException, InterruptedException, ExecutionException {
 
-        final ExecutorService executor = Executors.newFixedThreadPool(500);
+        final ExecutorService executor = Executors.newFixedThreadPool(100);
         try {
             final CountDownLatch start_latch = new CountDownLatch(1);
             final List<Future<Void>> future_concurrent_tests = new ArrayList<Future<Void>>();
