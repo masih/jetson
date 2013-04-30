@@ -31,8 +31,8 @@ import org.slf4j.LoggerFactory;
 abstract class BaseChannelInitializer extends ChannelInitializer<SocketChannel> {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(BaseChannelInitializer.class);
-    private static final long DEFAULT_READ_TIMEOUT_IN_SECONDS = 15;
-    private static final long DEFAULT_WRITE_TIMEOUT_IN_SECONDS = 15;
+    private static final long DEFAULT_READ_TIMEOUT_IN_SECONDS = 150;
+    private static final long DEFAULT_WRITE_TIMEOUT_IN_SECONDS = 150;
     private final long read_timeout;
     private final long write_timeout;
     private final TimeUnit timeout_unit;

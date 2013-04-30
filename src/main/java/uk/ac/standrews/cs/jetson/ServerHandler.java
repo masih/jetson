@@ -86,7 +86,7 @@ class ServerHandler extends ChannelInboundMessageHandlerAdapter<Request> {
     @Override
     public void exceptionCaught(final ChannelHandlerContext ctx, final Throwable cause) throws Exception {
 
-        LOGGER.info("caught on server handler {}", cause.getMessage(), cause);
+        LOGGER.debug("caught on server handler", cause);
         if (ctx.channel().isOpen()) {
             final Long current_request_id = ctx.channel().attr(ClientHandler.REQUEST_ATTRIBUTE).get().getId();
             final Response response = ctx.channel().attr(ClientHandler.RESPONSE_ATTRIBUTE).get();

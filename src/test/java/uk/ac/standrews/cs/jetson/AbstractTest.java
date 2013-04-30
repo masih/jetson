@@ -24,11 +24,16 @@ import java.util.concurrent.ExecutorService;
 
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Rule;
+import org.junit.rules.Timeout;
 
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 public abstract class AbstractTest<TestService> {
+
+    @Rule
+    public Timeout global_timeout = new Timeout(10 * 60 * 1000);
 
     protected JsonRpcServer server;
     protected InetSocketAddress server_address;
