@@ -33,6 +33,7 @@ import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import uk.ac.standrews.cs.jetson.util.NamingThreadFactory;
 import uk.ac.standrews.cs.jetson.util.ReflectionUtil;
 
 import com.fasterxml.jackson.core.JsonFactory;
@@ -43,8 +44,8 @@ import com.fasterxml.jackson.core.JsonFactory;
 public class JsonRpcServer {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(JsonRpcServer.class);
-    private static final NioEventLoopGroup GLOBAL_SERVER_THREADS_GROUP = new NioEventLoopGroup();
-    private static final NioEventLoopGroup GLOBAL_SERVER_WORKER_THREADS_GROUP = new NioEventLoopGroup(200);
+    private static final NioEventLoopGroup GLOBAL_SERVER_THREADS_GROUP = new NioEventLoopGroup(8, new NamingThreadFactory("server"));
+    private static final NioEventLoopGroup GLOBAL_SERVER_WORKER_THREADS_GROUP = new NioEventLoopGroup(200, new NamingThreadFactory("server_worker"));
 
     private final Map<String, Method> dispatch;
     private volatile InetSocketAddress endpoint;
@@ -86,7 +87,9 @@ public class JsonRpcServer {
 
         if (isExposed()) {
             try {
+                channel_group.disconnect().sync();
                 channel_group.close().sync();
+                channel_group.clear();
                 server_channel_future.cancel(true);
                 server_channel_future.channel().disconnect().sync();
                 server_channel_future.channel().closeFuture().sync();
@@ -116,6 +119,5 @@ public class JsonRpcServer {
         catch (final IOException e) {
             LOGGER.warn("error while unexposing the server", e);
         }
-        //        bootstrap.shutdown();
     }
 }
