@@ -60,7 +60,7 @@ class ClientHandler extends ChannelInboundMessageHandlerAdapter<Response> {
     @Override
     public void exceptionCaught(final ChannelHandlerContext ctx, final Throwable cause) {
 
-        LOGGER.info("caught on client handler {}", ctx.channel());
+        LOGGER.debug("caught on client handler", cause);
         final CyclicBarrier latch = ctx.channel().attr(RESPONSE_BARRIER_ATTRIBUTE).get();
         if (latch != null) {
             final Attribute<Request> id_attr = ctx.channel().attr(ClientHandler.REQUEST_ATTRIBUTE);

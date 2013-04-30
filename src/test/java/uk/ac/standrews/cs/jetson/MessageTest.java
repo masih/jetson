@@ -21,11 +21,14 @@ package uk.ac.standrews.cs.jetson;
 import junit.framework.Assert;
 
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
-
-import uk.ac.standrews.cs.jetson.Message;
+import org.junit.rules.Timeout;
 
 public class MessageTest {
+
+    @Rule
+    public Timeout global_timeout = new Timeout(10 * 60 * 1000);
 
     Message message;
 
