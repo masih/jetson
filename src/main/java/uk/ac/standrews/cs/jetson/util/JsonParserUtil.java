@@ -20,6 +20,7 @@ package uk.ac.standrews.cs.jetson.util;
 
 import java.io.IOException;
 import java.lang.reflect.Type;
+import java.util.Arrays;
 
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.core.JsonParser;
@@ -38,7 +39,7 @@ public class JsonParserUtil {
         for (final String field_name : field_names) {
             if (next_field_name.equals(field_name)) { return next_field_name; }
         }
-        throw new JsonParseException("expected one of field names " + field_names, parser.getCurrentLocation());
+        throw new JsonParseException("expected one of field names " + Arrays.toString(field_names), parser.getCurrentLocation());
     }
 
     public static void expectFieldName(final JsonParser parser, final String field_name) throws JsonParseException, IOException {
