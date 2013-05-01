@@ -29,9 +29,6 @@ import org.junit.rules.Timeout;
 
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.staticiser.jetson.ClientFactory;
-import com.staticiser.jetson.Server;
-import com.staticiser.jetson.ServerFactory;
 
 public abstract class AbstractTest<TestService> {
 
@@ -83,6 +80,7 @@ public abstract class AbstractTest<TestService> {
 
         server.unexpose();
         temp_server.unexpose();
+        server_factory.shutdown();
 
     }
 }

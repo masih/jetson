@@ -20,6 +20,7 @@ package com.staticiser.jetson;
 
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.ChannelOption;
+import io.netty.channel.EventLoop;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
 
@@ -30,6 +31,7 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
 import com.fasterxml.jackson.core.JsonFactory;
+import com.staticiser.jetson.util.NamingThreadFactory;
 import com.staticiser.jetson.util.ReflectionUtil;
 
 /**
@@ -71,16 +73,28 @@ public class ServerFactory<Service> {
     static ServerBootstrap createDefaultServerBootstrap(final Class<?> service_type, final JsonFactory json_factory) {
 
         final Map<String, Method> dispatch = ReflectionUtil.mapNamesToMethods(service_type);
-        //        final NioEventLoopGroup parent_event_loop = new NioEventLoopGroup(8, new NamingThreadFactory("server_parent_event_loop_"));
-        //        final NioEventLoopGroup child_event_loop = new NioEventLoopGroup(50, new NamingThreadFactory("server_child_event_loop_"));
+        final NioEventLoopGroup parent_event_loop = new NioEventLoopGroup(8, new NamingThreadFactory("server_parent_event_loop_"));
+        final NioEventLoopGroup child_event_loop = new NioEventLoopGroup(50, new NamingThreadFactory("server_child_event_loop_"));
         final ThreadPoolExecutor request_executor = new ThreadPoolExecutor(0, 200, 5, TimeUnit.SECONDS, new SynchronousQueue<Runnable>(true));
         final ServerBootstrap server_bootstrap = new ServerBootstrap();
-        server_bootstrap.group(new NioEventLoopGroup(), new NioEventLoopGroup(50)); //group(parent_event_loop, child_event_loop);
+        server_bootstrap.group(parent_event_loop, child_event_loop);
         server_bootstrap.channel(NioServerSocketChannel.class);
         server_bootstrap.option(ChannelOption.TCP_NODELAY, true);
         server_bootstrap.childOption(ChannelOption.TCP_NODELAY, true);
         final ServerChannelInitializer server_channel_initialiser = new ServerChannelInitializer(json_factory, dispatch, request_executor);
         server_bootstrap.childHandler(server_channel_initialiser);
         return server_bootstrap;
+    }
+
+    /**
+     * Shuts down the {@link ServerBootstrap server bootstrap} and the {@link EventLoop}s used by any server that is created using this factory.
+     * After this method is called any server that is created using this factory will become unresponsive.
+     * 
+     * @see ServerBootstrap#shutdown()
+     */
+    public void shutdown() {
+
+        server_bootstrap.shutdown();
+
     }
 }
