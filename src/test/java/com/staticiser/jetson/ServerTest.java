@@ -10,8 +10,7 @@ import org.junit.Test;
 
 import com.staticiser.jetson.exception.JsonRpcException;
 
-
-public class ServerTest extends AbstractTest<TestService> {
+public class ServerTest extends AbstractTest {
 
     @Test
     public void testExposure() throws IOException {
@@ -58,15 +57,9 @@ public class ServerTest extends AbstractTest<TestService> {
     }
 
     @Override
-    protected Class<TestService> getServiceType() {
-
-        return TestService.class;
-    }
-
-    @Override
     protected TestService getService() {
 
-        return new NormalOperationTestService(client_factory);
+        return new NormalOperationTestService(CLIENT_FACTORY);
     }
 
 }

@@ -30,57 +30,45 @@ import org.junit.rules.Timeout;
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-public abstract class AbstractTest<TestService> {
+public abstract class AbstractTest {
 
     @Rule
     public Timeout global_timeout = new Timeout(10 * 60 * 1000);
+
+    protected static final JsonFactory JSON_FACTORY = new JsonFactory(new ObjectMapper());
+    protected static final ServerFactory<TestService> SERVER_FACTORY = new ServerFactory<TestService>(TestService.class, JSON_FACTORY);
+    protected static final ClientFactory<TestService> CLIENT_FACTORY = new ClientFactory<TestService>(TestService.class, JSON_FACTORY);
 
     protected Server server;
     protected InetSocketAddress server_address;
     protected Server temp_server;
     protected int temp_server_port;
-    protected JsonFactory json_factory;
     protected ExecutorService executor;
     protected TestService client;
-    protected ClientFactory client_factory;
-    protected ServerFactory server_factory;
 
     @Before
     public void setUp() throws Exception {
 
-        initJsonFactory();
-        client_factory = new ClientFactory(getServiceType(), json_factory);
-        server_factory = new ServerFactory(getServiceType(), json_factory);
         server = startJsonRpcTestServer();
         server_address = server.getLocalSocketAddress();
         temp_server = startJsonRpcTestServer();
         temp_server_port = temp_server.getLocalSocketAddress().getPort();
-        client = (TestService) client_factory.get(server_address);
+        client = CLIENT_FACTORY.get(server_address);
     }
 
     protected Server startJsonRpcTestServer() throws IOException {
 
-        final Server server = server_factory.createServer(getService());
+        final Server server = SERVER_FACTORY.createServer(getService());
         server.expose();
         return server;
     }
 
-    protected abstract Class<TestService> getServiceType();
-
     protected abstract TestService getService();
-
-    protected void initJsonFactory() {
-
-        final ObjectMapper mapper = new ObjectMapper();
-        json_factory = new JsonFactory(mapper);
-    }
 
     @After
     public void tearDown() throws Exception {
 
         server.unexpose();
         temp_server.unexpose();
-        server_factory.shutdown();
-
     }
 }

@@ -81,6 +81,7 @@ public class ServerFactory<Service> {
 
     static ServerBootstrap createDefaultServerBootstrap(final Class<?> service_type, final JsonFactory json_factory, final ExecutorService request_executor) {
 
+        System.out.println("sss");
         final Map<String, Method> dispatch = ReflectionUtil.mapNamesToMethods(service_type);
         final NioEventLoopGroup parent_event_loop = new NioEventLoopGroup(8, new NamingThreadFactory("server_parent_event_loop_"));
         final NioEventLoopGroup child_event_loop = new NioEventLoopGroup(50, new NamingThreadFactory("server_child_event_loop_"));

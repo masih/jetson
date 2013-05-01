@@ -35,12 +35,10 @@ import junit.framework.Assert;
 
 import org.junit.Test;
 
-import com.staticiser.jetson.Server;
 import com.staticiser.jetson.TestService.TestObject;
 import com.staticiser.jetson.exception.JsonRpcException;
 
-
-public class NormalOperationTest extends AbstractTest<TestService> {
+public class NormalOperationTest extends AbstractTest {
 
     @Test
     public void testDoVoidWithNoParams() throws JsonRpcException {
@@ -233,7 +231,7 @@ public class NormalOperationTest extends AbstractTest<TestService> {
                         final Server server = startJsonRpcTestServer();
                         final InetSocketAddress server_address = server.getLocalSocketAddress();
 
-                        final TestService client = (TestService) client_factory.get(server_address);
+                        final TestService client = (TestService) CLIENT_FACTORY.get(server_address);
 
                         try {
                             testAddOnClient(client);
@@ -257,15 +255,9 @@ public class NormalOperationTest extends AbstractTest<TestService> {
     }
 
     @Override
-    protected Class<TestService> getServiceType() {
-
-        return TestService.class;
-    }
-
-    @Override
     protected TestService getService() {
 
-        return new NormalOperationTestService(client_factory);
+        return new NormalOperationTestService(CLIENT_FACTORY);
     }
 
     public static void main(final String[] args) throws Exception {
