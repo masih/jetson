@@ -75,7 +75,7 @@ public class ServerFactory<Service> {
         //        final NioEventLoopGroup child_event_loop = new NioEventLoopGroup(50, new NamingThreadFactory("server_child_event_loop_"));
         final ThreadPoolExecutor request_executor = new ThreadPoolExecutor(0, 200, 5, TimeUnit.SECONDS, new SynchronousQueue<Runnable>(true));
         final ServerBootstrap server_bootstrap = new ServerBootstrap();
-        server_bootstrap.group(new NioEventLoopGroup(), new NioEventLoopGroup()); //group(parent_event_loop, child_event_loop);
+        server_bootstrap.group(new NioEventLoopGroup(), new NioEventLoopGroup(50)); //group(parent_event_loop, child_event_loop);
         server_bootstrap.channel(NioServerSocketChannel.class);
         server_bootstrap.option(ChannelOption.TCP_NODELAY, true);
         server_bootstrap.childOption(ChannelOption.TCP_NODELAY, true);
