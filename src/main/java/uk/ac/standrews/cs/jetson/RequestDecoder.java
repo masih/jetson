@@ -75,7 +75,7 @@ class RequestDecoder extends MessageToMessageDecoder<ByteBuf> {
             final Request request = new Request(id, method, method_name, params);
             request.setVersion(version);
             parser.nextToken();
-            ctx.channel().attr(ClientHandler.REQUEST_ATTRIBUTE).set(request);
+            ctx.channel().attr(ResponseHandler.REQUEST_ATTRIBUTE).set(request);
             return request;
         }
         catch (final JsonParseException e) {

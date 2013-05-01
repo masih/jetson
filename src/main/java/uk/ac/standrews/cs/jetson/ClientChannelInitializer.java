@@ -27,13 +27,13 @@ class ClientChannelInitializer extends BaseChannelInitializer {
 
     private final RequestEncoder request_encoder;
     private final ResponseDecoder response_decoder;
-    private final ClientHandler client_handler;
+    private final ResponseHandler client_handler;
 
     ClientChannelInitializer(final JsonFactory json_factory) {
 
         response_decoder = new ResponseDecoder(json_factory);
         request_encoder = new RequestEncoder(json_factory);
-        client_handler = new ClientHandler();
+        client_handler = new ResponseHandler();
     }
 
     @Override

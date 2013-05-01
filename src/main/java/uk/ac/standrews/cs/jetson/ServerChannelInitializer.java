@@ -19,11 +19,11 @@
 package uk.ac.standrews.cs.jetson;
 
 import io.netty.channel.ChannelPipeline;
-import io.netty.channel.group.ChannelGroup;
 import io.netty.channel.socket.SocketChannel;
 
 import java.lang.reflect.Method;
 import java.util.Map;
+import java.util.concurrent.ExecutorService;
 
 import com.fasterxml.jackson.core.JsonFactory;
 
@@ -31,13 +31,15 @@ class ServerChannelInitializer extends BaseChannelInitializer {
 
     private final RequestDecoder request_decoder;
     private final ResponseEncoder response_encoder;
-    private final ServerHandler server_handler;
+    private final RequestHandler request_handler;
+    private final ServerChannelGroupHandler channel_group_handler;
 
-    ServerChannelInitializer(final ChannelGroup channel_group, final Object service, final JsonFactory json_factory, final Map<String, Method> dispatch) {
+    ServerChannelInitializer(final JsonFactory json_factory, final Map<String, Method> dispatch, final ExecutorService executor) {
 
         request_decoder = new RequestDecoder(json_factory, dispatch);
         response_encoder = new ResponseEncoder(json_factory);
-        server_handler = new ServerHandler(channel_group, service);
+        request_handler = new RequestHandler(executor);
+        channel_group_handler = new ServerChannelGroupHandler();
     }
 
     @Override
@@ -46,8 +48,10 @@ class ServerChannelInitializer extends BaseChannelInitializer {
         super.initChannel(channel);
         final ChannelPipeline pipeline = channel.pipeline();
 
+        pipeline.addLast("group", channel_group_handler);
         pipeline.addLast("encoder", request_decoder);
         pipeline.addLast("decoder", response_encoder);
-        pipeline.addLast("handler", server_handler);
+        pipeline.addLast(RequestHandler.NAME, request_handler);
     }
+
 }

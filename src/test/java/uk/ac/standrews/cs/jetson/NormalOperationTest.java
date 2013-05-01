@@ -228,16 +228,17 @@ public class NormalOperationTest extends AbstractTest<TestService> {
                     public Void call() throws Exception {
 
                         start_latch.await();
-                        final JsonRpcServer server = startJsonRpcTestServer();
+                        final Server server = startJsonRpcTestServer();
                         final InetSocketAddress server_address = server.getLocalSocketAddress();
-                        final TestService client = (TestService) proxy_factory.get(server_address);
+
+                        final TestService client = (TestService) client_factory.get(server_address);
 
                         try {
                             testAddOnClient(client);
                             testAddOnRemoteClient(client);
                         }
                         finally {
-                            server.shutdown();
+                            server.unexpose();
                         }
                         return null;
                     }
@@ -262,16 +263,23 @@ public class NormalOperationTest extends AbstractTest<TestService> {
     @Override
     protected TestService getService() {
 
-        return new NormalOperationTestService(proxy_factory);
+        return new NormalOperationTestService(client_factory);
     }
 
-    public static void main(final String[] args) throws IOException {
+    public static void main(final String[] args) throws Exception {
 
         final NormalOperationTest t = new NormalOperationTest();
+        t.setUp();
         int i = 0;
-        while (!Thread.currentThread().isInterrupted()) {
-            new JsonRpcServer(t.getServiceType(), t.getService(), t.json_factory).expose();
-            System.out.println(i++);
+        try {
+            while (!Thread.currentThread().isInterrupted()) {
+                t.startJsonRpcTestServer().expose();
+                i++;
+            }
+        }
+        finally {
+            System.out.println("NUMBER OF SERVERS: " + i);
+
         }
     }
 

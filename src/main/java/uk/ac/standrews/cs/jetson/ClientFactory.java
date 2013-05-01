@@ -50,7 +50,7 @@ import uk.ac.standrews.cs.jetson.util.ReflectionUtil;
 import com.fasterxml.jackson.core.JsonFactory;
 
 /**
- * A factory for creating JSON RPC clients. This class is thread-safe.
+ * A factory for creating JSON RPC clients. The created clients are cached for future reuse. This class is thread-safe.
  *
  * @param <Service> the type of the remote service
  * @author Masih Hajiarabderkani (mh638@st-andrews.ac.uk)
@@ -59,7 +59,6 @@ public class ClientFactory<Service> {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ClientFactory.class);
     private final Map<Method, String> dispatch;
-    private final AtomicLong next_request_id;
     private final Bootstrap bootstrap;
     private final ClassLoader class_loader;
     private final Class<?>[] interfaces;
@@ -76,23 +75,11 @@ public class ClientFactory<Service> {
     public ClientFactory(final Class<?> service_interface, final JsonFactory json_factory) {
 
         dispatch = ReflectionUtil.mapMethodsToNames(service_interface);
-        next_request_id = new AtomicLong();
+
         this.class_loader = ClassLoader.getSystemClassLoader();
         this.interfaces = new Class<?>[]{service_interface};
         bootstrap = new Bootstrap();
         configure(json_factory);
-    }
-
-    private void configure(final JsonFactory json_factory) {
-
-        bootstrap.group(GLOBAL_CLIENT_WORKER_GROUP);
-        bootstrap.channel(NioSocketChannel.class);
-        bootstrap.handler(createClientChannelInitializer(json_factory));
-    }
-
-    protected ClientChannelInitializer createClientChannelInitializer(final JsonFactory json_factory) {
-
-        return new ClientChannelInitializer(json_factory);
     }
 
     /**
@@ -110,6 +97,18 @@ public class ClientFactory<Service> {
         return proxy;
     }
 
+    protected void configure(final JsonFactory json_factory) {
+
+        bootstrap.group(GLOBAL_CLIENT_WORKER_GROUP);
+        bootstrap.channel(NioSocketChannel.class);
+        bootstrap.handler(createClientChannelInitializer(json_factory));
+    }
+
+    protected ClientChannelInitializer createClientChannelInitializer(final JsonFactory json_factory) {
+
+        return new ClientChannelInitializer(json_factory);
+    }
+
     @SuppressWarnings("unchecked")
     protected Service createProxy(final JsonRpcInvocationHandler handler) {
 
@@ -121,16 +120,28 @@ public class ClientFactory<Service> {
         return new JsonRpcInvocationHandler(address);
     }
 
+    protected String getJsonRpcMethodName(final Method method) {
+
+        return dispatch.get(method);
+    }
+
     protected class JsonRpcInvocationHandler implements InvocationHandler {
 
         private final InetSocketAddress address;
+        private final AtomicLong next_request_id;
         private final ChannelPool channel_pool;
 
         protected JsonRpcInvocationHandler(final InetSocketAddress address) {
 
             this.address = address;
+            next_request_id = new AtomicLong();
             channel_pool = new ChannelPool(bootstrap, address);
 
+        }
+
+        private Long generateRequestId() {
+
+            return next_request_id.getAndIncrement();
         }
 
         public InetSocketAddress getProxiedAddress() {
@@ -148,7 +159,6 @@ public class ClientFactory<Service> {
                 final Response response = readResponse(channel);
                 if (response.isError()) {
                     final JsonRpcException exception = JsonRpcExceptions.fromJsonRpcError(response.getError());
-                    //                    LOGGER.info("error response " , exception);
                     throw !isInvocationException(exception) ? exception : reconstructException(method.getExceptionTypes(), castToInvovationException(exception));
                 }
                 return response.getResult();
@@ -161,7 +171,7 @@ public class ClientFactory<Service> {
         private Response readResponse(final Channel channel) throws InternalException {
 
             try {
-                channel.attr(ClientHandler.RESPONSE_BARRIER_ATTRIBUTE).get().await();
+                channel.attr(ResponseHandler.RESPONSE_BARRIER_ATTRIBUTE).get().await();
             }
             catch (final InterruptedException e) {
                 throw new InternalException(e);
@@ -170,7 +180,7 @@ public class ClientFactory<Service> {
                 LOGGER.debug("barrier broke while waiting for response", e);
             }
 
-            return channel.attr(ClientHandler.RESPONSE_ATTRIBUTE).get();
+            return channel.attr(ResponseHandler.RESPONSE_ATTRIBUTE).get();
         }
 
         private void writeRequest(final Channel channel, final Request request) throws JsonRpcException {
@@ -213,61 +223,51 @@ public class ClientFactory<Service> {
                 throw new InternalException(e);
             }
         }
-    }
 
-    private InvocationException castToInvovationException(final JsonRpcException exception) {
+        private InvocationException castToInvovationException(final JsonRpcException exception) {
 
-        assert InvocationException.class.isInstance(exception);
-        return InvocationException.class.cast(exception);
-    }
-
-    private Throwable reconstructException(final Class<?>[] expected_types, final InvocationException exception) {
-
-        final Object exception_data = exception.getData();
-        final Throwable throwable;
-        if (Throwable.class.isInstance(exception_data)) {
-            final Throwable cause = Throwable.class.cast(exception_data);
-            throwable = reconstructExceptionFromExpectedTypes(expected_types, cause);
-        }
-        else {
-            throwable = new UnexpectedException("cannot determine the cause of remote invocation exception : " + exception_data);
+            assert InvocationException.class.isInstance(exception);
+            return InvocationException.class.cast(exception);
         }
 
-        return throwable;
-    }
+        private Throwable reconstructException(final Class<?>[] expected_types, final InvocationException exception) {
 
-    private Throwable reconstructExceptionFromExpectedTypes(final Class<?>[] expected_types, final Throwable cause) {
+            final Object exception_data = exception.getData();
+            final Throwable throwable;
+            if (Throwable.class.isInstance(exception_data)) {
+                final Throwable cause = Throwable.class.cast(exception_data);
+                throwable = reconstructExceptionFromExpectedTypes(expected_types, cause);
+            }
+            else {
+                throwable = new UnexpectedException("cannot determine the cause of remote invocation exception : " + exception_data);
+            }
 
-        return !isExpected(expected_types, cause) ? new UnexpectedException(cause) : cause;
-    }
+            return throwable;
+        }
 
-    private boolean isExpected(final Class<?>[] expected_types, final Throwable cause) {
+        private Throwable reconstructExceptionFromExpectedTypes(final Class<?>[] expected_types, final Throwable cause) {
 
-        return ReflectionUtil.containsAnyAssignableFrom(cause.getClass(), expected_types);
-    }
+            return !isExpected(expected_types, cause) ? new UnexpectedException(cause) : cause;
+        }
 
-    private boolean isInvocationException(final JsonRpcException exception) {
+        private boolean isExpected(final Class<?>[] expected_types, final Throwable cause) {
 
-        return InvocationException.class.isInstance(exception);
-    }
+            return ReflectionUtil.containsAnyAssignableFrom(cause.getClass(), expected_types);
+        }
 
-    private Request createRequest(final Channel channel, final Method method, final Object[] params) {
+        private boolean isInvocationException(final JsonRpcException exception) {
 
-        final Request request = channel.attr(ClientHandler.REQUEST_ATTRIBUTE).get();
-        request.setId(generateRequestId());
-        request.setMethodName(getJsonRpcMethodName(method));
-        request.setMethod(method);
-        request.setParams(params);
-        return request;
-    }
+            return InvocationException.class.isInstance(exception);
+        }
 
-    private Long generateRequestId() {
+        private Request createRequest(final Channel channel, final Method method, final Object[] params) {
 
-        return next_request_id.getAndIncrement();
-    }
-
-    private String getJsonRpcMethodName(final Method method) {
-
-        return dispatch.get(method);
+            final Request request = channel.attr(ResponseHandler.REQUEST_ATTRIBUTE).get();
+            request.setId(generateRequestId());
+            request.setMethodName(getJsonRpcMethodName(method));
+            request.setMethod(method);
+            request.setParams(params);
+            return request;
+        }
     }
 }

@@ -58,8 +58,8 @@ class ResponseDecoder extends MessageToMessageDecoder<ByteBuf> {
     @Override
     protected Response decode(final ChannelHandlerContext ctx, final ByteBuf msg) throws JsonRpcException {
 
-        final Response response = ctx.channel().attr(ClientHandler.RESPONSE_ATTRIBUTE).get();
-        final Request request = ctx.channel().attr(ClientHandler.REQUEST_ATTRIBUTE).get();
+        final Response response = ctx.channel().attr(ResponseHandler.RESPONSE_ATTRIBUTE).get();
+        final Request request = ctx.channel().attr(ResponseHandler.REQUEST_ATTRIBUTE).get();
         final long expected_response_id = request.getId();
         final Type expected_return_type = request.getMethod().getGenericReturnType();
 
