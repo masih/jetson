@@ -26,6 +26,8 @@ import io.netty.channel.socket.nio.NioServerSocketChannel;
 
 import java.lang.reflect.Method;
 import java.util.Map;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -42,6 +44,7 @@ import com.staticiser.jetson.util.ReflectionUtil;
 public class ServerFactory<Service> {
 
     private final ServerBootstrap server_bootstrap;
+    private final ThreadPoolExecutor request_executor;
 
     /**
      * Instantiates a new server factory.
@@ -51,6 +54,7 @@ public class ServerFactory<Service> {
      */
     public ServerFactory(final Class<Service> service_type, final JsonFactory json_factory) {
 
+        request_executor = new ThreadPoolExecutor(0, 200, 5, TimeUnit.SECONDS, new SynchronousQueue<Runnable>(true));
         server_bootstrap = createServerBootstrap(service_type, json_factory);
     }
 
@@ -67,15 +71,19 @@ public class ServerFactory<Service> {
 
     protected ServerBootstrap createServerBootstrap(final Class<?> service_type, final JsonFactory json_factory) {
 
-        return createDefaultServerBootstrap(service_type, json_factory);
+        return createDefaultServerBootstrap(service_type, json_factory, request_executor);
     }
 
     static ServerBootstrap createDefaultServerBootstrap(final Class<?> service_type, final JsonFactory json_factory) {
 
+        return createDefaultServerBootstrap(service_type, json_factory, Executors.newCachedThreadPool());
+    }
+
+    static ServerBootstrap createDefaultServerBootstrap(final Class<?> service_type, final JsonFactory json_factory, final ExecutorService request_executor) {
+
         final Map<String, Method> dispatch = ReflectionUtil.mapNamesToMethods(service_type);
         final NioEventLoopGroup parent_event_loop = new NioEventLoopGroup(8, new NamingThreadFactory("server_parent_event_loop_"));
         final NioEventLoopGroup child_event_loop = new NioEventLoopGroup(50, new NamingThreadFactory("server_child_event_loop_"));
-        final ThreadPoolExecutor request_executor = new ThreadPoolExecutor(0, 200, 5, TimeUnit.SECONDS, new SynchronousQueue<Runnable>(true));
         final ServerBootstrap server_bootstrap = new ServerBootstrap();
         server_bootstrap.group(parent_event_loop, child_event_loop);
         server_bootstrap.channel(NioServerSocketChannel.class);
@@ -94,6 +102,7 @@ public class ServerFactory<Service> {
      */
     public void shutdown() {
 
+        request_executor.shutdownNow();
         server_bootstrap.shutdown();
 
     }
