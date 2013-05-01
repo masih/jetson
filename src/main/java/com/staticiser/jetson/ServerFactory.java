@@ -73,8 +73,8 @@ public class ServerFactory<Service> {
 
         final Map<String, Method> dispatch = ReflectionUtil.mapNamesToMethods(service_type);
         final NioEventLoopGroup parent_event_loop = new NioEventLoopGroup(8, new NamingThreadFactory("server_parent_event_loop_"));
-        final NioEventLoopGroup child_event_loop = new NioEventLoopGroup(200, new NamingThreadFactory("server_child_event_loop_"));
-        final ThreadPoolExecutor request_executor = new ThreadPoolExecutor(0, 500, 5, TimeUnit.SECONDS, new SynchronousQueue<Runnable>(true));
+        final NioEventLoopGroup child_event_loop = new NioEventLoopGroup(8, new NamingThreadFactory("server_child_event_loop_"));
+        final ThreadPoolExecutor request_executor = new ThreadPoolExecutor(0, 50, 5, TimeUnit.SECONDS, new SynchronousQueue<Runnable>(true));
         final ServerBootstrap server_bootstrap = new ServerBootstrap();
         server_bootstrap.group(parent_event_loop, child_event_loop);
         server_bootstrap.channel(NioServerSocketChannel.class);
