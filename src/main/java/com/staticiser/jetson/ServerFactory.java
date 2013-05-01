@@ -30,7 +30,6 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
 import com.fasterxml.jackson.core.JsonFactory;
-import com.staticiser.jetson.util.NamingThreadFactory;
 import com.staticiser.jetson.util.ReflectionUtil;
 
 /**
@@ -72,11 +71,11 @@ public class ServerFactory<Service> {
     static ServerBootstrap createDefaultServerBootstrap(final Class<?> service_type, final JsonFactory json_factory) {
 
         final Map<String, Method> dispatch = ReflectionUtil.mapNamesToMethods(service_type);
-        final NioEventLoopGroup parent_event_loop = new NioEventLoopGroup(8, new NamingThreadFactory("server_parent_event_loop_"));
-        final NioEventLoopGroup child_event_loop = new NioEventLoopGroup(50, new NamingThreadFactory("server_child_event_loop_"));
+        //        final NioEventLoopGroup parent_event_loop = new NioEventLoopGroup(8, new NamingThreadFactory("server_parent_event_loop_"));
+        //        final NioEventLoopGroup child_event_loop = new NioEventLoopGroup(50, new NamingThreadFactory("server_child_event_loop_"));
         final ThreadPoolExecutor request_executor = new ThreadPoolExecutor(0, 200, 5, TimeUnit.SECONDS, new SynchronousQueue<Runnable>(true));
         final ServerBootstrap server_bootstrap = new ServerBootstrap();
-        server_bootstrap.group(parent_event_loop, child_event_loop);
+        server_bootstrap.group(new NioEventLoopGroup(), new NioEventLoopGroup()); //group(parent_event_loop, child_event_loop);
         server_bootstrap.channel(NioServerSocketChannel.class);
         server_bootstrap.option(ChannelOption.TCP_NODELAY, true);
         server_bootstrap.childOption(ChannelOption.TCP_NODELAY, true);
