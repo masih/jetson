@@ -35,30 +35,32 @@ public abstract class AbstractTest<TestService> {
     @Rule
     public Timeout global_timeout = new Timeout(10 * 60 * 1000);
 
-    protected JsonRpcServer server;
+    protected Server server;
     protected InetSocketAddress server_address;
-    protected JsonRpcServer temp_server;
+    protected Server temp_server;
     protected int temp_server_port;
     protected JsonFactory json_factory;
     protected ExecutorService executor;
     protected TestService client;
-    protected ClientFactory proxy_factory;
+    protected ClientFactory client_factory;
+    protected ServerFactory server_factory;
 
     @Before
     public void setUp() throws Exception {
 
         initJsonFactory();
-        proxy_factory = new ClientFactory(getServiceType(), json_factory);
+        client_factory = new ClientFactory(getServiceType(), json_factory);
+        server_factory = new ServerFactory(getServiceType(), json_factory);
         server = startJsonRpcTestServer();
         server_address = server.getLocalSocketAddress();
         temp_server = startJsonRpcTestServer();
         temp_server_port = temp_server.getLocalSocketAddress().getPort();
-        client = (TestService) proxy_factory.get(server_address);
+        client = (TestService) client_factory.get(server_address);
     }
 
-    protected JsonRpcServer startJsonRpcTestServer() throws IOException {
+    protected Server startJsonRpcTestServer() throws IOException {
 
-        final JsonRpcServer server = new JsonRpcServer(getServiceType(), getService(), json_factory);
+        final Server server = server_factory.createJsonRpcServer(getService());
         server.expose();
         return server;
     }
@@ -76,8 +78,8 @@ public abstract class AbstractTest<TestService> {
     @After
     public void tearDown() throws Exception {
 
-        server.shutdown();
-        temp_server.shutdown();
+        server.unexpose();
+        temp_server.unexpose();
 
     }
 }

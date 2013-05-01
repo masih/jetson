@@ -56,20 +56,6 @@ public class ServerTest extends AbstractTest<TestService> {
         Assert.assertEquals(address, server.getLocalSocketAddress());
     }
 
-    @Test
-    public void testShutdown() throws JsonRpcException {
-
-        client.saySomething();
-        server.shutdown();
-        try {
-            client.saySomething();
-            fail();
-        }
-        catch (final JsonRpcException e) {
-            //expected
-        }
-    }
-
     @Override
     protected Class<TestService> getServiceType() {
 
@@ -79,7 +65,7 @@ public class ServerTest extends AbstractTest<TestService> {
     @Override
     protected TestService getService() {
 
-        return new NormalOperationTestService(proxy_factory);
+        return new NormalOperationTestService(client_factory);
     }
 
 }

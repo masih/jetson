@@ -32,27 +32,27 @@ public abstract class Message {
     private String version;
     private Long id;
 
-    Message() {
+    protected Message() {
 
         resetVersion();
     }
 
-    Long getId() {
+    protected Long getId() {
 
         return id;
     }
 
-    void setId(final Long id) {
+    protected void setId(final Long id) {
 
         this.id = id;
     }
 
-    String getVersion() {
+    protected String getVersion() {
 
         return version;
     }
 
-    void setVersion(final String version) {
+    protected void setVersion(final String version) {
 
         this.version = version;
     }
@@ -67,5 +67,4 @@ public abstract class Message {
 
         setVersion(DEFAULT_VERSION);
     }
-
 }

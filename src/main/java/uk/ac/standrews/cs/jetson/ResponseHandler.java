@@ -36,9 +36,9 @@ import uk.ac.standrews.cs.jetson.exception.TransportException;
 import uk.ac.standrews.cs.jetson.exception.UnexpectedException;
 
 @Sharable
-class ClientHandler extends ChannelInboundMessageHandlerAdapter<Response> {
+class ResponseHandler extends ChannelInboundMessageHandlerAdapter<Response> {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(ClientHandler.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(ResponseHandler.class);
     static final AttributeKey<Response> RESPONSE_ATTRIBUTE = new AttributeKey<Response>("response");
     static final AttributeKey<Request> REQUEST_ATTRIBUTE = new AttributeKey<Request>("request");
     static final AttributeKey<CyclicBarrier> RESPONSE_BARRIER_ATTRIBUTE = new AttributeKey<CyclicBarrier>("response_latch");
@@ -64,7 +64,7 @@ class ClientHandler extends ChannelInboundMessageHandlerAdapter<Response> {
         LOGGER.debug("caught on client handler", cause);
         final CyclicBarrier latch = ctx.channel().attr(RESPONSE_BARRIER_ATTRIBUTE).get();
         if (latch != null) {
-            final Attribute<Request> id_attr = ctx.channel().attr(ClientHandler.REQUEST_ATTRIBUTE);
+            final Attribute<Request> id_attr = ctx.channel().attr(ResponseHandler.REQUEST_ATTRIBUTE);
             final Long request_id = id_attr == null ? null : id_attr.get().getId();
             final Response response = ctx.channel().attr(RESPONSE_ATTRIBUTE).get();
             final JsonRpcError error;

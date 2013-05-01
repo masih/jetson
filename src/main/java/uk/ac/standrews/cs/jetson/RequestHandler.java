@@ -22,18 +22,14 @@ import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandler.Sharable;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundMessageHandlerAdapter;
-import io.netty.channel.group.ChannelGroup;
 import io.netty.handler.timeout.TimeoutException;
 import io.netty.util.AttributeKey;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
-import java.util.concurrent.RejectedExecutionHandler;
-import java.util.concurrent.SynchronousQueue;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -50,48 +46,35 @@ import uk.ac.standrews.cs.jetson.exception.TransportException;
 import uk.ac.standrews.cs.jetson.exception.UnexpectedException;
 
 @Sharable
-class ServerHandler extends ChannelInboundMessageHandlerAdapter<Request> {
+class RequestHandler extends ChannelInboundMessageHandlerAdapter<Request> {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(ServerHandler.class);
-    private final Object service;
-    private final ChannelGroup channel_group;
+    private static final Logger LOGGER = LoggerFactory.getLogger(RequestHandler.class);
     private static final AttributeKey<Future<Void>> PROCESSING_FUTURE_ATTRIBUTE = new AttributeKey<Future<Void>>("processing");
-    //    private static final ExecutorService exec = Executors.newCachedThreadPool();
-    private static final ThreadPoolExecutor exec = new ThreadPoolExecutor(0, 300, 5, TimeUnit.SECONDS, new SynchronousQueue<Runnable>(true));
-    static {
-        exec.setRejectedExecutionHandler(new RejectedExecutionHandler() {
+    private final ExecutorService executor;
 
-            @Override
-            public void rejectedExecution(final Runnable r, final ThreadPoolExecutor executor) {
+    static final String NAME = "request_handler";
 
-                LOGGER.info(">>>>> execution rejected , not enough threads to handle requests");
-            }
-        });
-    }
+    RequestHandler(final ExecutorService executor) {
 
-    ServerHandler(final ChannelGroup channel_group, final Object service) {
-
-        this.channel_group = channel_group;
-        this.service = service;
+        this.executor = executor;
     }
 
     @Override
-    public void channelActive(final ChannelHandlerContext ctx) throws Exception {
+    public void channelActive(final ChannelHandlerContext context) throws Exception {
 
-        final Channel channel = ctx.channel();
-        channel.attr(ClientHandler.RESPONSE_ATTRIBUTE).set(new Response());
-        channel_group.add(channel);
-        super.channelActive(ctx);
+        final Channel channel = context.channel();
+        channel.attr(ResponseHandler.RESPONSE_ATTRIBUTE).set(new Response());
+        super.channelActive(context);
     }
 
     @Override
-    public void channelInactive(final ChannelHandlerContext ctx) throws Exception {
+    public void channelInactive(final ChannelHandlerContext context) throws Exception {
 
-        cancelRequestProcessing(ctx);
-        ctx.channel().attr(PROCESSING_FUTURE_ATTRIBUTE).remove();
-        ctx.channel().attr(ClientHandler.RESPONSE_ATTRIBUTE).remove();
-        ctx.close();
-        super.channelActive(ctx);
+        cancelRequestProcessing(context);
+        context.channel().attr(PROCESSING_FUTURE_ATTRIBUTE).remove();
+        context.channel().attr(ResponseHandler.RESPONSE_ATTRIBUTE).remove();
+        context.close();
+        super.channelInactive(context);
     }
 
     private void cancelRequestProcessing(final ChannelHandlerContext ctx) {
@@ -105,14 +88,15 @@ class ServerHandler extends ChannelInboundMessageHandlerAdapter<Request> {
     @Override
     public void messageReceived(final ChannelHandlerContext ctx, final Request request) throws Exception {
 
-        final Future<Void> processing = exec.submit(new Callable<Void>() {
+        final Future<Void> processing_future = executor.submit(new Callable<Void>() {
 
             @Override
             public Void call() throws Exception {
 
                 try {
-                    final Object result = handleRequest(request);
-                    final Response response = ctx.channel().attr(ClientHandler.RESPONSE_ATTRIBUTE).get();
+                    final Object service = ctx.channel().parent().attr(Server.SERVICE_ATTRIBUTE).get();
+                    final Object result = handleRequest(service, request);
+                    final Response response = ctx.channel().attr(ResponseHandler.RESPONSE_ATTRIBUTE).get();
                     response.reset();
                     response.setId(request.getId());
                     response.setResult(result);
@@ -124,18 +108,22 @@ class ServerHandler extends ChannelInboundMessageHandlerAdapter<Request> {
                 return null;
             }
         });
-        ctx.channel().attr(PROCESSING_FUTURE_ATTRIBUTE).set(processing);
+        ctx.channel().attr(PROCESSING_FUTURE_ATTRIBUTE).set(processing_future);
     }
 
     @Override
     public void exceptionCaught(final ChannelHandlerContext ctx, final Throwable cause) throws Exception {
 
+        if (cause instanceof RuntimeException) {
+            cause.printStackTrace();
+        }
+
         LOGGER.debug("caught on server handler", cause);
         cancelRequestProcessing(ctx);
         if (ctx.channel().isOpen()) {
-            final Request request = ctx.channel().attr(ClientHandler.REQUEST_ATTRIBUTE).get();
+            final Request request = ctx.channel().attr(ResponseHandler.REQUEST_ATTRIBUTE).get();
             final Long current_request_id = request.getId();
-            final Response response = ctx.channel().attr(ClientHandler.RESPONSE_ATTRIBUTE).get();
+            final Response response = ctx.channel().attr(ResponseHandler.RESPONSE_ATTRIBUTE).get();
             final JsonRpcError error;
             if (cause instanceof JsonRpcException) {
                 error = JsonRpcException.class.cast(cause);
@@ -161,13 +149,13 @@ class ServerHandler extends ChannelInboundMessageHandlerAdapter<Request> {
         }
     }
 
-    private Object handleRequest(final Request request) throws ServerException {
+    private Object handleRequest(final Object service, final Request request) throws ServerException {
 
         final Method method = request.getMethod();
         final Object[] parameters = request.getParameters();
 
         try {
-            return invoke(method, parameters);
+            return method.invoke(service, parameters);
         }
         catch (final IllegalArgumentException e) {
             throw new InvalidParameterException(e);
@@ -185,10 +173,4 @@ class ServerHandler extends ChannelInboundMessageHandlerAdapter<Request> {
             throw new InternalException(e);
         }
     }
-
-    private Object invoke(final Method method, final Object... parameters) throws IllegalAccessException, InvocationTargetException {
-
-        return method.invoke(service, parameters);
-    }
-
 }
