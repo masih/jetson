@@ -24,8 +24,10 @@ public class UnexpectedException extends JsonRpcException {
     public static final int CODE = -32501;
 
     public UnexpectedException(final Throwable cause) {
+
         this(cause.getMessage());
     }
+
     public UnexpectedException(final String message) {
 
         super(CODE, message);

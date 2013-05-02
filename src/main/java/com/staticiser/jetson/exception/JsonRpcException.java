@@ -22,12 +22,10 @@ import java.io.IOException;
 
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 
-/*
--32700 ---> parse error
--32600 ---> server error
--32500 ---> application error
--32400 ---> system error
--32300 ---> transport error
+/**
+ * The base of all JSON RPC exception.
+ * 
+ * @author Masih Hajiarabderkani (mh638@st-andrews.ac.uk)
  */
 @JsonSerialize(as = JsonRpcError.class)
 public class JsonRpcException extends IOException implements JsonRpcError {
@@ -37,14 +35,26 @@ public class JsonRpcException extends IOException implements JsonRpcError {
     private Object data;
     private String message;
 
-    public JsonRpcException() {
+    protected JsonRpcException() {
 
         super();
     }
 
-    public JsonRpcException(final int code, final String message) {
+    protected JsonRpcException(final int code, final String message) {
 
         super(message);
+        initCodeAndMessage(code);
+    }
+
+    protected JsonRpcException(final int code, final Throwable cause) {
+
+        super(cause);
+        initCodeAndMessage(code);
+    }
+
+    protected JsonRpcException(final int code, final String message, final Throwable cause) {
+
+        super(message, cause);
         initCodeAndMessage(code);
     }
 
@@ -52,18 +62,6 @@ public class JsonRpcException extends IOException implements JsonRpcError {
 
         setCode(code);
         setMessage(super.getMessage());
-    }
-
-    public JsonRpcException(final int code, final Throwable cause) {
-
-        super(cause);
-        initCodeAndMessage(code);
-    }
-
-    public JsonRpcException(final int code, final String message, final Throwable cause) {
-
-        super(message, cause);
-        initCodeAndMessage(code);
     }
 
     @Override
@@ -84,17 +82,17 @@ public class JsonRpcException extends IOException implements JsonRpcError {
         return data;
     }
 
-    public void setCode(final int code) {
+    protected void setCode(final int code) {
 
         this.code = code;
     }
 
-    public void setMessage(final String message) {
+    protected void setMessage(final String message) {
 
         this.message = message;
     }
 
-    public void setData(final Object data) {
+    protected void setData(final Object data) {
 
         this.data = data;
     }

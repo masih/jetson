@@ -24,10 +24,12 @@ import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelFutureListener;
 
 import java.net.InetSocketAddress;
-import java.util.concurrent.CyclicBarrier;
+import java.util.concurrent.Semaphore;
 
 import org.apache.commons.pool.BasePoolableObjectFactory;
 import org.apache.commons.pool.impl.GenericObjectPool;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 class ChannelPool extends GenericObjectPool<Channel> {
 
@@ -71,7 +73,7 @@ class ChannelPool extends GenericObjectPool<Channel> {
 
         private void configureChannel(final Channel channel) {
 
-            channel.attr(ResponseHandler.RESPONSE_BARRIER_ATTRIBUTE).set(new CyclicBarrier(2));
+            channel.attr(ResponseHandler.RESPONSE_BARRIER_ATTRIBUTE).set(new AbortableSemaphore());
             channel.attr(ResponseHandler.REQUEST_ATTRIBUTE).set(new Request());
             channel.attr(ResponseHandler.RESPONSE_ATTRIBUTE).set(new Response());
         }
@@ -94,6 +96,32 @@ class ChannelPool extends GenericObjectPool<Channel> {
         public boolean validateObject(final Channel channel) {
 
             return channel.isOpen() && channel.isActive() && super.validateObject(channel);
+        }
+    }
+
+    static final class AbortableSemaphore extends Semaphore {
+
+        private static final long serialVersionUID = 2418286125921263676L;
+        private static final Logger LOGGER = LoggerFactory.getLogger(ChannelPool.AbortableSemaphore.class);
+        private static final int INITIAL_PERMITS = 0;
+
+        private AbortableSemaphore() {
+
+            super(INITIAL_PERMITS, true);
+        }
+
+        void reset() {
+
+            interruptQueuedThreads();
+            reducePermits(INITIAL_PERMITS);
+        }
+
+        private void interruptQueuedThreads() {
+
+            for (final Thread thread : getQueuedThreads()) {
+                thread.interrupt();
+                LOGGER.warn("interrupted queued thread {}", thread.getName());
+            }
         }
     }
 }

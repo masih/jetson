@@ -23,18 +23,43 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 
+/**
+ * Presents a JSON RPC error object as described in the <a href="http://www.jsonrpc.org/specification#error_object">specifications</a>.
+ * 
+ * @author Masih Hajiarabderkani (mh638@st-andrews.ac.uk)
+ */
 public interface JsonRpcError {
 
+    /** The JSON code key. */
     String CODE_KEY = "code";
+
+    /** The JSON message key. */
     String MESSAGE_KEY = "message";
+
+    /** The JSON data key. */
     String DATA_KEY = "data";
 
+    /**
+     * Gets the error code.
+     *
+     * @return the code
+     */
     @JsonProperty(CODE_KEY)
     int getCode();
 
+    /**
+     * Gets the short description of the error.
+     *
+     * @return the short description of the error
+     */
     @JsonProperty(MESSAGE_KEY)
     String getMessage();
 
+    /**
+     * Gets the additional information about the error.
+     *
+     * @return the additional information about the error
+     */
     @JsonProperty(value = DATA_KEY)
     @JsonTypeInfo(use = JsonTypeInfo.Id.CLASS, include = JsonTypeInfo.As.PROPERTY, property = "@type")
     @JsonInclude(Include.NON_NULL)

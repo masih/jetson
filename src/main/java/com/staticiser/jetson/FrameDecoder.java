@@ -28,7 +28,7 @@ import io.netty.handler.codec.Delimiters;
  * @author Masih Hajiarabderkani (mh638@st-andrews.ac.uk)
  * @see DelimiterBasedFrameDecoder
  */
-public class FrameDecoder extends DelimiterBasedFrameDecoder {
+class FrameDecoder extends DelimiterBasedFrameDecoder {
 
     /** The default maximum size of JSON RPC message frame. */
     public static final int DEFAULT_MAX_FRAME_LENGTH = 8192;

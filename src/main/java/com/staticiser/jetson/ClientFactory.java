@@ -31,13 +31,11 @@ import java.lang.reflect.Proxy;
 import java.net.InetSocketAddress;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.BrokenBarrierException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicLong;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
 
 import com.fasterxml.jackson.core.JsonFactory;
 import com.staticiser.jetson.exception.InternalException;
@@ -171,13 +169,10 @@ public class ClientFactory<Service> {
         private Response readResponse(final Channel channel) throws InternalException {
 
             try {
-                channel.attr(ResponseHandler.RESPONSE_BARRIER_ATTRIBUTE).get().await();
+                channel.attr(ResponseHandler.RESPONSE_BARRIER_ATTRIBUTE).get().acquire();
             }
             catch (final InterruptedException e) {
                 throw new InternalException(e);
-            }
-            catch (final BrokenBarrierException e) {
-                LOGGER.debug("barrier broke while waiting for response", e);
             }
 
             return channel.attr(ResponseHandler.RESPONSE_ATTRIBUTE).get();
