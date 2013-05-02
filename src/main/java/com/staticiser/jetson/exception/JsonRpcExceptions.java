@@ -21,7 +21,15 @@ package com.staticiser.jetson.exception;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * A utility class for converting JSON RPC error codes to {@link JsonRpcException exceptions}.
+ * @author Masih Hajiarabderkani (mh638@st-andrews.ac.uk)
+ */
 public final class JsonRpcExceptions {
+
+    private JsonRpcExceptions() {
+
+    }
 
     private static final Map<Integer, Class<? extends JsonRpcException>> CODE_TO_EXCEPTION = new HashMap<Integer, Class<? extends JsonRpcException>>();
     static {
@@ -35,9 +43,14 @@ public final class JsonRpcExceptions {
         CODE_TO_EXCEPTION.put(MethodNotFoundException.CODE, MethodNotFoundException.class);
         CODE_TO_EXCEPTION.put(ServerRuntimeException.CODE, ServerRuntimeException.class);
         CODE_TO_EXCEPTION.put(TransportException.CODE, TransportException.class);
-        //        CODE_TO_EXCEPTION.put(UnexpectedException.CODE,UnexpectedException.class);
     }
 
+    /**
+     * Produces a {@link JsonRpcException} from a given {@link JsonRpcError}.
+     *
+     * @param error the error
+     * @return the exception
+     */
     public static JsonRpcException fromJsonRpcError(final JsonRpcError error) {
 
         final Integer code = error.getCode();

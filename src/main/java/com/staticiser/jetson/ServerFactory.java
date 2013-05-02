@@ -28,9 +28,6 @@ import java.lang.reflect.Method;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.SynchronousQueue;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
 
 import com.fasterxml.jackson.core.JsonFactory;
 import com.staticiser.jetson.util.NamingThreadFactory;
@@ -44,7 +41,7 @@ import com.staticiser.jetson.util.ReflectionUtil;
 public class ServerFactory<Service> {
 
     private final ServerBootstrap server_bootstrap;
-    private final ThreadPoolExecutor request_executor;
+    private final ExecutorService request_executor;
 
     /**
      * Instantiates a new server factory.
@@ -54,7 +51,19 @@ public class ServerFactory<Service> {
      */
     public ServerFactory(final Class<Service> service_type, final JsonFactory json_factory) {
 
-        request_executor = new ThreadPoolExecutor(0, 200, 5, TimeUnit.SECONDS, new SynchronousQueue<Runnable>(true));
+        this(service_type, json_factory, Executors.newCachedThreadPool(new NamingThreadFactory(service_type.getSimpleName() + "_server_factory_")));
+    }
+
+    /**
+     * Instantiates a new server factory.
+     *
+     * @param service_type the type of the service
+     * @param json_factory the JSON factory
+     * @param request_executor the executor that is used to process requests by all the servers that are instantiated using this factory
+     */
+    public ServerFactory(final Class<Service> service_type, final JsonFactory json_factory, final ExecutorService request_executor) {
+
+        this.request_executor = request_executor;
         server_bootstrap = createServerBootstrap(service_type, json_factory);
     }
 
@@ -81,7 +90,6 @@ public class ServerFactory<Service> {
 
     static ServerBootstrap createDefaultServerBootstrap(final Class<?> service_type, final JsonFactory json_factory, final ExecutorService request_executor) {
 
-        System.out.println("sss");
         final Map<String, Method> dispatch = ReflectionUtil.mapNamesToMethods(service_type);
         final NioEventLoopGroup parent_event_loop = new NioEventLoopGroup(8, new NamingThreadFactory("server_parent_event_loop_"));
         final NioEventLoopGroup child_event_loop = new NioEventLoopGroup(50, new NamingThreadFactory("server_child_event_loop_"));

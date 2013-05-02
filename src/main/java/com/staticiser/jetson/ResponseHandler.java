@@ -25,16 +25,16 @@ import io.netty.handler.timeout.TimeoutException;
 import io.netty.util.Attribute;
 import io.netty.util.AttributeKey;
 
-import java.util.concurrent.CyclicBarrier;
+import java.util.concurrent.Semaphore;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.staticiser.jetson.ChannelPool.AbortableSemaphore;
 import com.staticiser.jetson.exception.JsonRpcError;
 import com.staticiser.jetson.exception.JsonRpcException;
 import com.staticiser.jetson.exception.TransportException;
 import com.staticiser.jetson.exception.UnexpectedException;
-
 
 @Sharable
 class ResponseHandler extends ChannelInboundMessageHandlerAdapter<Response> {
@@ -42,29 +42,29 @@ class ResponseHandler extends ChannelInboundMessageHandlerAdapter<Response> {
     private static final Logger LOGGER = LoggerFactory.getLogger(ResponseHandler.class);
     static final AttributeKey<Response> RESPONSE_ATTRIBUTE = new AttributeKey<Response>("response");
     static final AttributeKey<Request> REQUEST_ATTRIBUTE = new AttributeKey<Request>("request");
-    static final AttributeKey<CyclicBarrier> RESPONSE_BARRIER_ATTRIBUTE = new AttributeKey<CyclicBarrier>("response_latch");
+    static final AttributeKey<AbortableSemaphore> RESPONSE_BARRIER_ATTRIBUTE = new AttributeKey<AbortableSemaphore>("response_latch");
 
     @Override
     public void messageReceived(final ChannelHandlerContext ctx, final Response response) throws Exception {
 
         ctx.channel().attr(RESPONSE_ATTRIBUTE).set(response);
-        ctx.channel().attr(RESPONSE_BARRIER_ATTRIBUTE).get().await();
+        ctx.channel().attr(RESPONSE_BARRIER_ATTRIBUTE).get().release();
     }
 
     @Override
-    public void channelInactive(final ChannelHandlerContext ctx) throws Exception {
+    public void channelInactive(final ChannelHandlerContext context) throws Exception {
 
-        LOGGER.debug("client disconencted {}", ctx.channel().remoteAddress());
-        ctx.close();
-        super.channelInactive(ctx);
+        LOGGER.debug("client disconencted {}", context.channel().remoteAddress());
+        context.close();
+        super.channelInactive(context);
     }
 
     @Override
     public void exceptionCaught(final ChannelHandlerContext ctx, final Throwable cause) {
 
-        LOGGER.debug("caught on client handler", cause);
-        final CyclicBarrier latch = ctx.channel().attr(RESPONSE_BARRIER_ATTRIBUTE).get();
-        if (latch != null) {
+        LOGGER.info("caught on client handler", cause);
+        final Semaphore latch = ctx.channel().attr(RESPONSE_BARRIER_ATTRIBUTE).get();
+        try {
             final Attribute<Request> id_attr = ctx.channel().attr(ResponseHandler.REQUEST_ATTRIBUTE);
             final Long request_id = id_attr == null ? null : id_attr.get().getId();
             final Response response = ctx.channel().attr(RESPONSE_ATTRIBUTE).get();
@@ -80,10 +80,9 @@ class ResponseHandler extends ChannelInboundMessageHandlerAdapter<Response> {
             }
             response.setId(request_id);
             response.setError(error);
-            latch.reset();
         }
-        else {
-            ctx.close();
+        finally {
+            latch.release();
         }
     }
 }
