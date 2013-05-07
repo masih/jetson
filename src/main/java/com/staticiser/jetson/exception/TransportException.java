@@ -28,6 +28,10 @@ public class TransportException extends JsonRpcException {
 
         super(CODE, MESSAGE);
     }
+    public TransportException(final String message) {
+
+        super(CODE, message);
+    }
 
     public TransportException(final Throwable cause) {
 
