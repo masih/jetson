@@ -20,7 +20,6 @@ package com.staticiser.jetson;
 
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.Channel;
-import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioSocketChannel;
 
@@ -59,10 +58,10 @@ public class ClientFactory<Service> {
     private final Map<Method, String> dispatch;
     private final Bootstrap bootstrap;
     private final ClassLoader class_loader;
+
     private final Class<?>[] interfaces;
 
     private final Map<InetSocketAddress, Service> address_to_proxy_map = new HashMap<InetSocketAddress, Service>();
-    private static final EventLoopGroup GLOBAL_CLIENT_WORKER_GROUP = new NioEventLoopGroup(8, new NamingThreadFactory("client_event_loop_"));
 
     /**
      * Instantiates a new JSON RPC client factory. The {@link ClassLoader#getSystemClassLoader() system class loader} used for constructing new proxy instances.
@@ -97,9 +96,14 @@ public class ClientFactory<Service> {
 
     protected void configure(final JsonFactory json_factory) {
 
-        bootstrap.group(GLOBAL_CLIENT_WORKER_GROUP);
+        bootstrap.group(new NioEventLoopGroup(8, new NamingThreadFactory("client_event_loop_")));
         bootstrap.channel(NioSocketChannel.class);
         bootstrap.handler(createClientChannelInitializer(json_factory));
+    }
+
+    public void shutdown() {
+
+        bootstrap.shutdown();
     }
 
     protected ClientChannelInitializer createClientChannelInitializer(final JsonFactory json_factory) {

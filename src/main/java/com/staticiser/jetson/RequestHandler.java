@@ -19,10 +19,10 @@
 package com.staticiser.jetson;
 
 import io.netty.channel.Channel;
+import io.netty.channel.ChannelException;
 import io.netty.channel.ChannelHandler.Sharable;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundMessageHandlerAdapter;
-import io.netty.handler.timeout.TimeoutException;
 import io.netty.util.AttributeKey;
 
 import java.lang.reflect.InvocationTargetException;
@@ -42,9 +42,7 @@ import com.staticiser.jetson.exception.JsonRpcError;
 import com.staticiser.jetson.exception.JsonRpcException;
 import com.staticiser.jetson.exception.ServerException;
 import com.staticiser.jetson.exception.ServerRuntimeException;
-import com.staticiser.jetson.exception.TransportException;
 import com.staticiser.jetson.exception.UnexpectedException;
-
 
 @Sharable
 class RequestHandler extends ChannelInboundMessageHandlerAdapter<Request> {
@@ -113,41 +111,37 @@ class RequestHandler extends ChannelInboundMessageHandlerAdapter<Request> {
     }
 
     @Override
-    public void exceptionCaught(final ChannelHandlerContext ctx, final Throwable cause) throws Exception {
-
-        if (cause instanceof RuntimeException) {
-            cause.printStackTrace();
-        }
+    public void exceptionCaught(final ChannelHandlerContext context, final Throwable cause) throws Exception {
 
         LOGGER.debug("caught on server handler", cause);
-        cancelRequestProcessing(ctx);
-        if (ctx.channel().isOpen()) {
-            final Request request = ctx.channel().attr(ResponseHandler.REQUEST_ATTRIBUTE).get();
+        cancelRequestProcessing(context);
+        if (isRecoverable(context, cause)) {
+            final Request request = context.channel().attr(ResponseHandler.REQUEST_ATTRIBUTE).get();
             final Long current_request_id = request.getId();
-            final Response response = ctx.channel().attr(ResponseHandler.RESPONSE_ATTRIBUTE).get();
+            final Response response = context.channel().attr(ResponseHandler.RESPONSE_ATTRIBUTE).get();
             final JsonRpcError error;
             if (cause instanceof JsonRpcException) {
                 error = JsonRpcException.class.cast(cause);
             }
-            else if (cause instanceof TimeoutException) {
-                error = new TransportException(cause);
+            else if (cause instanceof RuntimeException) {
+                error = new ServerRuntimeException(cause);
             }
             else {
                 error = new UnexpectedException(cause);
             }
             response.setError(error);
             response.setId(current_request_id);
-            try {
-                ctx.write(response);
-            }
-            catch (final Throwable e) {
-                LOGGER.warn("failed to notify JSON RPC error", e);
-                ctx.close();
-            }
+            context.write(response);
         }
         else {
-            ctx.close();
+            LOGGER.debug("closing context after unrecoverable error", cause);
+            context.close();
         }
+    }
+
+    private boolean isRecoverable(final ChannelHandlerContext context, final Throwable cause) {
+
+        return !(cause instanceof ChannelException) && context.channel().isOpen();
     }
 
     private Object handleRequest(final Object service, final Request request) throws ServerException {
