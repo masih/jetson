@@ -138,7 +138,6 @@ public class ClientFactory<Service> {
             this.address = address;
             next_request_id = new AtomicLong();
             channel_pool = new ChannelPool(bootstrap, address);
-
         }
 
         private Long generateRequestId() {

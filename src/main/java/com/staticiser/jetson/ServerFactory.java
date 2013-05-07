@@ -113,6 +113,5 @@ public class ServerFactory<Service> {
 
         request_executor.shutdownNow();
         server_bootstrap.shutdown();
-
     }
 }
