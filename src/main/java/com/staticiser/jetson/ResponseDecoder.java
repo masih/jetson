@@ -40,6 +40,7 @@ import com.staticiser.jetson.exception.InvalidJsonException;
 import com.staticiser.jetson.exception.InvalidResponseException;
 import com.staticiser.jetson.exception.JsonRpcException;
 import com.staticiser.jetson.exception.TransportException;
+import com.staticiser.jetson.exception.UnexpectedException;
 import com.staticiser.jetson.util.CloseableUtil;
 import com.staticiser.jetson.util.JsonParserUtil;
 
@@ -59,6 +60,7 @@ class ResponseDecoder extends MessageToMessageDecoder<ByteBuf> {
 
         final Response response = ctx.channel().attr(ResponseHandler.RESPONSE_ATTRIBUTE).get();
         final Request request = ctx.channel().attr(ResponseHandler.REQUEST_ATTRIBUTE).get();
+        if (request == null) { throw new UnexpectedException("unexpected response to a request that does not exist"); }
         final long expected_response_id = request.getId();
         final Type expected_return_type = request.getMethod().getGenericReturnType();
 
