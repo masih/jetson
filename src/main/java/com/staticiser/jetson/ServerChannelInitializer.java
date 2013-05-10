@@ -52,6 +52,7 @@ class ServerChannelInitializer extends BaseChannelInitializer {
         pipeline.addLast("encoder", request_decoder);
         pipeline.addLast("decoder", response_encoder);
         pipeline.addLast(RequestHandler.NAME, request_handler);
+        //FIXME group handler threads for each server
     }
 
 }
