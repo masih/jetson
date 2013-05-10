@@ -20,6 +20,7 @@ package com.staticiser.jetson;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufInputStream;
+import io.netty.buffer.MessageBuf;
 import io.netty.channel.ChannelHandler.Sharable;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.MessageToMessageDecoder;
@@ -56,6 +57,12 @@ class ResponseDecoder extends MessageToMessageDecoder<ByteBuf> {
     }
 
     @Override
+    protected void decode(final ChannelHandlerContext ctx, final ByteBuf msg, final MessageBuf<Object> out) throws Exception {
+
+        out.add(decode(ctx, msg));
+
+    }
+
     protected Response decode(final ChannelHandlerContext ctx, final ByteBuf msg) throws JsonRpcException {
 
         final Response response = ctx.channel().attr(ResponseHandler.RESPONSE_ATTRIBUTE).get();

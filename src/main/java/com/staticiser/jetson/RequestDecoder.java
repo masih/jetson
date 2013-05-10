@@ -20,6 +20,7 @@ package com.staticiser.jetson;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufInputStream;
+import io.netty.buffer.MessageBuf;
 import io.netty.channel.ChannelHandler.Sharable;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.MessageToMessageDecoder;
@@ -31,7 +32,6 @@ import java.util.Map;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
 
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonGenerationException;
@@ -61,6 +61,12 @@ class RequestDecoder extends MessageToMessageDecoder<ByteBuf> {
     }
 
     @Override
+    protected void decode(final ChannelHandlerContext ctx, final ByteBuf msg, final MessageBuf<Object> out) throws Exception {
+
+        out.add(decode(ctx, msg));
+
+    }
+
     protected Request decode(final ChannelHandlerContext ctx, final ByteBuf msg) throws JsonRpcException {
 
         JsonParser parser = null;
