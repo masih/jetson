@@ -20,6 +20,7 @@ package com.staticiser.jetson;
 
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.Channel;
+import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioSocketChannel;
 
@@ -55,6 +56,7 @@ import com.staticiser.jetson.util.ReflectionUtil;
 public class ClientFactory<Service> {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ClientFactory.class);
+    private static final int THREAD_POOL_SIZE = 8;
     private final Map<Method, String> dispatch;
     private final Bootstrap bootstrap;
     private final ClassLoader class_loader;
@@ -62,6 +64,7 @@ public class ClientFactory<Service> {
     private final Class<?>[] interfaces;
 
     private final Map<InetSocketAddress, Service> address_to_proxy_map = new HashMap<InetSocketAddress, Service>();
+    private final NioEventLoopGroup group;
 
     /**
      * Instantiates a new JSON RPC client factory. The {@link ClassLoader#getSystemClassLoader() system class loader} used for constructing new proxy instances.
@@ -75,6 +78,7 @@ public class ClientFactory<Service> {
 
         this.class_loader = ClassLoader.getSystemClassLoader();
         this.interfaces = new Class<?>[]{service_interface};
+        group = new NioEventLoopGroup(THREAD_POOL_SIZE, new NamingThreadFactory("client_event_loop_"));
         bootstrap = new Bootstrap();
         configure(json_factory);
     }
@@ -96,14 +100,16 @@ public class ClientFactory<Service> {
 
     protected void configure(final JsonFactory json_factory) {
 
-        bootstrap.group(new NioEventLoopGroup(8, new NamingThreadFactory("client_event_loop_")));
+        bootstrap.group(group);
         bootstrap.channel(NioSocketChannel.class);
         bootstrap.handler(createClientChannelInitializer(json_factory));
     }
 
+    /** Shuts down all the {@link EventLoopGroup threads} that are used by any client constructed using this factory. */
     public void shutdown() {
 
-        bootstrap.shutdown();
+        LOGGER.debug("shutting down client factory for service {}", interfaces[0]);
+        group.shutdownGracefully();
     }
 
     protected ClientChannelInitializer createClientChannelInitializer(final JsonFactory json_factory) {
