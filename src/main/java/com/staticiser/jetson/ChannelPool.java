@@ -22,9 +22,11 @@ import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelFutureListener;
+import io.netty.channel.ConnectTimeoutException;
 
 import java.net.InetSocketAddress;
 import java.util.concurrent.Semaphore;
+import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.pool.BasePoolableObjectFactory;
 import org.apache.commons.pool.impl.GenericObjectPool;
@@ -32,6 +34,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 class ChannelPool extends GenericObjectPool<Channel> {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(ChannelPool.class);
 
     protected ChannelPool(final Bootstrap bootstrap, final InetSocketAddress address) {
 
@@ -42,6 +46,7 @@ class ChannelPool extends GenericObjectPool<Channel> {
 
         super(poolable_channel_factory);
         configure();
+
     }
 
     protected void configure() {
@@ -52,21 +57,36 @@ class ChannelPool extends GenericObjectPool<Channel> {
 
     protected static class PoolableChannelFactory extends BasePoolableObjectFactory<Channel> {
 
+        private static final long DEFAULT_CONNECTION_TIMEOUT_IN_MILLIS = 5 * 1000;
         private final Bootstrap bootstrap;
         private final InetSocketAddress address;
+        private volatile long connection_timeout_in_millis;
 
         PoolableChannelFactory(final Bootstrap bootstrap, final InetSocketAddress address) {
 
+            this(bootstrap, address, DEFAULT_CONNECTION_TIMEOUT_IN_MILLIS);
+        }
+
+        PoolableChannelFactory(final Bootstrap bootstrap, final InetSocketAddress address, final long connection_timeout_in_millis) {
+
             this.bootstrap = bootstrap;
             this.address = address;
+            this.connection_timeout_in_millis = connection_timeout_in_millis;
+        }
+
+        protected void setConnectionTimeout(final long timeout, final TimeUnit unit) {
+
+            connection_timeout_in_millis = TimeUnit.MILLISECONDS.convert(timeout, unit);
         }
 
         @Override
         public Channel makeObject() throws Exception {
 
+            LOGGER.info("making new channel for {}", address);
             final ChannelFuture connect_future = bootstrap.connect(address);
             connect_future.addListener(ChannelFutureListener.CLOSE_ON_FAILURE);
-            final Channel channel = connect_future.sync().channel();
+            if (!connect_future.await(connection_timeout_in_millis)) { throw new ConnectTimeoutException(); }
+            final Channel channel = connect_future.channel();
             configureChannel(channel);
             return channel;
         }

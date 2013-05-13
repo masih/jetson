@@ -45,16 +45,16 @@ class ResponseHandler extends ChannelInboundMessageHandlerAdapter<Response> {
     static final AttributeKey<AbortableSemaphore> RESPONSE_BARRIER_ATTRIBUTE = new AttributeKey<AbortableSemaphore>("response_latch");
 
     @Override
-    public void messageReceived(final ChannelHandlerContext ctx, final Response response) throws Exception {
+    public void messageReceived(final ChannelHandlerContext context, final Response response) throws Exception {
 
-        ctx.channel().attr(RESPONSE_ATTRIBUTE).set(response);
-        ctx.channel().attr(RESPONSE_BARRIER_ATTRIBUTE).get().release();
+        context.channel().attr(RESPONSE_ATTRIBUTE).set(response);
+        context.channel().attr(RESPONSE_BARRIER_ATTRIBUTE).get().release();
     }
 
     @Override
     public void channelInactive(final ChannelHandlerContext context) throws Exception {
 
-        LOGGER.debug("client disconencted {}", context.channel().remoteAddress());
+        LOGGER.info("client disconencted {}", context.channel().remoteAddress());
         context.close();
         super.channelInactive(context);
     }

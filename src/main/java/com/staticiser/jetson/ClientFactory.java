@@ -20,6 +20,7 @@ package com.staticiser.jetson;
 
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.Channel;
+import io.netty.channel.ChannelOption;
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioSocketChannel;
@@ -55,6 +56,7 @@ import com.staticiser.jetson.util.ReflectionUtil;
  */
 public class ClientFactory<Service> {
 
+    private static final int DEFAULT_CONNECTION_TIMEOUT_IN_MILLIS = 5000;
     private static final Logger LOGGER = LoggerFactory.getLogger(ClientFactory.class);
     private static final int THREAD_POOL_SIZE = 8;
     private final Map<Method, String> dispatch;
@@ -102,6 +104,8 @@ public class ClientFactory<Service> {
 
         bootstrap.group(group);
         bootstrap.channel(NioSocketChannel.class);
+        bootstrap.option(ChannelOption.CONNECT_TIMEOUT_MILLIS, DEFAULT_CONNECTION_TIMEOUT_IN_MILLIS);
+        bootstrap.option(ChannelOption.TCP_NODELAY, true);
         bootstrap.handler(createClientChannelInitializer(json_factory));
     }
 
