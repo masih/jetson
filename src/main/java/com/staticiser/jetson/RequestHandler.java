@@ -76,16 +76,16 @@ class RequestHandler extends ChannelInboundMessageHandlerAdapter<Request> {
         super.channelInactive(context);
     }
 
-    private void cancelRequestProcessing(final ChannelHandlerContext ctx) {
+    private void cancelRequestProcessing(final ChannelHandlerContext context) {
 
-        final Future<Void> procc = ctx.channel().attr(PROCESSING_FUTURE_ATTRIBUTE).get();
+        final Future<Void> procc = context.channel().attr(PROCESSING_FUTURE_ATTRIBUTE).get();
         if (procc != null) {
             procc.cancel(true);
         }
     }
 
     @Override
-    public void messageReceived(final ChannelHandlerContext ctx, final Request request) throws Exception {
+    public void messageReceived(final ChannelHandlerContext context, final Request request) throws Exception {
 
         final Future<Void> processing_future = executor.submit(new Callable<Void>() {
 
@@ -93,21 +93,21 @@ class RequestHandler extends ChannelInboundMessageHandlerAdapter<Request> {
             public Void call() throws Exception {
 
                 try {
-                    final Object service = ctx.channel().parent().attr(Server.SERVICE_ATTRIBUTE).get();
+                    final Object service = context.channel().parent().attr(Server.SERVICE_ATTRIBUTE).get();
                     final Object result = handleRequest(service, request);
-                    final Response response = ctx.channel().attr(ResponseHandler.RESPONSE_ATTRIBUTE).get();
+                    final Response response = context.channel().attr(ResponseHandler.RESPONSE_ATTRIBUTE).get();
                     response.reset();
                     response.setId(request.getId());
                     response.setResult(result);
-                    ctx.write(response);
+                    context.write(response);
                 }
                 catch (final Throwable e) {
-                    exceptionCaught(ctx, e);
+                    exceptionCaught(context, e);
                 }
                 return null;
             }
         });
-        ctx.channel().attr(PROCESSING_FUTURE_ATTRIBUTE).set(processing_future);
+        context.channel().attr(PROCESSING_FUTURE_ATTRIBUTE).set(processing_future);
     }
 
     @Override

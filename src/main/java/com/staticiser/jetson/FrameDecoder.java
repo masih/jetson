@@ -24,7 +24,7 @@ import io.netty.handler.codec.Delimiters;
 
 /**
  * Splits the received bytes by {@link Delimiters#lineDelimiter() new_line} as the delimiter.
- * 
+ *
  * @author Masih Hajiarabderkani (mh638@st-andrews.ac.uk)
  * @see DelimiterBasedFrameDecoder
  */
@@ -32,10 +32,9 @@ class FrameDecoder extends DelimiterBasedFrameDecoder {
 
     /** The default maximum size of JSON RPC message frame. */
     public static final int DEFAULT_MAX_FRAME_LENGTH = 8192;
-
     static final String NAME = "framer";
-    private static final ByteBuf[] FRAME_DELIMITER = Delimiters.nulDelimiter();
-    static final char FRAME_DELIMITER_AS_STRING = 0;
+    static final ByteBuf[] FRAME_DELIMITER = Delimiters.nulDelimiter();
+    static final byte[] FRAME_DELIMITER_BYTES = FRAME_DELIMITER[0].array();
 
     /** Instantiates a new frame decoder with the maximum frame size of {@value #DEFAULT_MAX_FRAME_LENGTH}. */
     public FrameDecoder() {

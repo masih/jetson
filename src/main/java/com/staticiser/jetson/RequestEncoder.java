@@ -74,7 +74,6 @@ class RequestEncoder extends MessageToByteEncoder<Request> {
             writeRequestParameters(request, generator);
             generator.writeObjectField(Message.ID_KEY, request.getId());
             generator.writeEndObject();
-            writeFrameDelimiter(generator);
             generator.flush();
             generator.close();
         }
@@ -96,11 +95,6 @@ class RequestEncoder extends MessageToByteEncoder<Request> {
         final Method target_method = request.getMethod();
         final Type[] param_types = target_method.getGenericParameterTypes();
         JsonGeneratorUtil.writeValuesAs(generator, Request.PARAMETERS_KEY, param_types, request.getParameters());
-    }
-
-    static void writeFrameDelimiter(final JsonGenerator generator) throws IOException {
-
-        generator.writeRaw(FrameDecoder.FRAME_DELIMITER_AS_STRING);
     }
 
     private JsonGenerator createJsonGenerator(final ByteBuf buffer) throws IOException {
