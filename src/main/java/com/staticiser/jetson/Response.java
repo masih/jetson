@@ -24,8 +24,8 @@ class Response extends Message {
 
     static final String RESULT_KEY = "result";
     static final String ERROR_KEY = "error";
-
     private Object result;
+    private Object extra_param;
     private JsonRpcError error;
 
     Response() {
@@ -47,14 +47,22 @@ class Response extends Message {
         return error;
     }
 
+    boolean isError() {
+
+        return error != null;
+    }
+
     void setError(final JsonRpcError error) {
 
         this.error = error;
     }
 
-    boolean isError() {
+    Object getExtraParam() {
+        return extra_param;
+    }
 
-        return error != null;
+    void setExtraParam(final Object extra_param) {
+        this.extra_param = extra_param;
     }
 
     @Override

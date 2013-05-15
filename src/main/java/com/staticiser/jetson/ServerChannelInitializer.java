@@ -54,5 +54,4 @@ class ServerChannelInitializer extends BaseChannelInitializer {
         pipeline.addLast(RequestHandler.NAME, request_handler);
         //FIXME group handler threads for each server
     }
-
 }
