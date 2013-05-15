@@ -37,6 +37,7 @@ abstract class BaseChannelInitializer extends ChannelInitializer<SocketChannel> 
     private volatile TimeUnit read_timeout_unit;
     private volatile long write_timeout;
     private volatile TimeUnit write_timeout_unit;
+    private static final FrameEncoder FRAME_ENCODER = new FrameEncoder();
 
     BaseChannelInitializer() {
 
@@ -63,6 +64,7 @@ abstract class BaseChannelInitializer extends ChannelInitializer<SocketChannel> 
         channel.pipeline().addLast("write_timeout", createWriteTimeoutHandler());
         channel.pipeline().addLast("read_timeout", createReadTimeoutHandler());
         channel.pipeline().addLast(FrameDecoder.NAME, createFrameDecoder());
+        channel.pipeline().addLast(FrameEncoder.NAME, FRAME_ENCODER);
     }
 
     protected FrameDecoder createFrameDecoder() {

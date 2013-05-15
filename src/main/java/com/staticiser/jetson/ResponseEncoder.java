@@ -69,7 +69,6 @@ class ResponseEncoder extends MessageToByteEncoder<Response> {
             writeResultOrError(response, generator);
             generator.writeObjectField(Message.ID_KEY, response.getId());
             generator.writeEndObject();
-            RequestEncoder.writeFrameDelimiter(generator);
             generator.flush();
             generator.close();
         }
