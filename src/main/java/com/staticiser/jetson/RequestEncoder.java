@@ -18,23 +18,6 @@
  */
 package com.staticiser.jetson;
 
-import io.netty.buffer.ByteBuf;
-import io.netty.buffer.ByteBufOutputStream;
-import io.netty.buffer.MessageBuf;
-import io.netty.channel.ChannelHandler.Sharable;
-import io.netty.channel.ChannelHandlerContext;
-import io.netty.channel.ChannelOutboundMessageHandlerAdapter;
-
-import java.io.IOException;
-import java.lang.reflect.Method;
-import java.lang.reflect.Type;
-
-import io.netty.handler.codec.MessageToByteEncoder;
-import io.netty.handler.codec.MessageToMessageEncoder;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-
 import com.fasterxml.jackson.core.JsonEncoding;
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonGenerator;
@@ -43,6 +26,16 @@ import com.staticiser.jetson.exception.InternalException;
 import com.staticiser.jetson.exception.TransportException;
 import com.staticiser.jetson.util.CloseableUtil;
 import com.staticiser.jetson.util.JsonGeneratorUtil;
+import io.netty.buffer.ByteBuf;
+import io.netty.buffer.ByteBufOutputStream;
+import io.netty.channel.ChannelHandler.Sharable;
+import io.netty.channel.ChannelHandlerContext;
+import io.netty.handler.codec.MessageToByteEncoder;
+import java.io.IOException;
+import java.lang.reflect.Method;
+import java.lang.reflect.Type;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @Sharable
 class RequestEncoder extends MessageToByteEncoder<Request> {
