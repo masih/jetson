@@ -18,6 +18,7 @@
  */
 package com.staticiser.jetson;
 
+import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufOutputStream;
 import io.netty.channel.ChannelHandler.Sharable;
 import io.netty.channel.ChannelHandlerContext;
@@ -25,6 +26,7 @@ import io.netty.channel.ChannelOutboundMessageHandlerAdapter;
 
 import java.io.IOException;
 
+import io.netty.handler.codec.MessageToByteEncoder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -38,7 +40,7 @@ import com.staticiser.jetson.exception.TransportException;
 import com.staticiser.jetson.util.CloseableUtil;
 
 @Sharable
-class ResponseEncoder extends ChannelOutboundMessageHandlerAdapter<Response> {
+class ResponseEncoder extends MessageToByteEncoder<Response> {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ResponseEncoder.class);
     private final JsonFactory json_factory;
@@ -56,11 +58,12 @@ class ResponseEncoder extends ChannelOutboundMessageHandlerAdapter<Response> {
     }
 
     @Override
-    public void flush(final ChannelHandlerContext context, final Response response) throws Exception {
+    protected void encode(final ChannelHandlerContext context, final Response response, final ByteBuf out) throws Exception {
+
 
         JsonGenerator generator = null;
         try {
-            generator = createJsonGenerator(context);
+            generator = createJsonGenerator(out);
             generator.writeStartObject();
             generator.writeObjectField(Message.VERSION_KEY, response.getVersion());
             writeResultOrError(response, generator);
@@ -75,7 +78,7 @@ class ResponseEncoder extends ChannelOutboundMessageHandlerAdapter<Response> {
             throw new InternalException(e);
         }
         catch (final IOException e) {
-            LOGGER.debug("IO error occured while encoding response", e);
+            LOGGER.debug("IO error occurred while encoding response", e);
             throw new TransportException(e);
         }
         finally {
@@ -83,9 +86,9 @@ class ResponseEncoder extends ChannelOutboundMessageHandlerAdapter<Response> {
         }
     }
 
-    private JsonGenerator createJsonGenerator(final ChannelHandlerContext context) throws IOException {
+    private JsonGenerator createJsonGenerator(final ByteBuf buffer) throws IOException {
 
-        final ByteBufOutputStream out = new ByteBufOutputStream(context.nextOutboundByteBuffer());
+        final ByteBufOutputStream out = new ByteBufOutputStream(buffer);
         return json_factory.createGenerator(out, encoding);
     }
 

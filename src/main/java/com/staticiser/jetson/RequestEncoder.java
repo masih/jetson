@@ -18,7 +18,9 @@
  */
 package com.staticiser.jetson;
 
+import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufOutputStream;
+import io.netty.buffer.MessageBuf;
 import io.netty.channel.ChannelHandler.Sharable;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelOutboundMessageHandlerAdapter;
@@ -27,6 +29,8 @@ import java.io.IOException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Type;
 
+import io.netty.handler.codec.MessageToByteEncoder;
+import io.netty.handler.codec.MessageToMessageEncoder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -41,7 +45,7 @@ import com.staticiser.jetson.util.CloseableUtil;
 import com.staticiser.jetson.util.JsonGeneratorUtil;
 
 @Sharable
-class RequestEncoder extends ChannelOutboundMessageHandlerAdapter<Request> {
+class RequestEncoder extends MessageToByteEncoder<Request> {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(RequestEncoder.class);
     private final JsonFactory json_factory;
@@ -59,11 +63,11 @@ class RequestEncoder extends ChannelOutboundMessageHandlerAdapter<Request> {
     }
 
     @Override
-    public void flush(final ChannelHandlerContext context, final Request request) throws Exception {
+    protected void encode(final ChannelHandlerContext context, final Request request, final ByteBuf out) throws Exception {
 
         JsonGenerator generator = null;
         try {
-            generator = createJsonGenerator(context);
+            generator = createJsonGenerator(out);
             generator.writeStartObject();
             generator.writeObjectField(Message.VERSION_KEY, request.getVersion());
             generator.writeObjectField(Request.METHOD_NAME_KEY, request.getMethodName());
@@ -87,10 +91,11 @@ class RequestEncoder extends ChannelOutboundMessageHandlerAdapter<Request> {
         }
     }
 
-    private JsonGenerator createJsonGenerator(final ChannelHandlerContext context) throws IOException {
+    private static void writeRequestParameters(final Request request, final JsonGenerator generator) throws IOException {
 
-        final ByteBufOutputStream out = new ByteBufOutputStream(context.nextOutboundByteBuffer());
-        return json_factory.createGenerator(out, encoding);
+        final Method target_method = request.getMethod();
+        final Type[] param_types = target_method.getGenericParameterTypes();
+        JsonGeneratorUtil.writeValuesAs(generator, Request.PARAMETERS_KEY, param_types, request.getParameters());
     }
 
     static void writeFrameDelimiter(final JsonGenerator generator) throws IOException {
@@ -98,10 +103,9 @@ class RequestEncoder extends ChannelOutboundMessageHandlerAdapter<Request> {
         generator.writeRaw(FrameDecoder.FRAME_DELIMITER_AS_STRING);
     }
 
-    private static void writeRequestParameters(final Request request, final JsonGenerator generator) throws IOException {
+    private JsonGenerator createJsonGenerator(final ByteBuf buffer) throws IOException {
 
-        final Method target_method = request.getMethod();
-        final Type[] param_types = target_method.getGenericParameterTypes();
-        JsonGeneratorUtil.writeValuesAs(generator, Request.PARAMETERS_KEY, param_types, request.getParameters());
+        final ByteBufOutputStream out = new ByteBufOutputStream(buffer);
+        return json_factory.createGenerator(out, encoding);
     }
 }

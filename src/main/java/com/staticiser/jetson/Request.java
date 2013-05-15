@@ -25,9 +25,9 @@ class Request extends Message {
 
     static final String PARAMETERS_KEY = "params";
     static final String METHOD_NAME_KEY = "method";
-
     private String method_name;
     private Object[] params;
+    private Object extra_param;
     private transient Method method;
 
     Request() {
@@ -42,6 +42,11 @@ class Request extends Message {
         setParams(params);
     }
 
+    void setParams(final Object[] params) {
+
+        this.params = params;
+    }
+
     @Override
     protected void reset() {
 
@@ -51,19 +56,9 @@ class Request extends Message {
         setParams(null);
     }
 
-    void setMethod(final Method target_method) {
-
-        this.method = target_method;
-    }
-
     String getMethodName() {
 
         return method_name;
-    }
-
-    Object[] getParameters() {
-
-        return params == null ? null : params.clone();
     }
 
     void setMethodName(final String method_name) {
@@ -71,9 +66,9 @@ class Request extends Message {
         this.method_name = method_name;
     }
 
-    void setParams(final Object[] params) {
+    Object[] getParameters() {
 
-        this.params = params;
+        return params == null ? null : params.clone();
     }
 
     Method getMethod() {
@@ -81,9 +76,22 @@ class Request extends Message {
         return method;
     }
 
+    void setMethod(final Method target_method) {
+
+        this.method = target_method;
+    }
+
     @Override
     public String toString() {
 
         return "Request [method_name=" + method_name + ", params=" + Arrays.toString(params) + ", method=" + method + ", getId()=" + getId() + ", getVersion()=" + getVersion() + "]";
+    }
+
+    Object getExtraParam() {
+        return extra_param;
+    }
+
+    void setExtraParam(final Object extra_param) {
+        this.extra_param = extra_param;
     }
 }
