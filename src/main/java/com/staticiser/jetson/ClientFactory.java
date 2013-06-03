@@ -1,42 +1,22 @@
 /*
  * Copyright 2013 Masih Hajiarabderkani
- * 
+ *
  * This file is part of Jetson.
- * 
+ *
  * Jetson is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * Jetson is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with Jetson.  If not, see <http://www.gnu.org/licenses/>.
  */
 package com.staticiser.jetson;
-
-import io.netty.bootstrap.Bootstrap;
-import io.netty.channel.Channel;
-import io.netty.channel.ChannelOption;
-import io.netty.channel.EventLoopGroup;
-import io.netty.channel.nio.NioEventLoopGroup;
-import io.netty.channel.socket.nio.NioSocketChannel;
-
-import java.io.IOException;
-import java.lang.reflect.InvocationHandler;
-import java.lang.reflect.Method;
-import java.lang.reflect.Proxy;
-import java.net.InetSocketAddress;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.atomic.AtomicLong;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.core.JsonFactory;
 import com.staticiser.jetson.exception.InternalException;
@@ -47,6 +27,23 @@ import com.staticiser.jetson.exception.TransportException;
 import com.staticiser.jetson.exception.UnexpectedException;
 import com.staticiser.jetson.util.NamingThreadFactory;
 import com.staticiser.jetson.util.ReflectionUtil;
+import io.netty.bootstrap.Bootstrap;
+import io.netty.channel.Channel;
+import io.netty.channel.ChannelOption;
+import io.netty.channel.EventLoopGroup;
+import io.netty.channel.nio.NioEventLoopGroup;
+import io.netty.channel.socket.nio.NioSocketChannel;
+import java.io.IOException;
+import java.lang.reflect.InvocationHandler;
+import java.lang.reflect.Method;
+import java.lang.reflect.Proxy;
+import java.net.InetSocketAddress;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.atomic.AtomicLong;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * A factory for creating JSON RPC clients. The created clients are cached for future reuse. This class is thread-safe.
@@ -77,24 +74,10 @@ public class ClientFactory<Service> {
         dispatch = ReflectionUtil.mapMethodsToNames(service_interface);
 
         this.class_loader = ClassLoader.getSystemClassLoader();
-        this.interfaces = new Class<?>[]{service_interface};
+        this.interfaces = new Class<?>[] {service_interface};
         group = new NioEventLoopGroup(THREAD_POOL_SIZE, new NamingThreadFactory("client_event_loop_"));
         bootstrap = new Bootstrap();
         configure(json_factory);
-    }
-
-    protected void configure(final JsonFactory json_factory) {
-
-        bootstrap.group(group);
-        bootstrap.channel(NioSocketChannel.class);
-        bootstrap.option(ChannelOption.CONNECT_TIMEOUT_MILLIS, DEFAULT_CONNECTION_TIMEOUT_IN_MILLIS);
-        bootstrap.option(ChannelOption.TCP_NODELAY, true);
-        bootstrap.handler(createClientChannelInitializer(json_factory));
-    }
-
-    protected ClientChannelInitializer createClientChannelInitializer(final JsonFactory json_factory) {
-
-        return new ClientChannelInitializer(json_factory);
     }
 
     /**
@@ -112,6 +95,27 @@ public class ClientFactory<Service> {
         return proxy;
     }
 
+    /** Shuts down all the {@link EventLoopGroup threads} that are used by any client constructed using this factory. */
+    public void shutdown() {
+
+        LOGGER.debug("shutting down client factory for service {}", interfaces[0]);
+        group.shutdownGracefully();
+    }
+
+    protected void configure(final JsonFactory json_factory) {
+
+        bootstrap.group(group);
+        bootstrap.channel(NioSocketChannel.class);
+        bootstrap.option(ChannelOption.CONNECT_TIMEOUT_MILLIS, DEFAULT_CONNECTION_TIMEOUT_IN_MILLIS);
+        bootstrap.option(ChannelOption.TCP_NODELAY, true);
+        bootstrap.handler(createClientChannelInitializer(json_factory));
+    }
+
+    protected ClientChannelInitializer createClientChannelInitializer(final JsonFactory json_factory) {
+
+        return new ClientChannelInitializer(json_factory);
+    }
+
     protected JsonRpcInvocationHandler createJsonRpcInvocationHandler(final InetSocketAddress address) {
 
         return new JsonRpcInvocationHandler(address);
@@ -121,13 +125,6 @@ public class ClientFactory<Service> {
     protected Service createProxy(final JsonRpcInvocationHandler handler) {
 
         return (Service) Proxy.newProxyInstance(class_loader, interfaces, handler);
-    }
-
-    /** Shuts down all the {@link EventLoopGroup threads} that are used by any client constructed using this factory. */
-    public void shutdown() {
-
-        LOGGER.debug("shutting down client factory for service {}", interfaces[0]);
-        group.shutdownGracefully();
     }
 
     protected String getJsonRpcMethodName(final Method method) {
@@ -156,19 +153,34 @@ public class ClientFactory<Service> {
         @Override
         public Object invoke(final Object proxy, final Method method, final Object[] params) throws Throwable {
 
-            final Channel channel = borrowChannel();
-            try {
-                final Request request = createRequest(channel, method, params);
-                writeRequest(channel, request);
-                final Response response = readResponse(channel);
-                if (response.isError()) {
-                    final JsonRpcException exception = JsonRpcExceptions.fromJsonRpcError(response.getError());
-                    throw !isInvocationException(exception) ? exception : reconstructException(method.getExceptionTypes(), castToInvovationException(exception));
+            if (dispatch.containsKey(method)) {
+
+                final Channel channel = borrowChannel();
+                try {
+                    final Request request = createRequest(channel, method, params);
+                    writeRequest(channel, request);
+                    final Response response = readResponse(channel);
+                    if (response.isError()) {
+                        final JsonRpcException exception = JsonRpcExceptions.fromJsonRpcError(response.getError());
+                        throw !isInvocationException(exception) ? exception : reconstructException(method.getExceptionTypes(), castToInvovationException(exception));
+                    }
+                    return response.getResult();
                 }
-                return response.getResult();
-            } finally {
-                returnChannel(channel);
+                finally {
+                    returnChannel(channel);
+                }
             }
+            else {
+                return method.invoke(this, params);
+            }
+        }
+
+        @Override
+        public String toString() {
+            final StringBuilder sb = new StringBuilder("JsonRpcInvocationHandler{");
+            sb.append("address=").append(address);
+            sb.append('}');
+            return sb.toString();
         }
 
         private Request createRequest(final Channel channel, final Method method, final Object[] params) {
@@ -226,13 +238,16 @@ public class ClientFactory<Service> {
 
             try {
                 return channel_pool.borrowObject();
-            } catch (final InterruptedException e) {
+            }
+            catch (final InterruptedException e) {
                 throw new InternalException(e);
-            } catch (final ExecutionException e) {
+            }
+            catch (final ExecutionException e) {
                 final Throwable cause = e.getCause();
                 if (cause instanceof IOException) { throw new TransportException(cause); }
                 throw new InternalException(e);
-            } catch (final Exception e) {
+            }
+            catch (final Exception e) {
                 throw new InternalException(e);
             }
         }
@@ -241,7 +256,8 @@ public class ClientFactory<Service> {
 
             try {
                 channel_pool.returnObject(channel);
-            } catch (final Exception e) {
+            }
+            catch (final Exception e) {
                 throw new InternalException(e);
             }
         }
@@ -250,7 +266,8 @@ public class ClientFactory<Service> {
 
             try {
                 channel.write(request).sync();
-            } catch (final Exception e) {
+            }
+            catch (final Exception e) {
                 if (e instanceof JsonRpcException) { throw JsonRpcException.class.cast(e); }
                 final Throwable cause = e.getCause();
                 if (cause != null && cause instanceof JsonRpcException) { throw JsonRpcException.class.cast(cause); }
@@ -262,7 +279,8 @@ public class ClientFactory<Service> {
 
             try {
                 channel.attr(ResponseHandler.RESPONSE_BARRIER_ATTRIBUTE).get().acquire();
-            } catch (final InterruptedException e) {
+            }
+            catch (final InterruptedException e) {
                 throw new InternalException(e);
             }
 
