@@ -1,39 +1,38 @@
 /*
  * Copyright 2013 Masih Hajiarabderkani
- * 
+ *
  * This file is part of Jetson.
- * 
+ *
  * Jetson is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * Jetson is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with Jetson.  If not, see <http://www.gnu.org/licenses/>.
  */
 package com.staticiser.jetson;
 
+import com.fasterxml.jackson.core.JsonFactory;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.Channel;
 import io.netty.channel.group.ChannelGroup;
 import io.netty.channel.group.DefaultChannelGroup;
 import io.netty.util.AttributeKey;
-
+import io.netty.util.concurrent.ImmediateEventExecutor;
 import java.io.IOException;
 import java.net.InetSocketAddress;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.fasterxml.jackson.core.JsonFactory;
-
 /**
  * Implements a JSON RPC server.
+ *
  * @author Masih Hajiarabderkani (mh638@st-andrews.ac.uk)
  */
 public class Server {
@@ -67,7 +66,7 @@ public class Server {
         this.server_bootstrap = server_bootstrap;
         this.service = service;
         endpoint = DEFAULT_ENDPOINT_ADDRESS;
-        server_channel_group = new DefaultChannelGroup();
+        server_channel_group = new DefaultChannelGroup(ImmediateEventExecutor.INSTANCE);
     }
 
     /**
@@ -99,7 +98,7 @@ public class Server {
 
     private void configureServerChannel() {
 
-        server_channel.attr(ServerChannelGroupHandler.CHANNEL_GROUP_ATTRIBUTE).set(server_channel_group);
+        server_channel.attr(RequestHandler.CHANNEL_GROUP_ATTRIBUTE).set(server_channel_group);
         server_channel.attr(SERVICE_ATTRIBUTE).set(service);
     }
 

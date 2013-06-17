@@ -1,18 +1,18 @@
 /*
  * Copyright 2013 Masih Hajiarabderkani
- * 
+ *
  * This file is part of Jetson.
- * 
+ *
  * Jetson is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * Jetson is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with Jetson.  If not, see <http://www.gnu.org/licenses/>.
  */
@@ -20,9 +20,6 @@ package com.staticiser.jetson;
 
 import com.staticiser.jetson.TestService.TestObject;
 import com.staticiser.jetson.exception.JsonRpcException;
-import org.junit.Assert;
-import org.junit.Test;
-
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
@@ -33,26 +30,28 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import org.junit.Assert;
+import org.junit.Test;
 
 import static org.junit.Assert.fail;
 
 public class NormalOperationTest extends AbstractTest {
 
-//    public static void main(final String[] args) throws Exception {
-//
-//        final NormalOperationTest t = new NormalOperationTest();
-//        t.setUp();
-//        int i = 0;
-//        try {
-//            while (!Thread.currentThread().isInterrupted()) {
-//                t.startJsonRpcTestServer().expose();
-//                i++;
-//            }
-//        } finally {
-//            System.out.println("NUMBER OF SERVERS: " + i);
-//
-//        }
-//    }
+    //    public static void main(final String[] args) throws Exception {
+    //
+    //        final NormalOperationTest t = new NormalOperationTest();
+    //        t.setUp();
+    //        int i = 0;
+    //        try {
+    //            while (!Thread.currentThread().isInterrupted()) {
+    //                t.startJsonRpcTestServer().expose();
+    //                i++;
+    //            }
+    //        } finally {
+    //            System.out.println("NUMBER OF SERVERS: " + i);
+    //
+    //        }
+    //    }
 
     @Test
     public void testConcatinate() throws JsonRpcException {
@@ -100,7 +99,8 @@ public class NormalOperationTest extends AbstractTest {
             for (final Future<Void> f : future_concurrent_tests) {
                 f.get();
             }
-        } finally {
+        }
+        finally {
             executor.shutdown();
         }
     }
@@ -166,7 +166,8 @@ public class NormalOperationTest extends AbstractTest {
         try {
             client.throwExceptionOnRemote(temp_server_port);
             fail("expected exception");
-        } catch (final Exception e) {
+        }
+        catch (final Exception e) {
             Assert.assertEquals(NormalOperationTestService.TEST_EXCEPTION.getClass(), e.getClass());
             Assert.assertEquals(NormalOperationTestService.TEST_EXCEPTION.getMessage(), e.getMessage());
         }
@@ -178,7 +179,8 @@ public class NormalOperationTest extends AbstractTest {
         try {
             client.throwException();
             fail("expected exception");
-        } catch (final Exception e) {
+        }
+        catch (final Exception e) {
             Assert.assertEquals(NormalOperationTestService.TEST_EXCEPTION.getClass(), e.getClass());
             Assert.assertEquals(NormalOperationTestService.TEST_EXCEPTION.getMessage(), e.getMessage());
         }

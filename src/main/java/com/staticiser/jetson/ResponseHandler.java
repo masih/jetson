@@ -1,55 +1,45 @@
 /*
  * Copyright 2013 Masih Hajiarabderkani
- * 
+ *
  * This file is part of Jetson.
- * 
+ *
  * Jetson is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * Jetson is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with Jetson.  If not, see <http://www.gnu.org/licenses/>.
  */
 package com.staticiser.jetson;
 
-import io.netty.channel.ChannelHandler.Sharable;
-import io.netty.channel.ChannelHandlerContext;
-import io.netty.channel.ChannelInboundMessageHandlerAdapter;
-import io.netty.handler.timeout.TimeoutException;
-import io.netty.util.Attribute;
-import io.netty.util.AttributeKey;
-
-import java.util.concurrent.Semaphore;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import com.staticiser.jetson.ChannelPool.AbortableSemaphore;
 import com.staticiser.jetson.exception.JsonRpcError;
 import com.staticiser.jetson.exception.JsonRpcException;
 import com.staticiser.jetson.exception.TransportException;
 import com.staticiser.jetson.exception.UnexpectedException;
+import io.netty.channel.ChannelHandler.Sharable;
+import io.netty.channel.ChannelHandlerContext;
+import io.netty.channel.ChannelInboundHandlerAdapter;
+import io.netty.channel.MessageList;
+import io.netty.handler.timeout.TimeoutException;
+import io.netty.util.Attribute;
+import io.netty.util.AttributeKey;
+import java.util.concurrent.Semaphore;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @Sharable
-class ResponseHandler extends ChannelInboundMessageHandlerAdapter<Response> {
+class ResponseHandler extends ChannelInboundHandlerAdapter {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(ResponseHandler.class);
     static final AttributeKey<Response> RESPONSE_ATTRIBUTE = new AttributeKey<Response>("response");
     static final AttributeKey<Request> REQUEST_ATTRIBUTE = new AttributeKey<Request>("request");
-    static final AttributeKey<AbortableSemaphore> RESPONSE_BARRIER_ATTRIBUTE = new AttributeKey<AbortableSemaphore>("response_latch");
-
-    @Override
-    public void messageReceived(final ChannelHandlerContext context, final Response response) throws Exception {
-
-        context.channel().attr(RESPONSE_ATTRIBUTE).set(response);
-        context.channel().attr(RESPONSE_BARRIER_ATTRIBUTE).get().release();
-    }
+    static final AttributeKey<ChannelPool.ResettableSemaphore> RESPONSE_BARRIER_ATTRIBUTE = new AttributeKey<ChannelPool.ResettableSemaphore>("response_latch");
+    private static final Logger LOGGER = LoggerFactory.getLogger(ResponseHandler.class);
 
     @Override
     public void channelInactive(final ChannelHandlerContext context) throws Exception {
@@ -57,6 +47,18 @@ class ResponseHandler extends ChannelInboundMessageHandlerAdapter<Response> {
         LOGGER.info("client disconencted {}", context.channel().remoteAddress());
         context.close();
         super.channelInactive(context);
+    }
+
+    @Override
+    public void messageReceived(final ChannelHandlerContext context, MessageList<Object> msgs) throws Exception {
+
+        final MessageList<Response> responses = msgs.cast();
+        for (final Response response : responses) {
+
+            context.channel().attr(RESPONSE_ATTRIBUTE).set(response);
+            context.channel().attr(RESPONSE_BARRIER_ATTRIBUTE).get().release();
+        }
+        msgs.releaseAllAndRecycle();
     }
 
     @Override
