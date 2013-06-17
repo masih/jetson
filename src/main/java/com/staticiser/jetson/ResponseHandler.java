@@ -50,15 +50,15 @@ class ResponseHandler extends ChannelInboundHandlerAdapter {
     }
 
     @Override
-    public void messageReceived(final ChannelHandlerContext context, MessageList<Object> msgs) throws Exception {
+    public void messageReceived(final ChannelHandlerContext context, final MessageList<Object> messages) throws Exception {
 
-        final MessageList<Response> responses = msgs.cast();
+        final MessageList<Response> responses = messages.cast();
         for (final Response response : responses) {
 
             context.channel().attr(RESPONSE_ATTRIBUTE).set(response);
             context.channel().attr(RESPONSE_BARRIER_ATTRIBUTE).get().release();
         }
-        msgs.releaseAllAndRecycle();
+        messages.releaseAllAndRecycle();
     }
 
     @Override
