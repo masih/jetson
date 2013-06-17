@@ -1,18 +1,18 @@
 /*
  * Copyright 2013 Masih Hajiarabderkani
- * 
+ *
  * This file is part of Jetson.
- * 
+ *
  * Jetson is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * Jetson is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with Jetson.  If not, see <http://www.gnu.org/licenses/>.
  */
@@ -75,7 +75,7 @@ class RequestEncoder extends MessageToByteEncoder<Request> {
             throw new InternalException(e);
         }
         catch (final IOException e) {
-            LOGGER.debug("IO error occured while encoding request", e);
+            LOGGER.debug("IO error occurred while encoding request", e);
             throw new TransportException(e);
         }
         finally {
@@ -90,7 +90,7 @@ class RequestEncoder extends MessageToByteEncoder<Request> {
         JsonGeneratorUtil.writeValuesAs(generator, Request.PARAMETERS_KEY, param_types, request.getParameters());
     }
 
-    private JsonGenerator createJsonGenerator(final ByteBuf buffer) throws IOException {
+    private synchronized JsonGenerator createJsonGenerator(final ByteBuf buffer) throws IOException {
 
         final ByteBufOutputStream out = new ByteBufOutputStream(buffer);
         return json_factory.createGenerator(out, encoding);
