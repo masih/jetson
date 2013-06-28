@@ -18,28 +18,11 @@
  */
 package com.staticiser.jetson;
 
-import com.staticiser.jetson.exception.AccessException;
-import com.staticiser.jetson.exception.InternalException;
-import com.staticiser.jetson.exception.InvalidParameterException;
-import com.staticiser.jetson.exception.InvocationException;
-import com.staticiser.jetson.exception.JsonRpcError;
-import com.staticiser.jetson.exception.JsonRpcException;
-import com.staticiser.jetson.exception.ServerException;
-import com.staticiser.jetson.exception.ServerRuntimeException;
-import com.staticiser.jetson.exception.UnexpectedException;
 import io.netty.channel.Channel;
-import io.netty.channel.ChannelException;
 import io.netty.channel.ChannelHandler.Sharable;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
 import io.netty.channel.MessageList;
-import io.netty.channel.group.ChannelGroup;
-import io.netty.util.AttributeKey;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Future;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -47,134 +30,44 @@ import org.slf4j.LoggerFactory;
 class RequestHandler extends ChannelInboundHandlerAdapter {
 
     static final String NAME = "request_handler";
-    static final AttributeKey<ChannelGroup> CHANNEL_GROUP_ATTRIBUTE = new AttributeKey<ChannelGroup>("ChannelGroup");
     private static final Logger LOGGER = LoggerFactory.getLogger(RequestHandler.class);
-    private static final AttributeKey<Future<Void>> PROCESSING_FUTURE_ATTRIBUTE = new AttributeKey<Future<Void>>("processing");
-    private final ExecutorService executor;
-
-    RequestHandler(final ExecutorService executor) {
-
-        this.executor = executor;
-    }
 
     @Override
     public void channelActive(final ChannelHandlerContext context) throws Exception {
 
         final Channel channel = context.channel();
-        final ChannelGroup group = channel.parent().attr(CHANNEL_GROUP_ATTRIBUTE).get();
-        channel.attr(ResponseHandler.RESPONSE_ATTRIBUTE).set(new Response());
-        group.add(channel);
+        final Server server = getServerFromContext(context);
+        server.notifyChannelActivation(channel);
         super.channelActive(context);
     }
 
     @Override
     public void channelInactive(final ChannelHandlerContext context) throws Exception {
         final Channel channel = context.channel();
-        final ChannelGroup group = channel.parent().attr(CHANNEL_GROUP_ATTRIBUTE).get();
-        cancelRequestProcessing(context);
-        channel.attr(PROCESSING_FUTURE_ATTRIBUTE).remove();
-        channel.attr(ResponseHandler.RESPONSE_ATTRIBUTE).remove();
-        group.remove(channel);
-        context.close();
+        final Server server = getServerFromContext(context);
+        server.notifyChannelInactivation(channel);
         super.channelInactive(context);
     }
 
     @Override
-    public void messageReceived(final ChannelHandlerContext context, final MessageList<Object> msgs) throws Exception {
+    public void messageReceived(final ChannelHandlerContext context, final MessageList<Object> messages) throws Exception {
 
-        MessageList<Request> requests = msgs.cast();
-
+        final MessageList<Request> requests = messages.cast();
+        final Server server = getServerFromContext(context);
         for (final Request request : requests) {
-
-            final Future<Void> processing_future = executor.submit(new Callable<Void>() {
-
-                @Override
-                public Void call() throws Exception {
-
-                    try {
-                        final Object service = context.channel().parent().attr(Server.SERVICE_ATTRIBUTE).get();
-                        final Object result = handleRequest(service, request);
-                        final Response response = context.channel().attr(ResponseHandler.RESPONSE_ATTRIBUTE).get();
-                        response.reset();
-                        response.setId(request.getId());
-                        response.setResult(result);
-                        context.write(response);
-                    }
-                    catch (final Throwable e) {
-                        exceptionCaught(context, e);
-                    }
-                    return null;
-                }
-            });
-            context.channel().attr(PROCESSING_FUTURE_ATTRIBUTE).set(processing_future);
+            server.handle(context, request);
         }
-        msgs.releaseAllAndRecycle();
+        messages.releaseAllAndRecycle();
     }
 
     @Override
-    public void exceptionCaught(final ChannelHandlerContext context, final Throwable cause) throws Exception {
-
-        LOGGER.debug("caught on server handler", cause);
-        cancelRequestProcessing(context);
-        if (isRecoverable(context, cause)) {
-            final Request request = context.channel().attr(ResponseHandler.REQUEST_ATTRIBUTE).get();
-            final Long current_request_id = request.getId();
-            final Response response = context.channel().attr(ResponseHandler.RESPONSE_ATTRIBUTE).get();
-            final JsonRpcError error;
-            if (cause instanceof JsonRpcException) {
-                error = JsonRpcException.class.cast(cause);
-            }
-            else if (cause instanceof RuntimeException) {
-                error = new ServerRuntimeException(cause);
-            }
-            else {
-                error = new UnexpectedException(cause);
-            }
-            response.setError(error);
-            response.setId(current_request_id);
-            context.write(response);
-        }
-        else {
-            LOGGER.debug("closing context after unrecoverable error", cause);
-            context.close();
-        }
+    public void exceptionCaught(final ChannelHandlerContext context, final Throwable cause) {
+        LOGGER.info("caught on server handler", cause);
+        context.close();
     }
 
-    private void cancelRequestProcessing(final ChannelHandlerContext context) {
+    static Server getServerFromContext(final ChannelHandlerContext context) {
 
-        final Future<Void> procc = context.channel().attr(PROCESSING_FUTURE_ATTRIBUTE).get();
-        if (procc != null) {
-            procc.cancel(true);
-        }
-    }
-
-    private boolean isRecoverable(final ChannelHandlerContext context, final Throwable cause) {
-
-        return !(cause instanceof ChannelException) && context.channel().isOpen();
-    }
-
-    private Object handleRequest(final Object service, final Request request) throws ServerException {
-
-        final Method method = request.getMethod();
-        final Object[] parameters = request.getParameters();
-
-        try {
-            return method.invoke(service, parameters);
-        }
-        catch (final IllegalArgumentException e) {
-            throw new InvalidParameterException(e);
-        }
-        catch (final RuntimeException e) {
-            throw new ServerRuntimeException(e);
-        }
-        catch (final InvocationTargetException e) {
-            throw new InvocationException(e);
-        }
-        catch (final IllegalAccessException e) {
-            throw new AccessException(e);
-        }
-        catch (final ExceptionInInitializerError e) {
-            throw new InternalException(e);
-        }
+        return context.channel().parent().attr(Server.SERVER_ATTRIBUTE).get();
     }
 }

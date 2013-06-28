@@ -18,15 +18,25 @@
  */
 package com.staticiser.jetson;
 
-import com.fasterxml.jackson.core.JsonFactory;
+import com.staticiser.jetson.exception.IllegalAccessException;
+import com.staticiser.jetson.exception.IllegalArgumentException;
+import com.staticiser.jetson.exception.InternalServerException;
+import com.staticiser.jetson.exception.ServerRuntimeException;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.Channel;
+import io.netty.channel.ChannelFuture;
+import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.group.ChannelGroup;
 import io.netty.channel.group.DefaultChannelGroup;
 import io.netty.util.AttributeKey;
 import io.netty.util.concurrent.ImmediateEventExecutor;
 import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.net.InetSocketAddress;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Future;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -37,34 +47,22 @@ import org.slf4j.LoggerFactory;
  */
 public class Server {
 
+    static final AttributeKey<Server> SERVER_ATTRIBUTE = new AttributeKey<Server>("server");
     private static final Logger LOGGER = LoggerFactory.getLogger(Server.class);
     private static final InetSocketAddress DEFAULT_ENDPOINT_ADDRESS = new InetSocketAddress(0);
-    static final AttributeKey<Object> SERVICE_ATTRIBUTE = new AttributeKey<Object>("service");
-
     private final ServerBootstrap server_bootstrap;
     private final ChannelGroup server_channel_group;
+    private final Object service;
+    private final ExecutorService executor;
     private volatile Channel server_channel;
     private volatile InetSocketAddress endpoint;
     private volatile boolean exposed;
-    private final Object service;
 
-    /**
-     * Instantiates a new server for the given {@code service_interface}.
-     *
-     * @param <T> the type of the service
-     * @param service_interface the type of the service
-     * @param service the service implementation
-     * @param json_factory the JSON factory
-     */
-    public <T> Server(final Class<T> service_interface, final T service, final JsonFactory json_factory) {
-
-        this(ServerFactory.createDefaultServerBootstrap(service_interface, json_factory), service);
-    }
-
-    protected Server(final ServerBootstrap server_bootstrap, final Object service) {
+    protected Server(final ServerBootstrap server_bootstrap, final Object service, ExecutorService executor) {
 
         this.server_bootstrap = server_bootstrap;
         this.service = service;
+        this.executor = executor;
         endpoint = DEFAULT_ENDPOINT_ADDRESS;
         server_channel_group = new DefaultChannelGroup(ImmediateEventExecutor.INSTANCE);
     }
@@ -96,26 +94,32 @@ public class Server {
         }
     }
 
-    private void configureServerChannel() {
+    public void handle(final ChannelHandlerContext context, final Request request) throws Exception {
+        final Callable<ChannelFuture> task = new Callable<ChannelFuture>() {
 
-        server_channel.attr(RequestHandler.CHANNEL_GROUP_ATTRIBUTE).set(server_channel_group);
-        server_channel.attr(SERVICE_ATTRIBUTE).set(service);
+            @Override
+            public ChannelFuture call() throws Exception {
+
+                final Response response = new Response(); //FIXME cache
+                response.setId(request.getId());
+                try {
+                    response.setResult(handleRequest(request));
+                }
+                catch (final Throwable e) {
+                    response.setException(e);
+                }
+                return context.write(response);
+            }
+        };
+        final Future<ChannelFuture> processing_future = executor.submit(task);      // TODO add to a map; upon channel inactivation cancel the processing if not done
     }
 
-    private void updateLocalSocketAddress() {
-
-        endpoint = (InetSocketAddress) server_channel.localAddress();
+    public void notifyChannelActivation(final Channel channel) {
+        server_channel_group.add(channel);
     }
 
-    private void attemptBind() throws IOException {
-
-        try {
-            server_channel = server_bootstrap.bind(endpoint).sync().channel();
-        }
-        catch (final Exception e) {
-            LOGGER.error("error while waiting for channel exposure", e);
-            throw new IOException(e);
-        }
+    public void notifyChannelInactivation(final Channel channel) {
+        server_channel_group.remove(channel);
     }
 
     /**
@@ -143,19 +147,6 @@ public class Server {
         }
     }
 
-    private void unbindServerChannel() throws InterruptedException {
-
-        server_channel.disconnect().sync();
-        server_channel.closeFuture().sync();
-    }
-
-    private void disconnectActiveClients() throws InterruptedException {
-
-        server_channel_group.disconnect().sync();
-        server_channel_group.close().sync();
-        server_channel_group.clear();
-    }
-
     /**
      * Checks if this server is listening for incoming connections.
      *
@@ -175,5 +166,64 @@ public class Server {
     public InetSocketAddress getLocalSocketAddress() {
 
         return !isExposed() ? null : endpoint;
+    }
+
+    private Object handleRequest(final Request request) throws Throwable {
+
+        final Method method = request.getMethod();
+        final Object[] arguments = request.getArguments();
+
+        try {
+            return method.invoke(service, arguments);
+        }
+        catch (final java.lang.IllegalArgumentException e) {
+            throw new IllegalArgumentException(e);
+        }
+        catch (final RuntimeException e) {
+            throw new ServerRuntimeException(e);
+        }
+        catch (final InvocationTargetException e) {
+            throw e.getCause();
+        }
+        catch (final java.lang.IllegalAccessException e) {
+            throw new IllegalAccessException(e);
+        }
+        catch (final ExceptionInInitializerError e) {
+            throw new InternalServerException(e);
+        }
+    }
+
+    private void configureServerChannel() {
+
+        server_channel.attr(SERVER_ATTRIBUTE).set(this);
+    }
+
+    private void updateLocalSocketAddress() {
+
+        endpoint = (InetSocketAddress) server_channel.localAddress();
+    }
+
+    private void attemptBind() throws IOException {
+
+        try {
+            server_channel = server_bootstrap.bind(endpoint).sync().channel();
+        }
+        catch (final Exception e) {
+            LOGGER.error("error while waiting for channel exposure", e);
+            throw new IOException(e);
+        }
+    }
+
+    private void unbindServerChannel() throws InterruptedException {
+
+        server_channel.disconnect().sync();
+        server_channel.closeFuture().sync();
+    }
+
+    private void disconnectActiveClients() throws InterruptedException {
+
+        server_channel_group.disconnect().sync();
+        server_channel_group.close().sync();
+        server_channel_group.clear();
     }
 }

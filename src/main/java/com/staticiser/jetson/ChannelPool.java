@@ -21,7 +21,6 @@ package com.staticiser.jetson;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
-import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ConnectTimeoutException;
 import java.net.InetSocketAddress;
 import java.util.concurrent.Semaphore;
@@ -82,32 +81,16 @@ class ChannelPool extends GenericObjectPool<Channel> {
 
             LOGGER.info("making new channel for {}", address);
             final ChannelFuture connect_future = bootstrap.connect(address);
-            connect_future.addListener(ChannelFutureListener.CLOSE_ON_FAILURE);
+            //            connect_future.addListener(ChannelFutureListener.CLOSE_ON_FAILURE);
             if (!connect_future.await(connection_timeout_in_millis)) { throw new ConnectTimeoutException(); }
             final Channel channel = connect_future.channel();
-            configureChannel(channel);
             return channel;
-        }
-
-        private void configureChannel(final Channel channel) {
-
-            channel.attr(ResponseHandler.RESPONSE_BARRIER_ATTRIBUTE).set(new ResettableSemaphore());
-            channel.attr(ResponseHandler.REQUEST_ATTRIBUTE).set(new Request());
-            channel.attr(ResponseHandler.RESPONSE_ATTRIBUTE).set(new Response());
         }
 
         @Override
         public void destroyObject(final Channel channel) {
 
             channel.close();
-        }
-
-        @Override
-        public void passivateObject(final Channel channel) throws Exception {
-
-            channel.attr(ResponseHandler.REQUEST_ATTRIBUTE).get().reset();
-            channel.attr(ResponseHandler.RESPONSE_BARRIER_ATTRIBUTE).get().reset();
-            channel.attr(ResponseHandler.RESPONSE_ATTRIBUTE).get().reset();
         }
 
         @Override

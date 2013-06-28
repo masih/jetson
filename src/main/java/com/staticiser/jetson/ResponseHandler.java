@@ -18,34 +18,24 @@
  */
 package com.staticiser.jetson;
 
-import com.staticiser.jetson.exception.JsonRpcError;
-import com.staticiser.jetson.exception.JsonRpcException;
-import com.staticiser.jetson.exception.TransportException;
-import com.staticiser.jetson.exception.UnexpectedException;
 import io.netty.channel.ChannelHandler.Sharable;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
 import io.netty.channel.MessageList;
-import io.netty.handler.timeout.TimeoutException;
-import io.netty.util.Attribute;
-import io.netty.util.AttributeKey;
-import java.util.concurrent.Semaphore;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 @Sharable
 class ResponseHandler extends ChannelInboundHandlerAdapter {
 
-    static final AttributeKey<Response> RESPONSE_ATTRIBUTE = new AttributeKey<Response>("response");
-    static final AttributeKey<Request> REQUEST_ATTRIBUTE = new AttributeKey<Request>("request");
-    static final AttributeKey<ChannelPool.ResettableSemaphore> RESPONSE_BARRIER_ATTRIBUTE = new AttributeKey<ChannelPool.ResettableSemaphore>("response_latch");
     private static final Logger LOGGER = LoggerFactory.getLogger(ResponseHandler.class);
 
     @Override
     public void channelInactive(final ChannelHandlerContext context) throws Exception {
 
         LOGGER.info("client disconencted {}", context.channel().remoteAddress());
-        context.close();
+        final Client client = getClientFromContext(context);
+        client.notifyChannelInactivation(context.channel());
         super.channelInactive(context);
     }
 
@@ -53,38 +43,22 @@ class ResponseHandler extends ChannelInboundHandlerAdapter {
     public void messageReceived(final ChannelHandlerContext context, final MessageList<Object> messages) throws Exception {
 
         final MessageList<Response> responses = messages.cast();
+        final Client client = getClientFromContext(context);
         for (final Response response : responses) {
-
-            context.channel().attr(RESPONSE_ATTRIBUTE).set(response);
-            context.channel().attr(RESPONSE_BARRIER_ATTRIBUTE).get().release();
+            client.handle(context, response);
         }
         messages.releaseAllAndRecycle();
     }
 
     @Override
-    public void exceptionCaught(final ChannelHandlerContext ctx, final Throwable cause) {
-
+    public void exceptionCaught(final ChannelHandlerContext context, final Throwable cause) {
+        final Client client = getClientFromContext(context);
+        client.notifyChannelInactivation(context.channel());
         LOGGER.info("caught on client handler", cause);
-        final Semaphore latch = ctx.channel().attr(RESPONSE_BARRIER_ATTRIBUTE).get();
-        try {
-            final Attribute<Request> id_attr = ctx.channel().attr(ResponseHandler.REQUEST_ATTRIBUTE);
-            final Long request_id = id_attr == null ? null : id_attr.get().getId();
-            final Response response = ctx.channel().attr(RESPONSE_ATTRIBUTE).get();
-            final JsonRpcError error;
-            if (cause instanceof JsonRpcException) {
-                error = JsonRpcException.class.cast(cause);
-            }
-            else if (cause instanceof TimeoutException) {
-                error = new TransportException(cause);
-            }
-            else {
-                error = new UnexpectedException(cause);
-            }
-            response.setId(request_id);
-            response.setError(error);
-        }
-        finally {
-            latch.release();
-        }
+        context.close();
+    }
+
+    static Client getClientFromContext(final ChannelHandlerContext context) {
+        return context.channel().attr(Client.CLIENT_ATTRIBUTE_KEY).get();
     }
 }

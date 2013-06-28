@@ -1,23 +1,24 @@
 /*
  * Copyright 2013 Masih Hajiarabderkani
- * 
+ *
  * This file is part of Jetson.
- * 
+ *
  * Jetson is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * Jetson is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with Jetson.  If not, see <http://www.gnu.org/licenses/>.
  */
 package com.staticiser.jetson.util;
 
+import com.staticiser.jetson.exception.RPCException;
 import java.io.Serializable;
 import java.lang.reflect.Method;
 import java.util.Arrays;
@@ -26,11 +27,9 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import com.staticiser.jetson.exception.JsonRpcException;
-
 /**
  * A utility class for reflective analysis of JSON RPC interfaces.
- * 
+ *
  * @author Masih Hajiarabderkani (mh638@st-andrews.ac.uk)
  */
 public final class ReflectionUtil {
@@ -69,8 +68,8 @@ public final class ReflectionUtil {
      * The mapped methods are cached and will be reused.
      *
      * @param service the service
-     * @throws IllegalArgumentException if one of the methods in the given type do not throw {@link JsonRpcException} or one of its super types
      * @return the map
+     * @throws IllegalArgumentException if one of the methods in the given type do not throw {@link RPCException} or one of its super types
      */
     public static Map<String, Method> mapNamesToMethods(final Class<?> service) {
 
@@ -111,7 +110,7 @@ public final class ReflectionUtil {
         }
     }
 
-    private static Method[] sort(final Method... methods) {
+    public static Method[] sort(final Method... methods) {
 
         Arrays.sort(methods, METHOD_COMPARATOR);
         return methods;
@@ -119,7 +118,7 @@ public final class ReflectionUtil {
 
     private static void validateJsonRpcExceptionTypes(final Method method) {
 
-        if (!containsAnyAssignableFrom(JsonRpcException.class, method.getExceptionTypes())) { throw new IllegalArgumentException(method + " must throw JsonRpcException or one of its super types"); }
+        if (!containsAnyAssignableFrom(RPCException.class, method.getExceptionTypes())) { throw new IllegalArgumentException(method + " must throw RPCException or one of its super types"); }
     }
 
     /**
