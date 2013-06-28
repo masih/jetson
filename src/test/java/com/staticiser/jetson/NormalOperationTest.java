@@ -19,7 +19,7 @@
 package com.staticiser.jetson;
 
 import com.staticiser.jetson.TestService.TestObject;
-import com.staticiser.jetson.exception.JsonRpcException;
+import com.staticiser.jetson.exception.RPCException;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
@@ -37,26 +37,26 @@ import static org.junit.Assert.fail;
 
 public class NormalOperationTest extends AbstractTest {
 
-    //    public static void main(final String[] args) throws Exception {
+    //        public static void main(final String[] args) throws Exception {
     //
-    //        final NormalOperationTest t = new NormalOperationTest();
-    //        t.setUp();
-    //        int i = 0;
-    //        try {
-    //            while (!Thread.currentThread().isInterrupted()) {
-    //                t.startJsonRpcTestServer().expose();
-    //                i++;
+    //            final NormalOperationTest t = new NormalOperationTest();
+    //            t.setUp();
+    //            int i = 0;
+    //            try {
+    //                while (!Thread.currentThread().isInterrupted()) {
+    //                    t.startJsonRpcTestServer().expose();
+    //                    i++;
+    //                }
+    //            } finally {
+    //                System.out.println("NUMBER OF SERVERS: " + i);
+    //
     //            }
-    //        } finally {
-    //            System.out.println("NUMBER OF SERVERS: " + i);
-    //
     //        }
-    //    }
 
     @Test
-    public void testConcatinate() throws JsonRpcException {
+    public void testConcatenate() throws RPCException {
 
-        final String text = "ssss";
+        final String text = "some text";
         final int integer = 8852456;
         final TestObject object = new TestObject("X_1_23");
         final char character = '=';
@@ -65,13 +65,14 @@ public class NormalOperationTest extends AbstractTest {
     }
 
     @Test
-    public void testConcurrentClients() throws JsonRpcException, InterruptedException, ExecutionException {
+    //    @Ignore
+    public void testConcurrentClients() throws RPCException, InterruptedException, ExecutionException {
 
         final ExecutorService executor = Executors.newFixedThreadPool(100);
         try {
             final CountDownLatch start_latch = new CountDownLatch(1);
             final List<Future<Void>> future_concurrent_tests = new ArrayList<Future<Void>>();
-            for (int i = 0; i < 500; i++) {
+            for (int i = 0; i < 1000; i++) { // FIXME increase size
                 future_concurrent_tests.add(executor.submit(new Callable<Void>() {
 
                     @Override
@@ -119,45 +120,21 @@ public class NormalOperationTest extends AbstractTest {
     }
 
     @Test
-    public void testGetObject() throws JsonRpcException {
+    public void testGetObject() throws RPCException {
 
         Assert.assertEquals(NormalOperationTestService.TEST_OBJECT_MESSAGE, client.getObject().getMessage());
     }
 
     @Test
-    public void testAddOnRemote() throws JsonRpcException {
+    public void testAddOnRemote() throws RPCException {
 
         testAddOnRemoteClient(client);
     }
 
-    private void testAddOnRemoteClient(final TestService client) throws JsonRpcException {
-
-        final Integer three = client.addOnRemote(1, 2, temp_server_port);
-        Assert.assertEquals(new Integer(1 + 2), three);
-        final Integer eleven = client.addOnRemote(12, -1, temp_server_port);
-        Assert.assertEquals(new Integer(12 + -1), eleven);
-        final Integer fifty_one = client.addOnRemote(-61, 112, temp_server_port);
-        Assert.assertEquals(new Integer(-61 + 112), fifty_one);
-        final Integer minus_seven = client.addOnRemote(-4, -3, temp_server_port);
-        Assert.assertEquals(new Integer(-4 + -3), minus_seven);
-    }
-
     @Test
-    public void testAdd() throws JsonRpcException {
+    public void testAdd() throws RPCException {
 
         testAddOnClient(client);
-    }
-
-    private void testAddOnClient(final TestService client) throws JsonRpcException {
-
-        final Integer three = client.add(1, 2);
-        Assert.assertEquals(new Integer(1 + 2), three);
-        final Integer eleven = client.add(12, -1);
-        Assert.assertEquals(new Integer(12 + -1), eleven);
-        final Integer fifty_one = client.add(-61, 112);
-        Assert.assertEquals(new Integer(-61 + 112), fifty_one);
-        final Integer minus_seven = client.add(-4, -3);
-        Assert.assertEquals(new Integer(-4 + -3), minus_seven);
     }
 
     @Test
@@ -187,48 +164,49 @@ public class NormalOperationTest extends AbstractTest {
     }
 
     @Test
-    public void testSayFalse() throws JsonRpcException {
+    public void testSayFalse() throws RPCException {
 
         final Boolean _false = client.sayFalse();
         Assert.assertFalse(_false);
     }
 
     @Test
-    public void testSayTrue() throws JsonRpcException {
+    public void testSayTrue() throws RPCException {
 
         final Boolean _true = client.sayTrue();
         Assert.assertTrue(_true);
     }
 
     @Test
-    public void testSayMinus65535() throws JsonRpcException {
+    public void testSayMinus65535() throws RPCException {
 
         final Integer minus65535 = client.sayMinus65535();
         Assert.assertEquals(new Integer(-65535), minus65535);
     }
 
     @Test
-    public void testSay65535() throws JsonRpcException {
+    public void testSay65535() throws RPCException {
 
         final Integer _65535 = client.say65535();
         Assert.assertEquals(new Integer(65535), _65535);
     }
 
     @Test
-    public void testSaySomething() throws JsonRpcException {
+    public void testSaySomething() throws RPCException {
 
         final String something = client.saySomething();
         Assert.assertEquals("something", something);
     }
 
     @Test
-    public void testDoVoidWithNoParams() throws JsonRpcException {
+    public void testDoVoidWithNoParams() throws RPCException {
 
         client.doVoidWithNoParams();
     }
 
     @Test
-    public void testConcurrentServers() throws JsonRpcException, InterruptedException, ExecutionException {
+    //    @Ignore
+    public void testConcurrentServers() throws RPCException, InterruptedException, ExecutionException {
 
         final ExecutorService executor = Executors.newFixedThreadPool(100);
         try {
@@ -244,7 +222,7 @@ public class NormalOperationTest extends AbstractTest {
                         final Server server = startJsonRpcTestServer();
                         final InetSocketAddress server_address = server.getLocalSocketAddress();
 
-                        final TestService client = (TestService) CLIENT_FACTORY.get(server_address);
+                        final TestService client = CLIENT_FACTORY.get(server_address);
 
                         try {
                             testAddOnClient(client);
@@ -265,6 +243,30 @@ public class NormalOperationTest extends AbstractTest {
         finally {
             executor.shutdown();
         }
+    }
+
+    private void testAddOnRemoteClient(final TestService client) throws RPCException {
+
+        final Integer three = client.addOnRemote(1, 2, temp_server_port);
+        Assert.assertEquals(new Integer(1 + 2), three);
+        final Integer eleven = client.addOnRemote(12, -1, temp_server_port);
+        Assert.assertEquals(new Integer(12 + -1), eleven);
+        final Integer fifty_one = client.addOnRemote(-61, 112, temp_server_port);
+        Assert.assertEquals(new Integer(-61 + 112), fifty_one);
+        final Integer minus_seven = client.addOnRemote(-4, -3, temp_server_port);
+        Assert.assertEquals(new Integer(-4 + -3), minus_seven);
+    }
+
+    private void testAddOnClient(final TestService client) throws RPCException {
+
+        final Integer three = client.add(1, 2);
+        Assert.assertEquals(new Integer(1 + 2), three);
+        final Integer eleven = client.add(12, -1);
+        Assert.assertEquals(new Integer(12 + -1), eleven);
+        final Integer fifty_one = client.add(-61, 112);
+        Assert.assertEquals(new Integer(-61 + 112), fifty_one);
+        final Integer minus_seven = client.add(-4, -3);
+        Assert.assertEquals(new Integer(-4 + -3), minus_seven);
     }
 
     @Override

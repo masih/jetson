@@ -1,97 +1,60 @@
 /*
  * Copyright 2013 Masih Hajiarabderkani
- * 
+ *
  * This file is part of Jetson.
- * 
+ *
  * Jetson is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * Jetson is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with Jetson.  If not, see <http://www.gnu.org/licenses/>.
  */
 package com.staticiser.jetson;
 
 import java.lang.reflect.Method;
-import java.util.Arrays;
 
-class Request extends Message {
+public class Request extends Message {
 
-    static final String PARAMETERS_KEY = "params";
-    static final String METHOD_NAME_KEY = "method";
-    private String method_name;
-    private Object[] params;
-    private Object extra_param;
-    private transient Method method;
+    private Method method;
+    private Object[] arguments;
 
-    Request() {
+    public Request() {
 
     }
 
-    Request(final Long id, final Method target_method, final String method_name, final Object[] params) {
-
+    public Request(Integer id, final Method method, final Object[] arguments) {
         setId(id);
-        setMethod(target_method);
-        setMethodName(method_name);
-        setParams(params);
+        setMethod(method);
+        setArguments(arguments);
     }
 
-    void setParams(final Object[] params) {
-
-        this.params = params;
-    }
-
-    @Override
-    protected void reset() {
-
-        super.reset();
-        setMethod(null);
-        setMethodName(null);
-        setParams(null);
-    }
-
-    String getMethodName() {
-
-        return method_name;
-    }
-
-    void setMethodName(final String method_name) {
-
-        this.method_name = method_name;
-    }
-
-    Object[] getParameters() {
-
-        return params == null ? null : params.clone();
-    }
-
-    Method getMethod() {
-
+    public Method getMethod() {
         return method;
     }
 
-    void setMethod(final Method target_method) {
+    public void setMethod(final Method method) {
+        this.method = method;
+    }
 
-        this.method = target_method;
+    public Object[] getArguments() {
+        return arguments;
+    }
+
+    public void setArguments(final Object[] arguments) {
+        this.arguments = arguments;
     }
 
     @Override
-    public String toString() {
-
-        return "Request [method_name=" + method_name + ", params=" + Arrays.toString(params) + ", method=" + method + ", getId()=" + getId() + ", getVersion()=" + getVersion() + "]";
-    }
-
-    Object getExtraParam() {
-        return extra_param;
-    }
-
-    void setExtraParam(final Object extra_param) {
-        this.extra_param = extra_param;
+    protected synchronized void reset() {
+        super.reset();
+        setArguments(null);
+        setMethod(null);
     }
 }

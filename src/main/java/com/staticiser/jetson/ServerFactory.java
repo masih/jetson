@@ -18,16 +18,12 @@
  */
 package com.staticiser.jetson;
 
-import com.fasterxml.jackson.core.JsonFactory;
 import com.staticiser.jetson.util.NamingThreadFactory;
-import com.staticiser.jetson.util.ReflectionUtil;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.ChannelOption;
 import io.netty.channel.EventLoop;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
-import java.lang.reflect.Method;
-import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -45,24 +41,22 @@ public class ServerFactory<Service> {
      * Instantiates a new server factory.
      *
      * @param service_type the type of the service
-     * @param json_factory the JSON factory
      */
-    public ServerFactory(final Class<Service> service_type, final JsonFactory json_factory) {
+    public ServerFactory(final Class<Service> service_type, ServerChannelInitializer handler) {
 
-        this(service_type, json_factory, Executors.newCachedThreadPool(new NamingThreadFactory(service_type.getSimpleName() + "_server_factory_")));
+        this(service_type, Executors.newCachedThreadPool(new NamingThreadFactory(service_type.getSimpleName() + "_server_factory_")), handler);
     }
 
     /**
      * Instantiates a new server factory.
      *
      * @param service_type the type of the service
-     * @param json_factory the JSON factory
      * @param request_executor the executor that is used to process requests by all the servers that are instantiated using this factory
      */
-    public ServerFactory(final Class<Service> service_type, final JsonFactory json_factory, final ExecutorService request_executor) {
+    public ServerFactory(final Class<Service> service_type, final ExecutorService request_executor, ServerChannelInitializer handler) {
 
         this.request_executor = request_executor;
-        server_bootstrap = createServerBootstrap(service_type, json_factory);
+        server_bootstrap = createServerBootstrap(service_type, handler);
     }
 
     /**
@@ -73,22 +67,16 @@ public class ServerFactory<Service> {
      */
     public Server createServer(final Service service) {
 
-        return new Server(server_bootstrap, service);
+        return new Server(server_bootstrap, service, request_executor);
     }
 
-    protected ServerBootstrap createServerBootstrap(final Class<?> service_type, final JsonFactory json_factory) {
+    protected ServerBootstrap createServerBootstrap(final Class<?> service_type, final ServerChannelInitializer handler) {
 
-        return createDefaultServerBootstrap(service_type, json_factory, request_executor);
+        return createDefaultServerBootstrap(service_type, handler);
     }
 
-    static ServerBootstrap createDefaultServerBootstrap(final Class<?> service_type, final JsonFactory json_factory) {
+    static ServerBootstrap createDefaultServerBootstrap(final Class<?> service_type, final ServerChannelInitializer handler) {
 
-        return createDefaultServerBootstrap(service_type, json_factory, Executors.newCachedThreadPool());
-    }
-
-    static ServerBootstrap createDefaultServerBootstrap(final Class<?> service_type, final JsonFactory json_factory, final ExecutorService request_executor) {
-
-        final Map<String, Method> dispatch = ReflectionUtil.mapNamesToMethods(service_type);
         final NioEventLoopGroup parent_event_loop = new NioEventLoopGroup(8, new NamingThreadFactory("server_parent_event_loop_"));
         final NioEventLoopGroup child_event_loop = new NioEventLoopGroup(50, new NamingThreadFactory("server_child_event_loop_"));
         final ServerBootstrap server_bootstrap = new ServerBootstrap();
@@ -96,8 +84,7 @@ public class ServerFactory<Service> {
         server_bootstrap.channel(NioServerSocketChannel.class);
         server_bootstrap.option(ChannelOption.TCP_NODELAY, true);
         server_bootstrap.childOption(ChannelOption.TCP_NODELAY, true);
-        final ServerChannelInitializer server_channel_initializer = new ServerChannelInitializer(json_factory, dispatch, request_executor);
-        server_bootstrap.childHandler(server_channel_initializer);
+        server_bootstrap.childHandler(handler);
         return server_bootstrap;
     }
 

@@ -18,82 +18,29 @@
  */
 package com.staticiser.jetson;
 
-import com.fasterxml.jackson.core.JsonEncoding;
-import com.fasterxml.jackson.core.JsonFactory;
-import com.fasterxml.jackson.core.JsonGenerator;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.staticiser.jetson.exception.InternalException;
-import com.staticiser.jetson.exception.TransportException;
-import com.staticiser.jetson.util.CloseableUtil;
+import com.staticiser.jetson.exception.RPCException;
 import io.netty.buffer.ByteBuf;
-import io.netty.buffer.ByteBufOutputStream;
 import io.netty.channel.ChannelHandler.Sharable;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.MessageToByteEncoder;
-import java.io.IOException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 @Sharable
-class ResponseEncoder extends MessageToByteEncoder<Response> {
-
-    private static final Logger LOGGER = LoggerFactory.getLogger(ResponseEncoder.class);
-    private final JsonFactory json_factory;
-    private final JsonEncoding encoding;
-
-    ResponseEncoder(final JsonFactory json_factory) {
-
-        this(json_factory, JsonEncoding.UTF8);
-    }
-
-    ResponseEncoder(final JsonFactory json_factory, final JsonEncoding encoding) {
-
-        this.json_factory = json_factory;
-        this.encoding = encoding;
-    }
+public abstract class ResponseEncoder extends MessageToByteEncoder<Response> {
 
     @Override
-    protected void encode(final ChannelHandlerContext context, final Response response, final ByteBuf out) throws Exception {
+    protected void encode(final ChannelHandlerContext context, final Response request, final ByteBuf out) {
 
-        // TODO use tokenbuffer
-
-        JsonGenerator generator = null;
         try {
-            generator = createJsonGenerator(out);
-            generator.writeStartObject();
-            generator.writeObjectField(Message.VERSION_KEY, response.getVersion());
-            writeResultOrError(response, generator);
-            generator.writeObjectField(Message.ID_KEY, response.getId());
-            generator.writeEndObject();
-            generator.flush();
-            generator.close();
+            encodeResponse(context, request, out);
         }
-        catch (final JsonProcessingException e) {
-            LOGGER.debug("failed to encode response", e);
-            throw new InternalException(e);
-        }
-        catch (final IOException e) {
-            LOGGER.debug("IO error occurred while encoding response", e);
-            throw new TransportException(e);
-        }
-        finally {
-            CloseableUtil.closeQuietly(generator);
+        catch (RPCException e) {
+            final Client client = ResponseHandler.getClientFromContext(context);
+            final Response response = new Response(); //TODO cache
+            response.setException(e);
+            client.handle(context, response);
         }
     }
 
-    private JsonGenerator createJsonGenerator(final ByteBuf buffer) throws IOException {
+    protected abstract void encodeResponse(final ChannelHandlerContext context, final Response request, final ByteBuf out) throws RPCException;
 
-        final ByteBufOutputStream out = new ByteBufOutputStream(buffer);
-        return json_factory.createGenerator(out, encoding);
-    }
-
-    private static void writeResultOrError(final Response response, final JsonGenerator generator) throws IOException {
-
-        if (!response.isError()) {
-            generator.writeObjectField(Response.RESULT_KEY, response.getResult());
-        }
-        else {
-            generator.writeObjectField(Response.ERROR_KEY, response.getError());
-        }
-    }
 }

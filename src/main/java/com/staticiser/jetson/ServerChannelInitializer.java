@@ -18,24 +18,19 @@
  */
 package com.staticiser.jetson;
 
-import com.fasterxml.jackson.core.JsonFactory;
 import io.netty.channel.ChannelPipeline;
 import io.netty.channel.socket.SocketChannel;
-import java.lang.reflect.Method;
-import java.util.Map;
-import java.util.concurrent.ExecutorService;
 
-class ServerChannelInitializer extends BaseChannelInitializer {
+public class ServerChannelInitializer extends BaseChannelInitializer {
 
     private final RequestDecoder request_decoder;
     private final ResponseEncoder response_encoder;
     private final RequestHandler request_handler;
 
-    ServerChannelInitializer(final JsonFactory json_factory, final Map<String, Method> dispatch, final ExecutorService executor) {
-
-        request_decoder = new RequestDecoder(json_factory, dispatch);
-        response_encoder = new ResponseEncoder(json_factory);
-        request_handler = new RequestHandler(executor);
+    public ServerChannelInitializer(final RequestDecoder request_decoder, final ResponseEncoder response_encoder) {
+        this.request_decoder = request_decoder;
+        this.response_encoder = response_encoder;
+        request_handler = new RequestHandler();
     }
 
     @Override
@@ -44,10 +39,9 @@ class ServerChannelInitializer extends BaseChannelInitializer {
         super.initChannel(channel);
         final ChannelPipeline pipeline = channel.pipeline();
 
-        pipeline.addLast("encoder", request_decoder);
-        pipeline.addLast("decoder", response_encoder);
+        pipeline.addLast("decoder", request_decoder);
+        pipeline.addLast("encoder", response_encoder);
         pipeline.addLast(RequestHandler.NAME, request_handler);
-        //FIXME group handler threads for each server
     }
 
 }

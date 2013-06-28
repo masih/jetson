@@ -18,24 +18,32 @@
  */
 package com.staticiser.jetson;
 
+import io.netty.channel.ChannelInboundHandler;
 import io.netty.channel.ChannelInitializer;
+import io.netty.channel.ChannelOutboundHandler;
 import io.netty.channel.socket.SocketChannel;
+import io.netty.handler.codec.LengthFieldBasedFrameDecoder;
+import io.netty.handler.codec.LengthFieldPrepender;
+import io.netty.handler.logging.LogLevel;
+import io.netty.handler.logging.LoggingHandler;
 import io.netty.handler.timeout.ReadTimeoutHandler;
 import io.netty.handler.timeout.WriteTimeoutHandler;
 import java.util.concurrent.TimeUnit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-abstract class BaseChannelInitializer extends ChannelInitializer<SocketChannel> {
+public abstract class BaseChannelInitializer extends ChannelInitializer<SocketChannel> {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(BaseChannelInitializer.class);
     private static final long DEFAULT_READ_TIMEOUT_IN_SECONDS = 30;
     private static final long DEFAULT_WRITE_TIMEOUT_IN_SECONDS = DEFAULT_READ_TIMEOUT_IN_SECONDS;
+    public static final int DEFAULT_LENGTH_FIELD_LENGTH = 2;
+    private static final LengthFieldPrepender DEFAULT_FRAME_ENCODER = new LengthFieldPrepender(DEFAULT_LENGTH_FIELD_LENGTH);
+    public static final int DEFAULT_MAX_FRAME_LENGTH = 0xFFFF;
     private volatile long read_timeout;
     private volatile TimeUnit read_timeout_unit;
     private volatile long write_timeout;
     private volatile TimeUnit write_timeout_unit;
-    private static final FrameEncoder FRAME_ENCODER = new FrameEncoder();
 
     BaseChannelInitializer() {
 
@@ -55,19 +63,26 @@ abstract class BaseChannelInitializer extends ChannelInitializer<SocketChannel> 
         write_timeout_unit = unit;
     }
 
+    private static LoggingHandler LOGGING = new LoggingHandler(LogLevel.INFO);
+
     @Override
     public void initChannel(final SocketChannel channel) throws Exception {
 
         LOGGER.debug("initialising new channel {}", channel);
+        //        channel.pipeline().addLast(LOGGING);
         channel.pipeline().addLast("write_timeout", createWriteTimeoutHandler());
         channel.pipeline().addLast("read_timeout", createReadTimeoutHandler());
-        channel.pipeline().addLast(FrameDecoder.NAME, createFrameDecoder());
-        channel.pipeline().addLast(FrameEncoder.NAME, FRAME_ENCODER);
+        channel.pipeline().addLast("frame_decoder", getFrameDecoder());
+        channel.pipeline().addLast("frame_encoder", getFrameEncoder());
     }
 
-    protected FrameDecoder createFrameDecoder() {
+    protected ChannelOutboundHandler getFrameEncoder() {
+        return DEFAULT_FRAME_ENCODER;
+    }
 
-        return new FrameDecoder();
+    protected ChannelInboundHandler getFrameDecoder() {
+
+        return new LengthFieldBasedFrameDecoder(DEFAULT_MAX_FRAME_LENGTH, 0, DEFAULT_LENGTH_FIELD_LENGTH, 0, DEFAULT_LENGTH_FIELD_LENGTH);
     }
 
     private WriteTimeoutHandler createWriteTimeoutHandler() {

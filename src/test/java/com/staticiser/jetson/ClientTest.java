@@ -1,13 +1,12 @@
 package com.staticiser.jetson;
 
+import com.staticiser.jetson.exception.RPCException;
+import com.staticiser.jetson.json.JsonClientFactory;
 import java.net.InetSocketAddress;
-
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
-
-import com.staticiser.jetson.exception.JsonRpcException;
 
 public class ClientTest {
 
@@ -16,7 +15,7 @@ public class ClientTest {
     @Before
     public void setUp() throws Exception {
 
-        client_factory = new ClientFactory<TestService>(TestService.class, AbstractTest.JSON_FACTORY);
+        client_factory = new JsonClientFactory<TestService>(TestService.class, AbstractTest.JSON_FACTORY);
     }
 
     @After
@@ -33,7 +32,7 @@ public class ClientTest {
             service.saySomething();
             Assert.fail();
         }
-        catch (final JsonRpcException e) {
+        catch (final RPCException e) {
             //expected
         }
     }

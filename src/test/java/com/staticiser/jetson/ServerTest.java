@@ -1,14 +1,12 @@
 package com.staticiser.jetson;
 
-import static org.junit.Assert.fail;
-
+import com.staticiser.jetson.exception.RPCException;
 import java.io.IOException;
 import java.net.InetSocketAddress;
-
 import org.junit.Assert;
 import org.junit.Test;
 
-import com.staticiser.jetson.exception.JsonRpcException;
+import static org.junit.Assert.fail;
 
 public class ServerTest extends AbstractTest {
 
@@ -21,7 +19,7 @@ public class ServerTest extends AbstractTest {
             client.saySomething();
             fail();
         }
-        catch (final JsonRpcException e) {
+        catch (final RPCException e) {
             //expected
         }
 
@@ -32,7 +30,7 @@ public class ServerTest extends AbstractTest {
             client.saySomething();
             fail();
         }
-        catch (final JsonRpcException e) {
+        catch (final RPCException e) {
             //expected
         }
     }
