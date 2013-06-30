@@ -37,6 +37,10 @@ import static org.junit.Assert.fail;
 
 public class NormalOperationTest extends AbstractTest {
 
+    public NormalOperationTest(final ClientFactory<TestService> client_factory, final ServerFactory<TestService> server_factory) {
+        super(client_factory, server_factory);
+    }
+
     //        public static void main(final String[] args) throws Exception {
     //
     //            final NormalOperationTest t = new NormalOperationTest();
@@ -60,7 +64,7 @@ public class NormalOperationTest extends AbstractTest {
         final int integer = 8852456;
         final TestObject object = new TestObject("X_1_23");
         final char character = '=';
-        final String result = client.concatinate(text, integer, object, character);
+        final String result = client.concatenate(text, integer, object, character);
         Assert.assertEquals(text + integer + object + character, result);
     }
 
@@ -68,11 +72,12 @@ public class NormalOperationTest extends AbstractTest {
     //    @Ignore
     public void testConcurrentClients() throws RPCException, InterruptedException, ExecutionException {
 
+        Thread.sleep(10000);
         final ExecutorService executor = Executors.newFixedThreadPool(100);
         try {
             final CountDownLatch start_latch = new CountDownLatch(1);
             final List<Future<Void>> future_concurrent_tests = new ArrayList<Future<Void>>();
-            for (int i = 0; i < 1000; i++) { // FIXME increase size
+            for (int i = 0; i < 500; i++) {
                 future_concurrent_tests.add(executor.submit(new Callable<Void>() {
 
                     @Override
@@ -222,7 +227,7 @@ public class NormalOperationTest extends AbstractTest {
                         final Server server = startJsonRpcTestServer();
                         final InetSocketAddress server_address = server.getLocalSocketAddress();
 
-                        final TestService client = CLIENT_FACTORY.get(server_address);
+                        final TestService client = client_factory.get(server_address);
 
                         try {
                             testAddOnClient(client);
@@ -259,6 +264,7 @@ public class NormalOperationTest extends AbstractTest {
 
     private void testAddOnClient(final TestService client) throws RPCException {
 
+        //TODO test null
         final Integer three = client.add(1, 2);
         Assert.assertEquals(new Integer(1 + 2), three);
         final Integer eleven = client.add(12, -1);
@@ -272,7 +278,7 @@ public class NormalOperationTest extends AbstractTest {
     @Override
     protected TestService getService() {
 
-        return new NormalOperationTestService(CLIENT_FACTORY);
+        return new NormalOperationTestService(client_factory);
     }
 
 }

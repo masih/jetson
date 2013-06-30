@@ -28,19 +28,19 @@ import io.netty.handler.codec.MessageToByteEncoder;
 public abstract class ResponseEncoder extends MessageToByteEncoder<Response> {
 
     @Override
-    protected void encode(final ChannelHandlerContext context, final Response request, final ByteBuf out) {
+    protected void encode(final ChannelHandlerContext context, final Response response, final ByteBuf out) {
 
         try {
-            encodeResponse(context, request, out);
+            encodeResponse(context, response, out);
         }
         catch (RPCException e) {
             final Client client = ResponseHandler.getClientFromContext(context);
-            final Response response = new Response(); //TODO cache
+            response.setResult(null);
             response.setException(e);
             client.handle(context, response);
         }
     }
 
-    protected abstract void encodeResponse(final ChannelHandlerContext context, final Response request, final ByteBuf out) throws RPCException;
+    protected abstract void encodeResponse(final ChannelHandlerContext context, final Response response, final ByteBuf out) throws RPCException;
 
 }
