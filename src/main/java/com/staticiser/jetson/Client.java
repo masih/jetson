@@ -50,7 +50,8 @@ public class Client implements InvocationHandler {
         if (future_responses.containsKey(id)) {
             return future_responses.get(id).getRequest();
         }
-        System.out.println("NULLLLLL");
+        //TODO fix readability
+        LOGGER.info("MUST NOT BE NULLLL");
         return null;
     }
 
@@ -194,8 +195,12 @@ public class Client implements InvocationHandler {
         }
         catch (final Exception e) {
             if (e instanceof RPCException) { throw RPCException.class.cast(e); }
+            if (e instanceof IOException) { throw new TransportException(e); }
             final Throwable cause = e.getCause();
-            if (cause != null && cause instanceof RPCException) { throw RPCException.class.cast(cause); }
+            if (cause != null) {
+                if (cause instanceof RPCException) { throw RPCException.class.cast(cause); }
+                if (cause instanceof IOException) { throw new TransportException(cause); }
+            }
             throw new InternalServerException(e);
         }
     }

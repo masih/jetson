@@ -10,6 +10,10 @@ import static org.junit.Assert.fail;
 
 public class ServerTest extends AbstractTest {
 
+    public ServerTest(final ClientFactory<TestService> client_factory, final ServerFactory<TestService> server_factory) {
+        super(client_factory, server_factory);
+    }
+
     @Test
     public void testExposure() throws IOException {
 
@@ -57,7 +61,7 @@ public class ServerTest extends AbstractTest {
     @Override
     protected TestService getService() {
 
-        return new NormalOperationTestService(CLIENT_FACTORY);
+        return new NormalOperationTestService(client_factory);
     }
 
 }

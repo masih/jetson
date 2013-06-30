@@ -100,7 +100,7 @@ public class NormalOperationTestService implements TestService {
     }
 
     @Override
-    public String concatinate(final String text, final Integer integer, final TestObject object, final char character) throws RPCException {
+    public String concatenate(final String text, final Integer integer, final TestObject object, final char character) throws RPCException {
 
         return text + integer + object + character;
     }

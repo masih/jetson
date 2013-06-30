@@ -26,11 +26,9 @@ public class FutureResponse implements Future<Object> {
     }
 
     @Override
-    public boolean cancel(final boolean mayInterruptIfRunning) {
-        synchronized (current_state) {
-            if (isDone()) { return false; }
-            return updateState(State.CANCELLED);
-        }
+    public synchronized boolean cancel(final boolean mayInterruptIfRunning) {
+        if (isDone()) { return false; }
+        return updateState(State.CANCELLED);
     }
 
     @Override
@@ -81,21 +79,19 @@ public class FutureResponse implements Future<Object> {
         return request;
     }
 
-    private boolean updateState(final State new_state) {
-        synchronized (current_state) {
-            if (isDone()) { return false; }
+    private synchronized boolean updateState(final State new_state) {
+        if (isDone()) { return false; }
 
-            State old_state = current_state;
-            current_state = new_state;
+        State old_state = current_state;
+        current_state = new_state;
 
-            if (current_state != State.PENDING) { // Check whether this future is no longer pending
-                job_done_latch.countDown(); // Release the waiting latch
-            }
-            return old_state == current_state;
+        if (current_state != State.PENDING) { // Check whether this future is no longer pending
+            job_done_latch.countDown(); // Release the waiting latch
         }
+        return old_state == current_state;
     }
 
-    void setResponse(Response response) {
+    synchronized void setResponse(Response response) {
         if (response.isError()) {
             setException(response.getException());
         }

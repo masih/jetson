@@ -69,7 +69,7 @@ public abstract class BaseChannelInitializer extends ChannelInitializer<SocketCh
     public void initChannel(final SocketChannel channel) throws Exception {
 
         LOGGER.debug("initialising new channel {}", channel);
-        //        channel.pipeline().addLast(LOGGING);
+        //                channel.pipeline().addLast(LOGGING);
         channel.pipeline().addLast("write_timeout", createWriteTimeoutHandler());
         channel.pipeline().addLast("read_timeout", createReadTimeoutHandler());
         channel.pipeline().addLast("frame_decoder", getFrameDecoder());

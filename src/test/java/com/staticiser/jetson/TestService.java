@@ -48,7 +48,7 @@ public interface TestService {
 
     TestObject getObjectOnRemote(Integer port) throws RPCException;
 
-    String concatinate(final String text, final Integer integer, final TestObject object, final char character) throws RPCException;
+    String concatenate(final String text, final Integer integer, final TestObject object, final char character) throws RPCException;
 
     public class TestObject {
 

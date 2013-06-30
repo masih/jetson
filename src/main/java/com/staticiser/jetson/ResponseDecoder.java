@@ -34,10 +34,10 @@ public abstract class ResponseDecoder extends MessageToMessageDecoder<ByteBuf> {
     }
 
     @Override
-    protected void decode(final ChannelHandlerContext ctx, final ByteBuf msg, final MessageList<Object> out) {
+    protected void decode(final ChannelHandlerContext ctx, final ByteBuf in, final MessageList<Object> out) {
         Response response;
         try {
-            response = decode(ctx, msg);
+            response = decode(ctx, in);
         }
         catch (RPCException e) {
             response = new Response(); //TODO cache
@@ -46,6 +46,6 @@ public abstract class ResponseDecoder extends MessageToMessageDecoder<ByteBuf> {
         out.add(response);
     }
 
-    protected abstract Response decode(final ChannelHandlerContext context, final ByteBuf msg) throws RPCException;
+    protected abstract Response decode(final ChannelHandlerContext context, final ByteBuf in) throws RPCException;
 
 }
