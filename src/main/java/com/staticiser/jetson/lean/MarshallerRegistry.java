@@ -154,7 +154,7 @@ public class MarshallerRegistry {
                 oos.flush();
             }
             catch (IOException e) {
-                new RPCException(e);
+                throw new RPCException(e);
             }
             finally {
                 if (oos != null) {
