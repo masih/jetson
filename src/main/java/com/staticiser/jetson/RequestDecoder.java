@@ -37,6 +37,7 @@ public abstract class RequestDecoder extends MessageToMessageDecoder<ByteBuf> {
             out.add(request);
         }
         catch (RPCException e) {
+            e.printStackTrace();
             Response response = new Response(); //TODO cache
             //            response.setId(request.getId());
             response.setException(e);
