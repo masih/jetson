@@ -72,12 +72,11 @@ public class NormalOperationTest extends AbstractTest {
     //    @Ignore
     public void testConcurrentClients() throws RPCException, InterruptedException, ExecutionException {
 
-        Thread.sleep(10000);
         final ExecutorService executor = Executors.newFixedThreadPool(100);
         try {
             final CountDownLatch start_latch = new CountDownLatch(1);
             final List<Future<Void>> future_concurrent_tests = new ArrayList<Future<Void>>();
-            for (int i = 0; i < 500; i++) {
+            for (int i = 0; i < 100; i++) {
                 future_concurrent_tests.add(executor.submit(new Callable<Void>() {
 
                     @Override
@@ -217,7 +216,7 @@ public class NormalOperationTest extends AbstractTest {
         try {
             final CountDownLatch start_latch = new CountDownLatch(1);
             final List<Future<Void>> future_concurrent_tests = new ArrayList<Future<Void>>();
-            for (int i = 0; i < 500; i++) {
+            for (int i = 0; i < 100; i++) {
                 future_concurrent_tests.add(executor.submit(new Callable<Void>() {
 
                     @Override
