@@ -3,6 +3,7 @@ package com.staticiser.jetson.lean;
 import com.staticiser.jetson.Request;
 import com.staticiser.jetson.RequestDecoder;
 import com.staticiser.jetson.exception.RPCException;
+import com.staticiser.jetson.lean.codec.Codecs;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import java.lang.reflect.Method;
@@ -13,9 +14,9 @@ import java.util.List;
 public class LeanRequestDecoder extends RequestDecoder {
 
     private final List<Method> dispatch;
-    private final MarshallerRegistry marshallers;
+    private final Codecs marshallers;
 
-    public LeanRequestDecoder(List<Method> dispatch, MarshallerRegistry marshallers) {
+    public LeanRequestDecoder(List<Method> dispatch, Codecs marshallers) {
 
         this.dispatch = dispatch;
         this.marshallers = marshallers;
@@ -47,11 +48,7 @@ public class LeanRequestDecoder extends RequestDecoder {
 
             arguments = new Object[arguments_count];
             for (int i = 0; i < arguments_count; i++) {
-
-                final Type type = argument_types[i];
-                final Marshaller marshaller = marshallers.get(type);
-                if (marshaller == null) { throw new RPCException("marshaller not found for type " + type); }
-                arguments[i] = marshaller.read(in);
+                arguments[i] = marshallers.decodeAs(in, argument_types[i]);
             }
         }
         else {

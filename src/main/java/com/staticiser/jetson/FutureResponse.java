@@ -32,12 +32,12 @@ public class FutureResponse implements Future<Object> {
     }
 
     @Override
-    public boolean isCancelled() {
+    public synchronized boolean isCancelled() {
         return current_state == State.CANCELLED;
     }
 
     @Override
-    public boolean isDone() {
+    public synchronized boolean isDone() {
         return current_state != State.PENDING;
     }
 

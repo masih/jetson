@@ -20,6 +20,7 @@ package com.staticiser.jetson.lean;
 
 import com.staticiser.jetson.ClientChannelInitializer;
 import com.staticiser.jetson.ClientFactory;
+import com.staticiser.jetson.lean.codec.Codecs;
 import com.staticiser.jetson.util.ReflectionUtil;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
@@ -42,7 +43,7 @@ public class LeanClientFactory<Service> extends ClientFactory<Service> {
      * @param service_interface the interface presenting the remote service
      * @param marshallers
      */
-    public LeanClientFactory(final Class<Service> service_interface, final MarshallerRegistry marshallers) {
+    public LeanClientFactory(final Class<Service> service_interface, final Codecs marshallers) {
         super(service_interface, new ClientChannelInitializer(new LeanRequestEncoder(new ArrayList<Method>(ReflectionUtil.mapMethodsToNames(service_interface).keySet()), marshallers), new LeanResponseDecoder(marshallers)));
     }
 }

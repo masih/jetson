@@ -19,10 +19,15 @@
 package com.staticiser.jetson;
 
 import com.staticiser.jetson.exception.RPCException;
+import java.util.Collection;
 
 public interface TestService {
 
     void doVoidWithNoParams() throws RPCException;
+
+    int getNumberOfMessages(String... messages) throws RPCException;
+
+    int getCollectionSize(Collection<String> collection) throws RPCException;
 
     String saySomething() throws RPCException;
 
