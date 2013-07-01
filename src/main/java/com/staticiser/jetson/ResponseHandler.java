@@ -33,7 +33,7 @@ class ResponseHandler extends ChannelInboundHandlerAdapter {
     @Override
     public void channelInactive(final ChannelHandlerContext context) throws Exception {
 
-        LOGGER.info("client disconencted {}", context.channel().remoteAddress());
+        LOGGER.debug("client disconencted {}", context.channel().remoteAddress());
         final Client client = getClientFromContext(context);
         client.notifyChannelInactivation(context.channel());
         super.channelInactive(context);

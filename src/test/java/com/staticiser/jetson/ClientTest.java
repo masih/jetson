@@ -1,7 +1,6 @@
 package com.staticiser.jetson;
 
 import com.staticiser.jetson.exception.RPCException;
-import com.staticiser.jetson.exception.TransportException;
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -28,7 +27,7 @@ public class ClientTest {
         this.client_factory = client_factory;
     }
 
-    @Test(expected = TransportException.class)
+    @Test(expected = RPCException.class)
     public void testConnectionRefusal() throws RPCException {
 
         final TestService service = client_factory.get(new InetSocketAddress(55555));

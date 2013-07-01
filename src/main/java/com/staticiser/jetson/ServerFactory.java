@@ -78,7 +78,7 @@ public class ServerFactory<Service> {
     static ServerBootstrap createDefaultServerBootstrap(final Class<?> service_type, final ServerChannelInitializer handler) {
 
         final NioEventLoopGroup parent_event_loop = new NioEventLoopGroup(8, new NamingThreadFactory("server_parent_event_loop_"));
-        final NioEventLoopGroup child_event_loop = new NioEventLoopGroup(50, new NamingThreadFactory("server_child_event_loop_"));
+        final NioEventLoopGroup child_event_loop = new NioEventLoopGroup(100, new NamingThreadFactory("server_child_event_loop_"));
         final ServerBootstrap server_bootstrap = new ServerBootstrap();
         server_bootstrap.group(parent_event_loop, child_event_loop);
         server_bootstrap.channel(NioServerSocketChannel.class);

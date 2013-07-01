@@ -48,7 +48,7 @@ class ChannelPool extends GenericObjectPool<Channel> {
 
     protected void configure() {
 
-        //        setTestOnBorrow(true);
+        setTestOnBorrow(true);
         setTestOnReturn(true);
     }
 
@@ -80,7 +80,7 @@ class ChannelPool extends GenericObjectPool<Channel> {
         public Channel makeObject() throws Exception {
 
             try {
-                LOGGER.info("making new channel for {}", address);
+                LOGGER.debug("making new channel for {}", address);
                 final ChannelFuture connect_future = bootstrap.connect(address);
                 //            connect_future.addListener(ChannelFutureListener.CLOSE_ON_FAILURE);
                 if (!connect_future.await(connection_timeout_in_millis)) { throw new ConnectTimeoutException(); }
