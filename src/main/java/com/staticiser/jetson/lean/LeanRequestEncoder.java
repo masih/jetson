@@ -4,6 +4,7 @@ import com.staticiser.jetson.Request;
 import com.staticiser.jetson.RequestEncoder;
 import com.staticiser.jetson.exception.MethodNotFoundException;
 import com.staticiser.jetson.exception.RPCException;
+import com.staticiser.jetson.lean.codec.Codecs;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import java.lang.reflect.Method;
@@ -14,11 +15,11 @@ import java.util.List;
 public class LeanRequestEncoder extends RequestEncoder {
 
     private final List<Method> dispatch;
-    private final MarshallerRegistry marshallers;
+    private final Codecs codecs;
 
-    public LeanRequestEncoder(final List<Method> dispatch, MarshallerRegistry marshallers) {
+    public LeanRequestEncoder(final List<Method> dispatch, Codecs codecs) {
         this.dispatch = dispatch;
-        this.marshallers = marshallers;
+        this.codecs = codecs;
     }
 
     @Override
@@ -37,13 +38,7 @@ public class LeanRequestEncoder extends RequestEncoder {
 
             final Type type = argument_types[i];
             final Object argument = arguments[i];
-            final Marshaller marshaller = marshallers.get(type);
-            if (marshaller != null) {
-                marshaller.write(argument, out);
-            }
-            else {
-                throw new RPCException("no marshaller found for type " + type);
-            }
+            codecs.encodeAs(argument, out, type);
         }
     }
 

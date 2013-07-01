@@ -23,6 +23,7 @@ import com.staticiser.jetson.exception.RPCException;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CountDownLatch;
@@ -69,7 +70,25 @@ public class NormalOperationTest extends AbstractTest {
     }
 
     @Test
-    //    @Ignore
+    public void testGetNumberOfMessages() throws Exception {
+
+        Assert.assertEquals(0, client.getNumberOfMessages(new String[0]));
+        Assert.assertEquals(0, client.getNumberOfMessages());
+        Assert.assertEquals(-1, client.getNumberOfMessages(null));
+        Assert.assertEquals(1, client.getNumberOfMessages(""));
+        Assert.assertEquals(3, client.getNumberOfMessages("", null, "1"));
+        Assert.assertEquals(3, client.getNumberOfMessages(new String[] {"", null, "1"}));
+    }
+
+    @Test
+    public void testGetCollectionSize() throws Exception {
+        Assert.assertEquals(0, client.getCollectionSize(new ArrayList()));
+        Assert.assertEquals(-1, client.getCollectionSize(null));
+        Assert.assertEquals(1, client.getCollectionSize(Arrays.asList((String) null)));
+        Assert.assertEquals(3, client.getCollectionSize(Arrays.asList("", null, "1")));
+    }
+
+    @Test
     public void testConcurrentClients() throws RPCException, InterruptedException, ExecutionException {
 
         final ExecutorService executor = Executors.newFixedThreadPool(100);

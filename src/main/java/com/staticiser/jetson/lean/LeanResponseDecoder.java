@@ -4,6 +4,7 @@ import com.staticiser.jetson.Request;
 import com.staticiser.jetson.Response;
 import com.staticiser.jetson.ResponseDecoder;
 import com.staticiser.jetson.exception.RPCException;
+import com.staticiser.jetson.lean.codec.Codecs;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import java.lang.reflect.Method;
@@ -12,10 +13,10 @@ import java.lang.reflect.Type;
 /** @author Masih Hajiarabderkani (mh638@st-andrews.ac.uk) */
 public class LeanResponseDecoder extends ResponseDecoder {
 
-    private final MarshallerRegistry marshallers;
+    private final Codecs codecs;
 
-    public LeanResponseDecoder(MarshallerRegistry marshallers) {
-        this.marshallers = marshallers;
+    public LeanResponseDecoder(Codecs codecs) {
+        this.codecs = codecs;
     }
 
     @Override
@@ -26,7 +27,7 @@ public class LeanResponseDecoder extends ResponseDecoder {
         response.setId(id);
         final boolean error = in.readBoolean();
         if (error) {
-            final Throwable throwable = (Throwable) marshallers.get(Throwable.class).read(in);
+            final Throwable throwable = codecs.decodeAs(in, Throwable.class);
             response.setException(throwable);
         }
         else {
@@ -34,7 +35,7 @@ public class LeanResponseDecoder extends ResponseDecoder {
             final Method method = request.getMethod();
             if (!method.getReturnType().equals(Void.TYPE)) {
                 final Type return_type = method.getGenericReturnType();
-                final Object result = marshallers.get(return_type).read(in);
+                final Object result = codecs.decodeAs(in, return_type);
                 response.setResult(result);
             }
         }

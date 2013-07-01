@@ -2,6 +2,7 @@ package com.staticiser.jetson;
 
 import com.staticiser.jetson.exception.RPCException;
 import java.net.InetSocketAddress;
+import java.util.Collection;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -21,6 +22,16 @@ public class NormalOperationTestService implements TestService {
     public void doVoidWithNoParams() {
 
         LOGGER.debug("doing nothing");
+    }
+
+    @Override
+    public int getNumberOfMessages(final String... messages) {
+        return messages != null ? messages.length : -1;
+    }
+
+    @Override
+    public int getCollectionSize(final Collection<String> collection) throws RPCException {
+        return collection != null ? collection.size() : -1;
     }
 
     @Override

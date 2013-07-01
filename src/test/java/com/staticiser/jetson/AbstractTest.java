@@ -25,10 +25,12 @@ import com.staticiser.jetson.json.JsonClientFactory;
 import com.staticiser.jetson.json.JsonServerFactory;
 import com.staticiser.jetson.lean.LeanClientFactory;
 import com.staticiser.jetson.lean.LeanServerFactory;
-import com.staticiser.jetson.lean.Marshaller;
-import com.staticiser.jetson.lean.MarshallerRegistry;
+import com.staticiser.jetson.lean.codec.Codec;
+import com.staticiser.jetson.lean.codec.Codecs;
+import com.staticiser.jetson.lean.codec.CollectionCodec;
 import io.netty.buffer.ByteBuf;
 import java.io.IOException;
+import java.lang.reflect.Type;
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -43,32 +45,42 @@ import org.junit.runners.Parameterized;
 @RunWith(Parameterized.class)
 public abstract class AbstractTest {
 
-    public static final MarshallerRegistry MARSHALLERS = new MarshallerRegistry();
+    public static final Codecs CODECS = new Codecs();
 
     static {
-        MARSHALLERS.register(TestService.TestObject.class, new Marshaller<TestService.TestObject>() {
+        CODECS.register(new Codec() {
 
             @Override
-            public void write(final TestService.TestObject testObject, final ByteBuf out) throws RPCException {
-                MARSHALLERS.get(String.class).write(testObject.getMessage(), out);
+            public boolean isSupported(final Type type) {
+                return type != null && type instanceof Class<?> && TestService.TestObject.class.isAssignableFrom((Class<?>) type);
             }
 
             @Override
-            public TestService.TestObject read(final ByteBuf in) throws RPCException {
-                final String message = (String) MARSHALLERS.get(String.class).read(in);
+            public void encode(final Object value, final ByteBuf out, final Codecs codecs, final Type type) throws RPCException {
+                final TestService.TestObject testObject = (TestService.TestObject) value;
+                codecs.encodeAs(testObject.getMessage(), out, String.class);
+            }
 
+            @Override
+            public TestService.TestObject decode(final ByteBuf in, final Codecs codecs, final Type type) throws RPCException {
+                final String message = codecs.decodeAs(in, String.class);
                 return new TestService.TestObject(message);
+            }
+        });
+        CODECS.register(new CollectionCodec() {
+
+            @Override
+            protected Collection constructCollectionOfType(final Type type) {
+                return new ArrayList();
             }
         });
     }
 
-    protected static final ServerFactory<TestService> LEAN_SERVER_FACTORY = new LeanServerFactory<TestService>(TestService.class, MARSHALLERS);
-    protected static final ClientFactory<TestService> LEAN_CLIENT_FACTORY = new LeanClientFactory<TestService>(TestService.class, MARSHALLERS);
-
+    protected static final ServerFactory<TestService> LEAN_SERVER_FACTORY = new LeanServerFactory<TestService>(TestService.class, CODECS);
+    protected static final ClientFactory<TestService> LEAN_CLIENT_FACTORY = new LeanClientFactory<TestService>(TestService.class, CODECS);
     protected static final JsonFactory JSON_FACTORY = new JsonFactory(new ObjectMapper());
     protected static final ServerFactory<TestService> JSON_SERVER_FACTORY = new JsonServerFactory<TestService>(TestService.class, JSON_FACTORY);
     protected static final ClientFactory<TestService> JSON_CLIENT_FACTORY = new JsonClientFactory<TestService>(TestService.class, JSON_FACTORY);
-
     protected final ClientFactory<TestService> client_factory;
     protected final ServerFactory<TestService> server_factory;
     @Rule
