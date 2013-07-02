@@ -42,22 +42,6 @@ public class NormalOperationTest extends AbstractTest {
         super(client_factory, server_factory);
     }
 
-    //        public static void main(final String[] args) throws Exception {
-    //
-    //            final NormalOperationTest t = new NormalOperationTest();
-    //            t.setUp();
-    //            int i = 0;
-    //            try {
-    //                while (!Thread.currentThread().isInterrupted()) {
-    //                    t.startJsonRpcTestServer().expose();
-    //                    i++;
-    //                }
-    //            } finally {
-    //                System.out.println("NUMBER OF SERVERS: " + i);
-    //
-    //            }
-    //        }
-
     @Test
     public void testConcatenate() throws RPCException {
 

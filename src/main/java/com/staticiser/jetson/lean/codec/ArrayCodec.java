@@ -31,15 +31,16 @@ class ArrayCodec implements Codec {
     }
 
     @Override
-    public Object[] decode(final ByteBuf in, final Codecs codecs, final Type expected_type) throws RPCException {
+    public Object decode(final ByteBuf in, final Codecs codecs, final Type expected_type) throws RPCException {
 
         final int length = in.readInt();
         if (length < 0) { return null; }
-        final Object[] result = new Object[length];
+        final Class<?> expected_class = (Class<?>) expected_type;
+        final Class<?> component_type = expected_class.getComponentType();
+        final Object result = Array.newInstance(component_type, length);
 
-        final Class<?> component_type = ((Class) expected_type).getComponentType();
         for (int i = 0; i < length; i++) {
-            result[i] = codecs.decodeAs(in, component_type);
+            Array.set(result, i, codecs.decodeAs(in, component_type));
         }
         return result;
     }
