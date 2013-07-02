@@ -24,6 +24,7 @@ public class Codecs {
     private final List<Codec> codecs;
 
     public Codecs() {
+
         codecs = new ArrayList<Codec>();
         registerDefaultCodecs();
     }
@@ -34,6 +35,7 @@ public class Codecs {
     }
 
     public boolean isSupported(final Type type) {
+
         for (Codec codec : codecs) {
             if (codec.isSupported(type)) { return true; }
         }
@@ -41,10 +43,12 @@ public class Codecs {
     }
 
     public synchronized void encodeAs(final Object value, final ByteBuf out, Type type) throws RPCException {
+
         get(type).encode(value, out, this, type);
     }
 
     public synchronized <Value> Value decodeAs(final ByteBuf in, Type type) throws RPCException {
+
         return get(type).decode(in, this, type);
     }
 
@@ -58,6 +62,7 @@ public class Codecs {
     }
 
     protected void registerDefaultCodecs() {
+
         register(BYTE_CODEC);
         register(SHORT_CODEC);
         register(INTEGER_CODEC);

@@ -58,7 +58,7 @@ public class ClientFactory<Service> {
 
         dispatch = ReflectionUtil.sort(service_interface.getMethods());
         this.class_loader = ClassLoader.getSystemClassLoader();
-        this.interfaces = new Class<?>[] {service_interface};
+        this.interfaces = new Class<?>[]{service_interface};
         bootstrap = new Bootstrap();
         configure(handler);
     }
@@ -80,6 +80,7 @@ public class ClientFactory<Service> {
 
     /** Shuts down all the {@link EventLoopGroup threads} that are used by any client constructed using this factory. */
     public void shutdown() {
+
         LOGGER.debug("shutting down client factory for service {}", interfaces[0]);
         bootstrap.group().shutdownGracefully();
     }

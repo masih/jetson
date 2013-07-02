@@ -23,6 +23,7 @@ public class IllegalAccessException extends ServerException {
     private static final long serialVersionUID = -869413349986223849L;
 
     public IllegalAccessException() {
+
         super();
     }
 

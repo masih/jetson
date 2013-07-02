@@ -30,29 +30,35 @@ public class Request extends Message {
     }
 
     public Request(Integer id, final Method method, final Object[] arguments) {
+
         setId(id);
         setMethod(method);
         setArguments(arguments);
     }
 
     public Method getMethod() {
+
         return method;
     }
 
     public void setMethod(final Method method) {
+
         this.method = method;
     }
 
     public Object[] getArguments() {
+
         return arguments;
     }
 
     public void setArguments(final Object[] arguments) {
+
         this.arguments = arguments;
     }
 
     @Override
     protected synchronized void reset() {
+
         super.reset();
         setArguments(null);
         setMethod(null);

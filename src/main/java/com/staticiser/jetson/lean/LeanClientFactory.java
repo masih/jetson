@@ -44,6 +44,7 @@ public class LeanClientFactory<Service> extends ClientFactory<Service> {
      * @param marshallers
      */
     public LeanClientFactory(final Class<Service> service_interface, final Codecs marshallers) {
+
         super(service_interface, new ClientChannelInitializer(new LeanRequestEncoder(new ArrayList<Method>(ReflectionUtil.mapMethodsToNames(service_interface).keySet()), marshallers), new LeanResponseDecoder(marshallers)));
     }
 }

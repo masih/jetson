@@ -16,14 +16,16 @@ public class ClientTest {
 
     @Parameterized.Parameters(name = "{index} -  client:{0}")
     public static Collection<Object[]> getParameters() {
+
         final Collection<Object[]> parameters = new ArrayList<Object[]>();
-        parameters.add(new Object[] {AbstractTest.LEAN_CLIENT_FACTORY});
-        parameters.add(new Object[] {AbstractTest.JSON_CLIENT_FACTORY});
+        parameters.add(new Object[]{AbstractTest.LEAN_CLIENT_FACTORY});
+        parameters.add(new Object[]{AbstractTest.JSON_CLIENT_FACTORY});
 
         return parameters;
     }
 
     public ClientTest(final ClientFactory<TestService> client_factory) {
+
         this.client_factory = client_factory;
     }
 

@@ -9,16 +9,19 @@ class ByteCodec implements Codec {
 
     @Override
     public boolean isSupported(final Type type) {
+
         return type == Byte.class || type == Byte.TYPE;
     }
 
     @Override
     public void encode(final Object value, final ByteBuf out, final Codecs codecs, final Type type) throws RPCException {
+
         out.writeByte((Byte) value);
     }
 
     @Override
     public Byte decode(final ByteBuf in, final Codecs codecs, final Type type) {
+
         return in.readByte();
     }
 }

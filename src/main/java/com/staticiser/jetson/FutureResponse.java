@@ -19,6 +19,7 @@ public class FutureResponse implements Future<Object> {
     private volatile Object result;
 
     public FutureResponse(Request request, final Channel channel) {
+
         this.request = request;
         this.channel = channel;
         current_state = State.PENDING;
@@ -27,22 +28,26 @@ public class FutureResponse implements Future<Object> {
 
     @Override
     public synchronized boolean cancel(final boolean mayInterruptIfRunning) {
+
         if (isDone()) { return false; }
         return updateState(State.CANCELLED);
     }
 
     @Override
     public synchronized boolean isCancelled() {
+
         return current_state == State.CANCELLED;
     }
 
     @Override
     public synchronized boolean isDone() {
+
         return current_state != State.PENDING;
     }
 
     @Override
     public Object get() throws InterruptedException, ExecutionException {
+
         job_done_latch.await(); // Wait until the job is done
 
         switch (current_state) {
@@ -61,25 +66,30 @@ public class FutureResponse implements Future<Object> {
 
     @Override
     public Object get(final long timeout, final TimeUnit unit) throws InterruptedException, ExecutionException, TimeoutException {
+
         if (job_done_latch.await(timeout, unit)) { return get(); }
 
         throw new TimeoutException();
     }
 
     public Channel getChannel() {
+
         return channel;
     }
 
     public void setException(final Throwable exception) {
+
         this.error = exception;
         updateState(State.DONE_WITH_EXCEPTION);
     }
 
     public Request getRequest() {
+
         return request;
     }
 
     private synchronized boolean updateState(final State new_state) {
+
         if (isDone()) { return false; }
 
         State old_state = current_state;
@@ -92,6 +102,7 @@ public class FutureResponse implements Future<Object> {
     }
 
     synchronized void setResponse(Response response) {
+
         if (response.isError()) {
             setException(response.getException());
         }
@@ -116,4 +127,3 @@ public class FutureResponse implements Future<Object> {
         CANCELLED;
     }
 }
-

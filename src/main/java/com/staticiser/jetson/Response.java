@@ -54,6 +54,7 @@ public class Response extends Message {
 
     @Override
     public String toString() {
+
         final StringBuilder sb = new StringBuilder("Response{");
         sb.append("result=").append(result);
         sb.append(", error=").append(error);

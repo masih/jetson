@@ -18,6 +18,7 @@ public class LeanRequestEncoder extends RequestEncoder {
     private final Codecs codecs;
 
     public LeanRequestEncoder(final List<Method> dispatch, Codecs codecs) {
+
         this.dispatch = dispatch;
         this.codecs = codecs;
     }
@@ -34,6 +35,7 @@ public class LeanRequestEncoder extends RequestEncoder {
     }
 
     private void writeArguments(final Object[] arguments, final Type[] argument_types, final ByteBuf out) throws RPCException {
+
         for (int i = 0; i < argument_types.length; i++) {
 
             final Type type = argument_types[i];
@@ -43,8 +45,9 @@ public class LeanRequestEncoder extends RequestEncoder {
     }
 
     private void writeMethod(final Method method, final ByteBuf out) throws MethodNotFoundException {
+
         final int index = dispatch.indexOf(method);
-        if (index == -1) { throw new MethodNotFoundException();}
+        if (index == -1) { throw new MethodNotFoundException(); }
         out.writeByte(index);
     }
 }

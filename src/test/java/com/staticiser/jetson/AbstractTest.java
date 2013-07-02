@@ -52,17 +52,20 @@ public abstract class AbstractTest {
 
             @Override
             public boolean isSupported(final Type type) {
+
                 return type != null && type instanceof Class<?> && TestService.TestObject.class.isAssignableFrom((Class<?>) type);
             }
 
             @Override
             public void encode(final Object value, final ByteBuf out, final Codecs codecs, final Type type) throws RPCException {
+
                 final TestService.TestObject testObject = (TestService.TestObject) value;
                 codecs.encodeAs(testObject.getMessage(), out, String.class);
             }
 
             @Override
             public TestService.TestObject decode(final ByteBuf in, final Codecs codecs, final Type type) throws RPCException {
+
                 final String message = codecs.decodeAs(in, String.class);
                 return new TestService.TestObject(message);
             }
@@ -71,6 +74,7 @@ public abstract class AbstractTest {
 
             @Override
             protected Collection constructCollectionOfType(final Type type) {
+
                 return new ArrayList();
             }
         });
@@ -93,15 +97,17 @@ public abstract class AbstractTest {
     protected TestService client;
 
     protected AbstractTest(ClientFactory<TestService> client_factory, ServerFactory<TestService> server_factory) {
+
         this.client_factory = client_factory;
         this.server_factory = server_factory;
     }
 
     @Parameterized.Parameters(name = "{index} -  client:{0}, server: {1}")
     public static Collection<Object[]> getParameters() {
+
         final Collection<Object[]> parameters = new ArrayList<Object[]>();
-        parameters.add(new Object[] {LEAN_CLIENT_FACTORY, LEAN_SERVER_FACTORY});
-        parameters.add(new Object[] {JSON_CLIENT_FACTORY, JSON_SERVER_FACTORY});
+        parameters.add(new Object[]{LEAN_CLIENT_FACTORY, LEAN_SERVER_FACTORY});
+        parameters.add(new Object[]{JSON_CLIENT_FACTORY, JSON_SERVER_FACTORY});
 
         return parameters;
     }

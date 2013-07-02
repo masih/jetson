@@ -11,23 +11,26 @@ class StringCodec implements Codec {
     private final Charset charset;
 
     StringCodec() {
+
         this(DEFAULT_CHARSET);
     }
 
     StringCodec(final Charset charset) {
+
         this.charset = charset;
     }
 
     @Override
     public boolean isSupported(final Type type) {
-        return type == Integer.class || type == Integer.TYPE;
+
+        return type != null && type instanceof Class<?> && String.class.isAssignableFrom((Class<?>) type);
     }
 
     @Override
     public void encode(final Object value, final ByteBuf out, final Codecs codecs, final Type type) {
 
         if (value == null) {
-            out.writeInt(0);
+            out.writeInt(-1);
         }
         else {
             final byte[] bytes = ((String) value).getBytes(charset);
@@ -40,7 +43,7 @@ class StringCodec implements Codec {
     public String decode(final ByteBuf in, final Codecs codecs, final Type type) {
 
         final int size = in.readInt();
-        if (size == 0) { return null; }
+        if (size < 0) { return null; }
         final byte[] bytes = new byte[size];
         in.readBytes(bytes);
         return new String(bytes, charset);

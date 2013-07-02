@@ -10,6 +10,7 @@ class ArrayCodec implements Codec {
 
     @Override
     public boolean isSupported(final Type type) {
+
         return type != null && type instanceof Class<?> && ((Class<?>) type).isArray();
     }
 

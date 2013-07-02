@@ -45,20 +45,24 @@ class JsonRpcError {
     }
 
     JsonRpcError(final int code, final String message, final Object object) {
+
         this.code = code;
         this.message = message;
         this.object = object;
     }
 
     void setCode(final int code) {
+
         this.code = code;
     }
 
     void setMessage(final String message) {
+
         this.message = message;
     }
 
     void setData(final Object object) {
+
         this.object = object;
     }
 
@@ -69,6 +73,7 @@ class JsonRpcError {
      */
     @JsonProperty(CODE_KEY)
     int getCode() {
+
         return code;
     }
 
@@ -79,6 +84,7 @@ class JsonRpcError {
      */
     @JsonProperty(MESSAGE_KEY)
     String getMessage() {
+
         return message;
     }
 
@@ -91,10 +97,12 @@ class JsonRpcError {
     @JsonTypeInfo(use = JsonTypeInfo.Id.CLASS, include = JsonTypeInfo.As.PROPERTY, property = "@type")
     @JsonInclude(Include.NON_NULL)
     Object getData() {
+
         return object;
     }
 
     void reset() {
+
         setCode(0);
         setMessage(null);
         setData(null);

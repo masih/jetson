@@ -16,6 +16,7 @@ public class LeanResponseDecoder extends ResponseDecoder {
     private final Codecs codecs;
 
     public LeanResponseDecoder(Codecs codecs) {
+
         this.codecs = codecs;
     }
 

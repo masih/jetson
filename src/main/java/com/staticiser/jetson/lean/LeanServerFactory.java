@@ -11,6 +11,7 @@ import java.util.ArrayList;
 public class LeanServerFactory<Service> extends ServerFactory<Service> {
 
     public LeanServerFactory(final Class<Service> service_type, final Codecs marshallers) {
+
         super(service_type, new ServerChannelInitializer(new LeanRequestDecoder(new ArrayList<Method>(ReflectionUtil.mapMethodsToNames(service_type).keySet()), marshallers), new LeanResponseEncoder(marshallers)));
     }
 }

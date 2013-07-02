@@ -11,6 +11,7 @@ import static org.junit.Assert.fail;
 public class ServerTest extends AbstractTest {
 
     public ServerTest(final ClientFactory<TestService> client_factory, final ServerFactory<TestService> server_factory) {
+
         super(client_factory, server_factory);
     }
 

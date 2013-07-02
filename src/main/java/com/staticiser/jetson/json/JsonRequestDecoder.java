@@ -50,6 +50,7 @@ class JsonRequestDecoder extends RequestDecoder {
     private final JsonFactory json_factory;
 
     JsonRequestDecoder(final JsonFactory json_factory, final Map<String, Method> dispatch) {
+
         this.json_factory = json_factory;
         this.dispatch = dispatch;
     }

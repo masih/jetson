@@ -77,6 +77,7 @@ public abstract class BaseChannelInitializer extends ChannelInitializer<SocketCh
     }
 
     protected ChannelOutboundHandler getFrameEncoder() {
+
         return DEFAULT_FRAME_ENCODER;
     }
 

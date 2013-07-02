@@ -10,14 +10,16 @@ import org.junit.Test;
 public class ArrayCodecTest extends CodecTest {
 
     public ArrayCodecTest() {
+
         super(new ArrayCodec());
     }
 
     @Test
     public void testIsSupported() throws Exception {
-        Assert.assertTrue(codec.isSupported(new Object[] {}.getClass()));
-        Assert.assertTrue(codec.isSupported(new int[] {}.getClass()));
-        Assert.assertTrue(codec.isSupported(new byte[] {}.getClass()));
+
+        Assert.assertTrue(codec.isSupported(new Object[]{}.getClass()));
+        Assert.assertTrue(codec.isSupported(new int[]{}.getClass()));
+        Assert.assertTrue(codec.isSupported(new byte[]{}.getClass()));
         Assert.assertTrue(codec.isSupported(Array.newInstance(Integer.TYPE, 5, 5).getClass()));
         Assert.assertFalse(codec.isSupported("".getClass()));
         Assert.assertFalse(codec.isSupported(null));
@@ -26,6 +28,7 @@ public class ArrayCodecTest extends CodecTest {
 
     @Test
     public void testCodecIntegers() throws Exception {
+
         final int[] value = {1, 2, 3, 4, 5};
         final int value_length = value.length;
         encode(value);
@@ -37,6 +40,7 @@ public class ArrayCodecTest extends CodecTest {
 
     @Test
     public void testCodecStrings() throws Exception {
+
         final String[] value = {"AAA", null, null, null, ""};
         final int value_length = value.length;
         encode(value);
@@ -46,6 +50,7 @@ public class ArrayCodecTest extends CodecTest {
     }
 
     private void assertEncodedArrayLength(final int length) {
+
         Assert.assertEquals(length, buffer.getInt(0));
     }
 }
