@@ -92,11 +92,11 @@ public class ServerFactory<Service> {
      * Shuts down the {@link ServerBootstrap server bootstrap} and the {@link EventLoop}s used by any server that is created using this factory.
      * After this method is called any server that is created using this factory will become unresponsive.
      *
-     * @see ServerBootstrap#shutdown()
+     * @see EventLoop#shutdownGracefully()
      */
     public void shutdown() {
 
         request_executor.shutdownNow();
-        server_bootstrap.shutdown();
+        server_bootstrap.group().shutdownGracefully();
     }
 }
