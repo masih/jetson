@@ -25,7 +25,7 @@ public class DoubleCodecTest extends CodecTest {
 
         final double[] doubles = {15.9, 64565465465.54654654, -888949.000000001, Double.MAX_VALUE, Double.MIN_VALUE, Double.NaN};
         for (final double b : doubles) {
-            encode(b);
+            encode(b, Double.TYPE);
         }
         Assert.assertEquals(doubles.length * 64 / 8, buffer.readableBytes());
         for (final double b : doubles) {

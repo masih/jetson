@@ -25,7 +25,7 @@ public class IntegerCodecTest extends CodecTest {
 
         final int[] ints = {54654654, -89999, -88, Integer.MAX_VALUE, Integer.MIN_VALUE, 0};
         for (final int b : ints) {
-            encode(b);
+            encode(b, Integer.TYPE);
         }
         Assert.assertEquals(ints.length * 32 / 8, buffer.readableBytes());
         for (final int b : ints) {

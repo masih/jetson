@@ -22,9 +22,21 @@ public class Response extends Message {
 
     private Object result;
     private Throwable error;
+    private Request request;
 
     public Response() {
 
+    }
+
+    public Request getRequest() {
+
+        return request;
+    }
+
+    public void setRequest(final Request request) {
+
+        this.request = request;
+        setId(request.getId());
     }
 
     public Object getResult() {

@@ -25,9 +25,9 @@ public class ByteCodecTest extends CodecTest {
     @Test
     public void testCodec() throws Exception {
 
-        final Byte[] bytes = {0, -52, 127, -127};
+        final byte[] bytes = {0, -52, 127, -127};
         for (final byte b : bytes) {
-            encode(b);
+            encode(b, Byte.TYPE);
         }
         Assert.assertEquals(bytes.length, buffer.readableBytes());
         for (final byte b : bytes) {

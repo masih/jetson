@@ -1,26 +1,24 @@
 package com.staticiser.jetson.lean.codec;
 
 import io.netty.buffer.ByteBuf;
-import java.lang.reflect.Type;
 
 /** @author Masih Hajiarabderkani (mh638@st-andrews.ac.uk) */
-class LongCodec implements Codec {
+class LongCodec extends PrimitiveTypeCodec {
 
-    @Override
-    public boolean isSupported(final Type type) {
+    protected LongCodec() {
 
-        return type == Long.class || type == Long.TYPE;
+        super(Long.class, Long.TYPE);
     }
 
     @Override
-    public void encode(final Object value, final ByteBuf out, final Codecs codecs, final Type type) {
-
-        out.writeLong((Long) value);
-    }
-
-    @Override
-    public Long decode(final ByteBuf in, final Codecs codecs, final Type type) {
+    protected Object readValue(final ByteBuf in) {
 
         return in.readLong();
+    }
+
+    @Override
+    protected void writeValue(final ByteBuf out, final Object value) {
+
+        out.writeLong((Long) value);
     }
 }

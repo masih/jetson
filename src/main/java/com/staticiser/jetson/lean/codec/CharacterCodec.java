@@ -1,26 +1,24 @@
 package com.staticiser.jetson.lean.codec;
 
 import io.netty.buffer.ByteBuf;
-import java.lang.reflect.Type;
 
 /** @author Masih Hajiarabderkani (mh638@st-andrews.ac.uk) */
-class CharacterCodec implements Codec {
+class CharacterCodec extends PrimitiveTypeCodec {
 
-    @Override
-    public boolean isSupported(final Type type) {
+    protected CharacterCodec() {
 
-        return type == Character.class || type == Character.TYPE;
+        super(Character.class, Character.TYPE);
     }
 
     @Override
-    public void encode(final Object value, final ByteBuf out, final Codecs codecs, final Type type) {
-
-        out.writeChar((Character) value);
-    }
-
-    @Override
-    public Character decode(final ByteBuf in, final Codecs codecs, final Type type) {
+    protected Object readValue(final ByteBuf in) {
 
         return in.readChar();
+    }
+
+    @Override
+    protected void writeValue(final ByteBuf out, final Object value) {
+
+        out.writeChar((Character) value);
     }
 }

@@ -1,27 +1,24 @@
 package com.staticiser.jetson.lean.codec;
 
-import com.staticiser.jetson.exception.RPCException;
 import io.netty.buffer.ByteBuf;
-import java.lang.reflect.Type;
 
 /** @author Masih Hajiarabderkani (mh638@st-andrews.ac.uk) */
-class ByteCodec implements Codec {
+class ByteCodec extends PrimitiveTypeCodec {
 
-    @Override
-    public boolean isSupported(final Type type) {
+    protected ByteCodec() {
 
-        return type == Byte.class || type == Byte.TYPE;
+        super(Byte.class, Byte.TYPE);
     }
 
     @Override
-    public void encode(final Object value, final ByteBuf out, final Codecs codecs, final Type type) throws RPCException {
-
-        out.writeByte((Byte) value);
-    }
-
-    @Override
-    public Byte decode(final ByteBuf in, final Codecs codecs, final Type type) {
+    protected Object readValue(final ByteBuf in) {
 
         return in.readByte();
+    }
+
+    @Override
+    protected void writeValue(final ByteBuf out, final Object value) {
+
+        out.writeByte((Byte) value);
     }
 }

@@ -21,6 +21,7 @@ public class Codecs {
     private static final FloatCodec FLOAT_CODEC = new FloatCodec();
     private static final DoubleCodec DOUBLE_CODEC = new DoubleCodec();
     private static final SerializableCodec SERIALIZABLE_CODEC = new SerializableCodec();
+    public static final ArrayCodec ARRAY_CODEC = new ArrayCodec();
     private final List<Codec> codecs;
 
     public Codecs() {
@@ -73,6 +74,7 @@ public class Codecs {
         register(STRING_CODEC);
         register(BOOLEAN_CODEC);
         register(THROWABLE_CODEC);
+        register(ARRAY_CODEC);
         register(SERIALIZABLE_CODEC);
     }
 }

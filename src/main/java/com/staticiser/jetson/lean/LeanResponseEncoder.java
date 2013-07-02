@@ -30,7 +30,7 @@ public class LeanResponseEncoder extends ResponseEncoder {
         }
         else if (response.getResult() != null) {
 
-            Type return_type = response.getResult().getClass(); //FIXME
+            final Type return_type = response.getRequest().getMethod().getGenericReturnType();
             codecs.encodeAs(response.getResult(), out, return_type);
         }
     }
