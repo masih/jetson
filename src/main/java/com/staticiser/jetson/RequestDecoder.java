@@ -48,6 +48,7 @@ public abstract class RequestDecoder extends MessageToMessageDecoder<ByteBuf> {
     protected abstract Request decode(final ChannelHandlerContext context, final ByteBuf bytes) throws RPCException;
 
     protected Server getServer(ChannelHandlerContext context) {
+
         return RequestHandler.getServerFromContext(context);
     }
 

@@ -28,6 +28,7 @@ public class ServerChannelInitializer extends BaseChannelInitializer {
     private final RequestHandler request_handler;
 
     public ServerChannelInitializer(final RequestDecoder request_decoder, final ResponseEncoder response_encoder) {
+
         this.request_decoder = request_decoder;
         this.response_encoder = response_encoder;
         request_handler = new RequestHandler();

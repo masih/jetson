@@ -95,6 +95,7 @@ public class Server {
     }
 
     public void handle(final ChannelHandlerContext context, final Request request) throws Exception {
+
         final Callable<ChannelFuture> task = new Callable<ChannelFuture>() {
 
             @Override
@@ -111,14 +112,16 @@ public class Server {
                 return context.write(response);
             }
         };
-        final Future<ChannelFuture> processing_future = executor.submit(task);      // TODO add to a map; upon channel inactivation cancel the processing if not done
+        final Future<ChannelFuture> processing_future = executor.submit(task); // TODO add to a map; upon channel inactivation cancel the processing if not done
     }
 
     public void notifyChannelActivation(final Channel channel) {
+
         server_channel_group.add(channel);
     }
 
     public void notifyChannelInactivation(final Channel channel) {
+
         server_channel_group.remove(channel);
     }
 

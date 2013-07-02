@@ -16,11 +16,13 @@ public class SerializableCodec implements Codec {
 
     @Override
     public boolean isSupported(final Type type) {
+
         return type != null && type instanceof Class<?> && Serializable.class.isAssignableFrom((Class<?>) type);
     }
 
     @Override
     public void encode(final Object value, final ByteBuf out, final Codecs codecs, final Type type) throws RPCException {
+
         ObjectOutputStream object_out = null;
         try {
             object_out = new ObjectOutputStream(new ByteBufOutputStream(out));
@@ -37,6 +39,7 @@ public class SerializableCodec implements Codec {
 
     @Override
     public Serializable decode(final ByteBuf in, final Codecs codecs, final Type type) throws RPCException {
+
         ObjectInputStream object_in = null;
         try {
             object_in = new ObjectInputStream(new ByteBufInputStream(in));

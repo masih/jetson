@@ -7,10 +7,11 @@ import java.lang.reflect.Type;
 import java.util.Collection;
 
 /** @author Masih Hajiarabderkani (mh638@st-andrews.ac.uk) */
-public abstract  class CollectionCodec implements Codec {
+public abstract class CollectionCodec implements Codec {
 
     @Override
     public boolean isSupported(final Type type) {
+
         return type != null && isCollection(type) || isParameterizedCollection(type);
     }
 
@@ -43,18 +44,22 @@ public abstract  class CollectionCodec implements Codec {
             result.add(codecs.decodeAs(in, component_type));
         }
         return result;
+
     }
 
     protected boolean isParameterizedCollection(final Type type) {
+
         return type != null && type instanceof ParameterizedType && Collection.class.isAssignableFrom((Class<?>) ((ParameterizedType) type).getRawType());
     }
 
     protected boolean isCollection(final Type type) {
+
         return type instanceof Class<?> && Collection.class.isAssignableFrom((Class<?>) type);
 
-  }
+    }
 
     protected Type getComponentType(final Type type) {
+
         return type instanceof ParameterizedType ? ((ParameterizedType) type).getActualTypeArguments()[0] : Object.class;
     }
 

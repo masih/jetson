@@ -39,6 +39,7 @@ import static org.junit.Assert.fail;
 public class NormalOperationTest extends AbstractTest {
 
     public NormalOperationTest(final ClientFactory<TestService> client_factory, final ServerFactory<TestService> server_factory) {
+
         super(client_factory, server_factory);
     }
 
@@ -61,11 +62,12 @@ public class NormalOperationTest extends AbstractTest {
         Assert.assertEquals(-1, client.getNumberOfMessages(null));
         Assert.assertEquals(1, client.getNumberOfMessages(""));
         Assert.assertEquals(3, client.getNumberOfMessages("", null, "1"));
-        Assert.assertEquals(3, client.getNumberOfMessages(new String[] {"", null, "1"}));
+        Assert.assertEquals(3, client.getNumberOfMessages(new String[]{"", null, "1"}));
     }
 
     @Test
     public void testGetCollectionSize() throws Exception {
+
         Assert.assertEquals(0, client.getCollectionSize(new ArrayList()));
         Assert.assertEquals(-1, client.getCollectionSize(null));
         Assert.assertEquals(1, client.getCollectionSize(Arrays.asList((String) null)));

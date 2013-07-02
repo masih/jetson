@@ -26,11 +26,13 @@ public class NormalOperationTestService implements TestService {
 
     @Override
     public int getNumberOfMessages(final String... messages) {
+
         return messages != null ? messages.length : -1;
     }
 
     @Override
     public int getCollectionSize(final Collection<String> collection) throws RPCException {
+
         return collection != null ? collection.size() : -1;
     }
 

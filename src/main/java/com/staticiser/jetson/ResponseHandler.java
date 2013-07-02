@@ -52,6 +52,7 @@ class ResponseHandler extends ChannelInboundHandlerAdapter {
 
     @Override
     public void exceptionCaught(final ChannelHandlerContext context, final Throwable cause) {
+
         final Client client = getClientFromContext(context);
         client.notifyChannelInactivation(context.channel());
         LOGGER.info("caught on client handler", cause);
@@ -59,6 +60,7 @@ class ResponseHandler extends ChannelInboundHandlerAdapter {
     }
 
     static Client getClientFromContext(final ChannelHandlerContext context) {
+
         return context.channel().attr(Client.CLIENT_ATTRIBUTE_KEY).get();
     }
 }

@@ -23,6 +23,7 @@ public class UnexpectedException extends RPCException {
     private static final long serialVersionUID = -4415616684672785380L;
 
     public UnexpectedException() {
+
         super();
     }
 

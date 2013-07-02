@@ -60,19 +60,19 @@ public final class JsonRpcExceptions {
      * @return the exception
      */
     public static Throwable fromJsonRpcError(final JsonRpcError error) {
+
         final Integer code = error.getCode();
         final String message = error.getMessage();
         final Object data = error.getData();
         if (isRegistered(code)) {
             return attemptCodeBasedInstantiation(code, message);
         }
-        else if (code.equals(JSON_RPC_APPLICATION_ERROR_CODE) && data instanceof Throwable) {
-            return (Throwable) data;
-        }
+        else if (code.equals(JSON_RPC_APPLICATION_ERROR_CODE) && data instanceof Throwable) { return (Throwable) data; }
         return new RPCException(message);
     }
 
     public static JsonRpcError toJsonRpcError(final Throwable throwable) {
+
         final Integer code;
         final Object data;
         final Class<? extends Throwable> throwable_class = throwable.getClass();
@@ -93,9 +93,7 @@ public final class JsonRpcExceptions {
 
         assert isRegistered(throwable_class);
         for (Map.Entry<Integer, Class<? extends Throwable>> entry : JSON_RPC_ERROR_CODES.entrySet()) {
-            if (entry.getValue().equals(throwable_class)) {
-                return entry.getKey();
-            }
+            if (entry.getValue().equals(throwable_class)) { return entry.getKey(); }
         }
         return null;
     }

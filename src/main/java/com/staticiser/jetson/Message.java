@@ -28,14 +28,17 @@ public abstract class Message {
     private Integer id;
 
     public Integer getId() {
+
         return id;
     }
 
     public void setId(final Integer id) {
+
         this.id = id;
     }
 
     protected synchronized void reset() {
+
         setId(null);
     }
 }

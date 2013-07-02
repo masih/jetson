@@ -42,6 +42,7 @@ public class JsonClientFactory<Service> extends ClientFactory<Service> {
      * @param json_factory the provider of JSON serializer and deserializer
      */
     public JsonClientFactory(final Class<Service> service_interface, final JsonFactory json_factory) {
+
         super(service_interface, new ClientChannelInitializer(new JsonRequestEncoder(json_factory, ReflectionUtil.mapMethodsToNames(service_interface)), new JsonResponseDecoder(json_factory)));
     }
 }

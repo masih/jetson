@@ -29,12 +29,14 @@ import io.netty.handler.codec.MessageToMessageDecoder;
 public abstract class ResponseDecoder extends MessageToMessageDecoder<ByteBuf> {
 
     protected Client getClient(ChannelHandlerContext context) {
+
         return ResponseHandler.getClientFromContext(context);
 
     }
 
     @Override
     protected void decode(final ChannelHandlerContext ctx, final ByteBuf in, final MessageList<Object> out) {
+
         Response response;
         try {
             response = decode(ctx, in);

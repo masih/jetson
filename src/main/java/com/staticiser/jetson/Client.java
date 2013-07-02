@@ -47,9 +47,8 @@ public class Client implements InvocationHandler {
     }
 
     public Request getPendingRequestById(Integer id) {
-        if (future_responses.containsKey(id)) {
-            return future_responses.get(id).getRequest();
-        }
+
+        if (future_responses.containsKey(id)) { return future_responses.get(id).getRequest(); }
         //TODO fix readability
         LOGGER.info("MUST NOT BE NULLLL");
         return null;
@@ -96,10 +95,12 @@ public class Client implements InvocationHandler {
 
     @Override
     public String toString() {
+
         return new StringBuilder("DefaultInvocationHandler{").append("address=").append(address).append('}').toString();
     }
 
     public void handle(final ChannelHandlerContext context, final Response response) {
+
         executor.execute(new Runnable() {
 
             @Override
@@ -120,10 +121,12 @@ public class Client implements InvocationHandler {
     }
 
     public void notifyChannelInactivation(final Channel channel) {
+
         executor.execute(new Runnable() {
 
             @Override
             public void run() {
+
                 synchronized (future_responses) {
                     for (Map.Entry<Integer, FutureResponse> entry : future_responses.entrySet()) {
                         final FutureResponse future_response = entry.getValue();
@@ -138,10 +141,9 @@ public class Client implements InvocationHandler {
     }
 
     protected boolean dispatchContains(Method target) {
+
         for (Method method : dispatch) {
-            if (method.equals(target)) {
-                return true;
-            }
+            if (method.equals(target)) { return true; }
         }
         return false;
     }

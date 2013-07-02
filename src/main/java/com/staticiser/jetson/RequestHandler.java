@@ -43,6 +43,7 @@ class RequestHandler extends ChannelInboundHandlerAdapter {
 
     @Override
     public void channelInactive(final ChannelHandlerContext context) throws Exception {
+
         final Channel channel = context.channel();
         final Server server = getServerFromContext(context);
         server.notifyChannelInactivation(channel);
@@ -62,6 +63,7 @@ class RequestHandler extends ChannelInboundHandlerAdapter {
 
     @Override
     public void exceptionCaught(final ChannelHandlerContext context, final Throwable cause) {
+
         LOGGER.info("caught on server handler", cause);
         cause.printStackTrace();
         context.close();
