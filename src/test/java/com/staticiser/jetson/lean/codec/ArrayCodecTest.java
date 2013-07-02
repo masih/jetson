@@ -2,12 +2,14 @@ package com.staticiser.jetson.lean.codec;
 
 import java.lang.reflect.Array;
 import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.List;
 import org.junit.Assert;
 import org.junit.Test;
 
 /** @author Masih Hajiarabderkani (mh638@st-andrews.ac.uk) */
 public class ArrayCodecTest extends CodecTest {
+
+    private static final Class<?> NULL_ARRAY_CLASS = new String[]{}.getClass();
 
     public ArrayCodecTest() {
 
@@ -23,34 +25,26 @@ public class ArrayCodecTest extends CodecTest {
         Assert.assertTrue(codec.isSupported(Array.newInstance(Integer.TYPE, 5, 5).getClass()));
         Assert.assertFalse(codec.isSupported("".getClass()));
         Assert.assertFalse(codec.isSupported(null));
+        Assert.assertFalse(codec.isSupported(new ArrayList().getClass().getGenericSuperclass()));
         Assert.assertFalse(codec.isSupported(new ArrayList().getClass()));
     }
 
     @Test
-    public void testCodecIntegers() throws Exception {
+    public void testCodec() throws Exception {
 
-        final int[] value = {1, 2, 3, 4, 5};
-        final int value_length = value.length;
-        encode(value);
-        Assert.assertEquals(4 * (value_length + 1), buffer.readableBytes());
-        assertEncodedArrayLength(value_length);
-        final int[] decoded_value = decode(value.getClass());
-        Assert.assertTrue(Arrays.equals(value, decoded_value));
-    }
+        final List<Object[]> arrays = new ArrayList<Object[]>();
+        arrays.add(new Integer[]{1, 2, 3, 4, 5, Integer.MAX_VALUE});
+        arrays.add(new String[]{"AAA", null, null, null, ""});
+        arrays.add(new String[]{"AAA", null, null, null, ""});
+        arrays.add(new String[][]{{"aa", "bb", null}, {"ZZ", null, "DD"}});
+        arrays.add(new Long[]{});
+        arrays.add(null);
 
-    @Test
-    public void testCodecStrings() throws Exception {
-
-        final String[] value = {"AAA", null, null, null, ""};
-        final int value_length = value.length;
-        encode(value);
-        assertEncodedArrayLength(value_length);
-        final String[] decoded_value = decode(value.getClass());
-        Assert.assertTrue(Arrays.equals(value, decoded_value));
-    }
-
-    private void assertEncodedArrayLength(final int length) {
-
-        Assert.assertEquals(length, buffer.getInt(0));
+        for (Object[] value : arrays) {
+            final Class<?> value_type = value != null ? value.getClass() : NULL_ARRAY_CLASS;
+            encode(value, value_type);
+            final Object[] decoded_value = (Object[]) decode(value_type);
+            Assert.assertArrayEquals(value, decoded_value);
+        }
     }
 }
