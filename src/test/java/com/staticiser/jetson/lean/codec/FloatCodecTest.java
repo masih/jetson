@@ -25,7 +25,7 @@ public class FloatCodecTest extends CodecTest {
 
         final float[] floats = {15.9f, 64565465465.54654654f, -888949.000000001f, Float.MAX_VALUE, Float.MIN_VALUE, Float.NaN};
         for (final float b : floats) {
-            encode(b);
+            encode(b, Float.TYPE);
         }
         Assert.assertEquals(floats.length * 32 / 8, buffer.readableBytes());
         for (final float b : floats) {

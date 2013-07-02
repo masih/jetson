@@ -24,9 +24,9 @@ public class LongCodecTest extends CodecTest {
     @Test
     public void testCodec() throws Exception {
 
-        final long[] longs = {54654654, -899999999999L, -88, Long.MAX_VALUE, Long.MIN_VALUE, 0L};
+        final long[] longs = {54654654, -899999999999L, -88, Long.MAX_VALUE, Long.MIN_VALUE, 0};
         for (final long b : longs) {
-            encode(b);
+            encode(b, Long.TYPE);
         }
         Assert.assertEquals(longs.length * 64 / 8, buffer.readableBytes());
         for (final long b : longs) {

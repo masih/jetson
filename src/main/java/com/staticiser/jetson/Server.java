@@ -102,7 +102,7 @@ public class Server {
             public ChannelFuture call() throws Exception {
 
                 final Response response = new Response(); //FIXME cache
-                response.setId(request.getId());
+                response.setRequest(request);
                 try {
                     response.setResult(handleRequest(request));
                 }

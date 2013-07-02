@@ -25,7 +25,7 @@ public class CharacterCodecTest extends CodecTest {
 
         final char[] chars = {' ', '@', 'a', '!', '\u02DA', '\u02FA'};
         for (final char b : chars) {
-            encode(b);
+            encode(b, Character.TYPE);
         }
         // Assume UTF-8 encoding: 2 bytes for each character
         Assert.assertEquals(chars.length * 2, buffer.readableBytes());

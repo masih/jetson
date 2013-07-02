@@ -59,8 +59,6 @@ class JsonResponseEncoder extends ResponseEncoder {
     @Override
     protected void encodeResponse(final ChannelHandlerContext context, final Response response, final ByteBuf out) throws RPCException {
 
-        // TODO use tokenbuffer
-
         JsonGenerator generator = null;
         try {
             generator = createJsonGenerator(out);
