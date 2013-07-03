@@ -23,7 +23,6 @@ import com.fasterxml.jackson.core.JsonGenerationException;
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.staticiser.jetson.Client;
 import com.staticiser.jetson.Request;
 import com.staticiser.jetson.Response;
 import com.staticiser.jetson.ResponseDecoder;
@@ -62,7 +61,7 @@ public class JsonResponseDecoder extends ResponseDecoder {
             final Response response = new Response(); //FIXME cache
             readAndValidateVersion(parser);
             validateAndSetResponseId(parser, response);
-            final Request request = context.channel().attr(Client.CLIENT_ATTRIBUTE_KEY).get().getPendingRequestById(response.getId());
+            final Request request = getClient(context).getPendingRequestById(response.getId());
             final Type expected_return_type;
             //            if (request == null) {
             //              expected_return_type =Object.class;

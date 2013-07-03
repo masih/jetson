@@ -24,8 +24,6 @@ import com.staticiser.jetson.lean.codec.Codecs;
 import com.staticiser.jetson.util.ReflectionUtil;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * A factory for creating JSON RPC clients. The created clients are cached for future reuse. This class is thread-safe.
@@ -35,16 +33,14 @@ import org.slf4j.LoggerFactory;
  */
 public class LeanClientFactory<Service> extends ClientFactory<Service> {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(LeanClientFactory.class);
-
     /**
      * Instantiates a new JSON RPC client factory. The {@link ClassLoader#getSystemClassLoader() system class loader} used for constructing new proxy instances.
      *
      * @param service_interface the interface presenting the remote service
-     * @param marshallers
+     * @param codecs
      */
-    public LeanClientFactory(final Class<Service> service_interface, final Codecs marshallers) {
+    public LeanClientFactory(final Class<Service> service_interface, final Codecs codecs) {
 
-        super(service_interface, new ClientChannelInitializer(new LeanRequestEncoder(new ArrayList<Method>(ReflectionUtil.mapMethodsToNames(service_interface).keySet()), marshallers), new LeanResponseDecoder(marshallers)));
+        super(service_interface, new ClientChannelInitializer(new LeanRequestEncoder(new ArrayList<Method>(ReflectionUtil.mapMethodsToNames(service_interface).keySet()), codecs), new LeanResponseDecoder(codecs)));
     }
 }
