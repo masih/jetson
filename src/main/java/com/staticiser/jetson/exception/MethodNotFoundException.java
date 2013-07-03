@@ -26,4 +26,9 @@ public class MethodNotFoundException extends ServerException {
 
         super();
     }
+
+    public MethodNotFoundException(final String message) {
+
+        super(message);
+    }
 }

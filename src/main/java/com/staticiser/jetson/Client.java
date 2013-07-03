@@ -38,20 +38,18 @@ public class Client implements InvocationHandler {
         this.dispatch = dispatch;
         this.executor = executor;
         next_request_id = new AtomicInteger();
-        channel_pool = new ChannelPool(bootstrap, address);
+        channel_pool = new ChannelPool(bootstrap, this);
     }
 
-    public InetSocketAddress getProxiedAddress() {
+    public InetSocketAddress getAddress() {
 
         return address;
     }
 
     public Request getPendingRequestById(Integer id) {
 
-        if (future_responses.containsKey(id)) { return future_responses.get(id).getRequest(); }
-        //TODO fix readability
-        LOGGER.info("MUST NOT BE NULLLL");
-        return null;
+        final FutureResponse response = future_responses.get(id);
+        return response != null ? response.getRequest() : null;
     }
 
     @Override
@@ -59,32 +57,19 @@ public class Client implements InvocationHandler {
 
         if (dispatchContains(method)) {
 
-            final Channel channel = borrowChannel();
-            channel.attr(CLIENT_ATTRIBUTE_KEY).set(this);
-            try {
-                final Request request = createRequest(method, params);
-                final FutureResponse future_response;
-                synchronized (future_responses) {
-                    future_response = new FutureResponse(request, channel);
-                    future_responses.put(request.getId(), future_response);
-                    writeRequest(channel, request);
-                }
+            final FutureResponse future_response = invokeAsynchronously(method, params);
 
-                try {
-                    return future_response.get();
-                }
-                catch (InterruptedException e) {
-                    throw new InternalServerException(e);
-                }
-                catch (ExecutionException e) {
-                    throw e.getCause();
-                }
-                catch (CancellationException e) {
-                    throw new InternalServerException(e);
-                }
+            try {
+                return future_response.get();
             }
-            finally {
-                returnChannel(channel);
+            catch (InterruptedException e) {
+                throw new InternalServerException(e);
+            }
+            catch (ExecutionException e) {
+                throw e.getCause();
+            }
+            catch (CancellationException e) {
+                throw new InternalServerException(e);
             }
         }
         else {
@@ -106,13 +91,13 @@ public class Client implements InvocationHandler {
             @Override
             public void run() {
 
+                final Integer id = response.getId();
                 synchronized (future_responses) {
-                    final Integer id = response.getId();
                     if (future_responses.containsKey(id)) {
                         future_responses.remove(id).setResponse(response);
                     }
                     else {
-                        LOGGER.info("received unknown response: {},from {}", response, context.channel());
+                        LOGGER.warn("received unknown response: {},from {}", response, context.channel());
                     }
                 }
             }
@@ -138,6 +123,23 @@ public class Client implements InvocationHandler {
             }
         });
 
+    }
+
+    protected FutureResponse invokeAsynchronously(final Method method, final Object[] params) throws RPCException {
+
+        final Channel channel = borrowChannel();
+        try {
+            final Request request = createRequest(method, params);
+            final FutureResponse future_response = new FutureResponse(request, channel);
+            synchronized (future_responses) {
+                future_responses.put(request.getId(), future_response);
+                writeRequest(channel, request);
+            }
+            return future_response;
+        }
+        finally {
+            returnChannel(channel);
+        }
     }
 
     protected boolean dispatchContains(Method target) {

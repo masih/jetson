@@ -46,7 +46,7 @@ public class ClientFactory<Service> {
 
     private static final int DEFAULT_CONNECTION_TIMEOUT_IN_MILLIS = 5000;
     private static final Logger LOGGER = LoggerFactory.getLogger(ClientFactory.class);
-    private static final int THREAD_POOL_SIZE = 8;
+    private static final int THREAD_POOL_SIZE = 0;
     private static final Executor EXECUTOR = Executors.newCachedThreadPool(new NamingThreadFactory("client_response_handler_"));
     private final Bootstrap bootstrap;
     private final ClassLoader class_loader;
