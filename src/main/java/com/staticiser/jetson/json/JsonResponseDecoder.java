@@ -26,7 +26,7 @@ import com.staticiser.jetson.FutureResponse;
 import com.staticiser.jetson.ResponseDecoder;
 import com.staticiser.jetson.exception.InternalServerException;
 import com.staticiser.jetson.exception.InvalidResponseException;
-import com.staticiser.jetson.exception.RPCException;
+import com.staticiser.jetson.exception.ServerRuntimeException;
 import com.staticiser.jetson.exception.TransportException;
 import com.staticiser.jetson.util.CloseableUtil;
 import com.staticiser.jetson.util.JsonParserUtil;
@@ -50,36 +50,58 @@ public class JsonResponseDecoder extends ResponseDecoder {
         this.json_factory = json_factory;
     }
 
-    protected FutureResponse decode(final ChannelHandlerContext context, final ByteBuf in) throws RPCException {
+    protected FutureResponse decode(final ChannelHandlerContext context, final ByteBuf in) {
 
         JsonParser parser = null;
+        FutureResponse future_response = null;
         try {
             parser = json_factory.createParser(new ByteBufInputStream(in));
             parser.nextToken();
             final Integer id = validateAndReadResponseId(parser);
-            final FutureResponse future_response = getClient(context).getFutureResponseById(id);
-            // FIXME cover for unknown IDs
+            future_response = getClient(context).getFutureResponseById(id);
             readAndValidateVersion(parser);
+
             final Type expected_return_type = future_response.getMethod().getGenericReturnType();
             setResponseResultOrError(parser, future_response, expected_return_type);
             parser.nextToken();
-            return future_response;
         }
         catch (final JsonParseException e) {
             LOGGER.debug("failed to parse response", e);
-            throw new InvalidResponseException(e);
+
+            future_response = checkFutureResponse(context, future_response);
+            future_response.setException(new InvalidResponseException(e));
         }
         catch (final JsonGenerationException e) {
             LOGGER.debug("failed to generate response", e);
-            throw new InternalServerException(e);
+
+            future_response = checkFutureResponse(context, future_response);
+            future_response.setException(new InternalServerException(e));
         }
         catch (final IOException e) {
             LOGGER.debug("IO error occurred while decoding response", e);
-            throw new TransportException("failed to process response", e);
+
+            future_response = checkFutureResponse(context, future_response);
+            future_response.setException(new TransportException("failed to process response", e));
+        }
+        catch (final RuntimeException e) {
+            LOGGER.debug("runtime error while decoding response", e);
+
+            future_response = checkFutureResponse(context, future_response);
+            future_response.setException(new ServerRuntimeException(e));
         }
         finally {
             CloseableUtil.closeQuietly(parser);
         }
+
+        return future_response;
+    }
+
+    private FutureResponse checkFutureResponse(final ChannelHandlerContext context, FutureResponse future_response) {
+
+        if (future_response == null) {
+            future_response = new FutureResponse(context.channel());
+        }
+        return future_response;
     }
 
     private Integer validateAndReadResponseId(final JsonParser parser) throws IOException {

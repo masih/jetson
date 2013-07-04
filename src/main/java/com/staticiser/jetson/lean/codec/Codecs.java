@@ -10,6 +10,8 @@ import java.util.List;
 /** @author Masih Hajiarabderkani (mh638@st-andrews.ac.uk) */
 public class Codecs {
 
+    public static final ArrayCodec ARRAY_CODEC = new ArrayCodec();
+    public static final VoidCodec VOID_CODEC = new VoidCodec();
     private static final StringCodec STRING_CODEC = new StringCodec();
     private static final BooleanCodec BOOLEAN_CODEC = new BooleanCodec();
     private static final ThrowableCodec THROWABLE_CODEC = new ThrowableCodec();
@@ -21,7 +23,6 @@ public class Codecs {
     private static final FloatCodec FLOAT_CODEC = new FloatCodec();
     private static final DoubleCodec DOUBLE_CODEC = new DoubleCodec();
     private static final SerializableCodec SERIALIZABLE_CODEC = new SerializableCodec();
-    public static final ArrayCodec ARRAY_CODEC = new ArrayCodec();
     private final List<Codec> codecs;
 
     public Codecs() {
@@ -64,6 +65,7 @@ public class Codecs {
 
     protected void registerDefaultCodecs() {
 
+        register(VOID_CODEC);
         register(BYTE_CODEC);
         register(SHORT_CODEC);
         register(INTEGER_CODEC);

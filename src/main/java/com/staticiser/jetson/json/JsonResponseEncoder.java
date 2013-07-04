@@ -22,7 +22,6 @@ import com.fasterxml.jackson.core.JsonEncoding;
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.staticiser.jetson.FutureResponse;
 import com.staticiser.jetson.ResponseEncoder;
 import com.staticiser.jetson.exception.InternalServerException;
 import com.staticiser.jetson.exception.RPCException;
@@ -33,8 +32,7 @@ import io.netty.buffer.ByteBufOutputStream;
 import io.netty.channel.ChannelHandler.Sharable;
 import io.netty.channel.ChannelHandlerContext;
 import java.io.IOException;
-import java.util.concurrent.CancellationException;
-import java.util.concurrent.ExecutionException;
+import java.lang.reflect.Method;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -58,16 +56,39 @@ class JsonResponseEncoder extends ResponseEncoder {
         this.encoding = encoding;
     }
 
+    private JsonGenerator createJsonGenerator(final ByteBuf buffer) throws IOException {
+
+        final ByteBufOutputStream out = new ByteBufOutputStream(buffer);
+        return json_factory.createGenerator(out, encoding);
+    }
+
     @Override
-    protected void encodeResponse(final ChannelHandlerContext context, final FutureResponse response, final ByteBuf out) throws RPCException {
+    protected void encodeResult(final ChannelHandlerContext context, final Integer id, final Object result, final Method method, final ByteBuf out) throws RPCException {
+
+        encodeResultOrException(id, result, null, out, false);
+    }
+
+    @Override
+    protected void encodeException(final ChannelHandlerContext context, final Integer id, final Throwable exception, final ByteBuf out) throws RPCException {
+
+        encodeResultOrException(id, null, exception, out, true);
+    }
+
+    protected void encodeResultOrException(final Integer id, final Object result, final Throwable exception, final ByteBuf out, boolean error) throws RPCException {
 
         JsonGenerator generator = null;
         try {
             generator = createJsonGenerator(out);
             generator.writeStartObject();
-            generator.writeObjectField(JsonRequestEncoder.ID_KEY, response.getId());
+            generator.writeObjectField(JsonRequestEncoder.ID_KEY, id);
             generator.writeObjectField(JsonRequestEncoder.VERSION_KEY, JsonRequestEncoder.DEFAULT_VERSION);
-            writeResultOrError(response, generator);
+            if (error) {
+                final JsonRpcError json_rpc_error = JsonRpcExceptions.toJsonRpcError(exception);
+                generator.writeObjectField(ERROR_KEY, json_rpc_error);
+            }
+            else {
+                generator.writeObjectField(RESULT_KEY, result);
+            }
             generator.writeEndObject();
             generator.flush();
             generator.close();
@@ -82,31 +103,6 @@ class JsonResponseEncoder extends ResponseEncoder {
         }
         finally {
             CloseableUtil.closeQuietly(generator);
-        }
-    }
-
-    private JsonGenerator createJsonGenerator(final ByteBuf buffer) throws IOException {
-
-        final ByteBufOutputStream out = new ByteBufOutputStream(buffer);
-        return json_factory.createGenerator(out, encoding);
-    }
-
-    private static void writeResultOrError(final FutureResponse response, final JsonGenerator generator) throws IOException {
-
-        try {
-            generator.writeObjectField(RESULT_KEY, response.get());
-        }
-        catch (InterruptedException e) {
-            final JsonRpcError error = JsonRpcExceptions.toJsonRpcError(new InternalServerException(e));
-            generator.writeObjectField(ERROR_KEY, error);
-        }
-        catch (CancellationException e) {
-            final JsonRpcError error = JsonRpcExceptions.toJsonRpcError(new InternalServerException(e));
-            generator.writeObjectField(ERROR_KEY, error);
-        }
-        catch (ExecutionException e) {
-            final JsonRpcError error = JsonRpcExceptions.toJsonRpcError(e.getCause());
-            generator.writeObjectField(ERROR_KEY, error);
         }
     }
 }
