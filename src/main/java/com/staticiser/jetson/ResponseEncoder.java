@@ -25,10 +25,10 @@ import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.MessageToByteEncoder;
 
 @Sharable
-public abstract class ResponseEncoder extends MessageToByteEncoder<Response> {
+public abstract class ResponseEncoder extends MessageToByteEncoder<FutureResponse> {
 
     @Override
-    protected void encode(final ChannelHandlerContext context, final Response response, final ByteBuf out) {
+    protected void encode(final ChannelHandlerContext context, final FutureResponse response, final ByteBuf out) {
 
         try {
             encodeResponse(context, response, out);
@@ -41,6 +41,6 @@ public abstract class ResponseEncoder extends MessageToByteEncoder<Response> {
         }
     }
 
-    protected abstract void encodeResponse(final ChannelHandlerContext context, final Response response, final ByteBuf out) throws RPCException;
+    protected abstract void encodeResponse(final ChannelHandlerContext context, final FutureResponse response, final ByteBuf out) throws RPCException;
 
 }

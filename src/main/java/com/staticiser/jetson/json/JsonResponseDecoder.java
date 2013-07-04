@@ -22,9 +22,7 @@ import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonGenerationException;
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.staticiser.jetson.Request;
-import com.staticiser.jetson.Response;
+import com.staticiser.jetson.FutureResponse;
 import com.staticiser.jetson.ResponseDecoder;
 import com.staticiser.jetson.exception.InternalServerException;
 import com.staticiser.jetson.exception.InvalidResponseException;
@@ -52,26 +50,20 @@ public class JsonResponseDecoder extends ResponseDecoder {
         this.json_factory = json_factory;
     }
 
-    protected Response decode(final ChannelHandlerContext context, final ByteBuf msg) throws RPCException {
+    protected FutureResponse decode(final ChannelHandlerContext context, final ByteBuf in) throws RPCException {
 
         JsonParser parser = null;
         try {
-            parser = json_factory.createParser(new ByteBufInputStream(msg));
+            parser = json_factory.createParser(new ByteBufInputStream(in));
             parser.nextToken();
-            final Response response = new Response(); //FIXME cache
+            final Integer id = validateAndReadResponseId(parser);
+            final FutureResponse future_response = getClient(context).getFutureResponseById(id);
+            // FIXME cover for unknown IDs
             readAndValidateVersion(parser);
-            validateAndSetResponseId(parser, response);
-            final Request request = getClient(context).getPendingRequestById(response.getId());
-            final Type expected_return_type;
-            //            if (request == null) {
-            //              expected_return_type =Object.class;
-            //            }
-            //            else {
-            expected_return_type = request.getMethod().getGenericReturnType();
-            //            }
-            setResponseResultOrError(parser, response, expected_return_type);
+            final Type expected_return_type = future_response.getMethod().getGenericReturnType();
+            setResponseResultOrError(parser, future_response, expected_return_type);
             parser.nextToken();
-            return response;
+            return future_response;
         }
         catch (final JsonParseException e) {
             LOGGER.debug("failed to parse response", e);
@@ -81,29 +73,21 @@ public class JsonResponseDecoder extends ResponseDecoder {
             LOGGER.debug("failed to generate response", e);
             throw new InternalServerException(e);
         }
-        catch (final JsonProcessingException e) {
-            LOGGER.debug("failed to decode response", e);
-            throw new InvalidResponseException(e);
-        }
         catch (final IOException e) {
             LOGGER.debug("IO error occurred while decoding response", e);
             throw new TransportException("failed to process response", e);
-        }
-        catch (NullPointerException e) {
-            throw new InternalServerException(e); //FIXME
         }
         finally {
             CloseableUtil.closeQuietly(parser);
         }
     }
 
-    private void validateAndSetResponseId(final JsonParser parser, final Response response) throws IOException {
+    private Integer validateAndReadResponseId(final JsonParser parser) throws IOException {
 
-        final Integer id = JsonParserUtil.readFieldValueAs(parser, JsonRequestEncoder.ID_KEY, Integer.class);
-        response.setId(id);
+        return JsonParserUtil.readFieldValueAs(parser, JsonRequestEncoder.ID_KEY, Integer.class);
     }
 
-    private void setResponseResultOrError(final JsonParser parser, final Response response, final Type expected_return_type) throws IOException {
+    private void setResponseResultOrError(final JsonParser parser, final FutureResponse response, final Type expected_return_type) throws IOException {
 
         final String next_field_name = JsonParserUtil.expectFieldNames(parser, JsonResponseEncoder.RESULT_KEY, JsonResponseEncoder.ERROR_KEY);
         if (JsonResponseEncoder.ERROR_KEY.equals(next_field_name)) {
@@ -114,13 +98,13 @@ public class JsonResponseDecoder extends ResponseDecoder {
         }
     }
 
-    private void setResponseResult(final JsonParser parser, final Response response, final Type expected_return_type) throws IOException {
+    private void setResponseResult(final JsonParser parser, final FutureResponse response, final Type expected_return_type) throws IOException {
 
         final Object result = JsonParserUtil.readValueAs(parser, expected_return_type);
         response.setResult(result);
     }
 
-    private void setResponseError(final JsonParser parser, final Response response) throws IOException {
+    private void setResponseError(final JsonParser parser, final FutureResponse response) throws IOException {
 
         final JsonRpcError error = JsonParserUtil.readValueAs(parser, JsonRpcError.class);
         if (error == null) { throw new InvalidResponseException("error in response must not be null"); }
@@ -138,7 +122,7 @@ public class JsonResponseDecoder extends ResponseDecoder {
     private void validateVersion(final String version) throws InvalidResponseException {
 
         if (version == null || !version.equals(JsonRequestEncoder.DEFAULT_VERSION)) {
-            LOGGER.debug("expected JSON RPC {}, but recieved ", JsonRequestEncoder.DEFAULT_VERSION, version);
+            LOGGER.debug("expected JSON RPC {}, but relieved ", JsonRequestEncoder.DEFAULT_VERSION, version);
             throw InvalidResponseException.fromMessage("version must be equal to ", JsonRequestEncoder.DEFAULT_VERSION);
         }
     }

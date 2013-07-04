@@ -34,8 +34,8 @@ import java.util.concurrent.Executors;
  */
 public class ServerFactory<Service> {
 
-    private final ServerBootstrap server_bootstrap;
     private final ExecutorService request_executor;
+    private final ServerBootstrap server_bootstrap;
 
     /**
      * Instantiates a new server factory.
@@ -44,7 +44,8 @@ public class ServerFactory<Service> {
      */
     public ServerFactory(final Class<Service> service_type, ServerChannelInitializer handler) {
 
-        this(service_type, Executors.newFixedThreadPool(100, new NamingThreadFactory(service_type.getSimpleName() + "_server_factory_")), handler);
+        this(service_type, Executors.newCachedThreadPool(new NamingThreadFactory(service_type.getSimpleName() + "_server_factory_")), handler);
+        //        this(service_type, new ThreadPoolExecutor(0, 1000, 1, TimeUnit.SECONDS, new LinkedBlockingQueue<Runnable>(20)), handler);
     }
 
     /**
@@ -70,24 +71,6 @@ public class ServerFactory<Service> {
         return new Server(server_bootstrap, service, request_executor);
     }
 
-    protected ServerBootstrap createServerBootstrap(final Class<?> service_type, final ServerChannelInitializer handler) {
-
-        return createDefaultServerBootstrap(service_type, handler);
-    }
-
-    static ServerBootstrap createDefaultServerBootstrap(final Class<?> service_type, final ServerChannelInitializer handler) {
-
-        final NioEventLoopGroup parent_event_loop = new NioEventLoopGroup(8, new NamingThreadFactory("server_parent_event_loop_"));
-        final NioEventLoopGroup child_event_loop = new NioEventLoopGroup(50, new NamingThreadFactory("server_child_event_loop_"));
-        final ServerBootstrap server_bootstrap = new ServerBootstrap();
-        server_bootstrap.group(parent_event_loop, child_event_loop);
-        server_bootstrap.channel(NioServerSocketChannel.class);
-        server_bootstrap.option(ChannelOption.TCP_NODELAY, true);
-        server_bootstrap.childOption(ChannelOption.TCP_NODELAY, true);
-        server_bootstrap.childHandler(handler);
-        return server_bootstrap;
-    }
-
     /**
      * Shuts down the {@link ServerBootstrap server bootstrap} and the {@link EventLoop}s used by any server that is created using this factory.
      * After this method is called any server that is created using this factory will become unresponsive.
@@ -98,5 +81,23 @@ public class ServerFactory<Service> {
 
         request_executor.shutdownNow();
         server_bootstrap.group().shutdownGracefully();
+    }
+
+    protected ServerBootstrap createServerBootstrap(final Class<?> service_type, final ServerChannelInitializer handler) {
+
+        return createDefaultServerBootstrap(service_type, handler);
+    }
+
+    static ServerBootstrap createDefaultServerBootstrap(final Class<?> service_type, final ServerChannelInitializer handler) {
+
+        final NioEventLoopGroup parent_event_loop = new NioEventLoopGroup(0, new NamingThreadFactory("server_parent_event_loop_"));
+        final NioEventLoopGroup child_event_loop = new NioEventLoopGroup(0, new NamingThreadFactory("server_child_event_loop_"));
+        final ServerBootstrap server_bootstrap = new ServerBootstrap();
+        server_bootstrap.group(parent_event_loop, child_event_loop);
+        server_bootstrap.channel(NioServerSocketChannel.class);
+        server_bootstrap.option(ChannelOption.TCP_NODELAY, true);
+        server_bootstrap.childOption(ChannelOption.TCP_NODELAY, true);
+        server_bootstrap.childHandler(handler);
+        return server_bootstrap;
     }
 }

@@ -23,23 +23,26 @@ import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandler.Sharable;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.MessageToByteEncoder;
+import java.lang.reflect.Method;
 
 @Sharable
-public abstract class RequestEncoder extends MessageToByteEncoder<Request> {
+public abstract class RequestEncoder extends MessageToByteEncoder<FutureResponse> {
 
     @Override
-    protected void encode(final ChannelHandlerContext context, final Request request, final ByteBuf out) {
+    protected void encode(final ChannelHandlerContext context, final FutureResponse future_response, final ByteBuf out) {
 
         try {
-            encodeRequest(context, request, out);
+            final Integer id = future_response.getId();
+            final Method method = future_response.getMethod();
+            final Object[] arguments = future_response.getArguments();
+            encodeRequest(context, id, method, arguments, out);
         }
-        catch (RPCException e) {
+        catch (final RPCException e) {
             final Client client = ResponseHandler.getClientFromContext(context);
-            final Response response = new Response(); //TODO cache
-            response.setException(e);
-            client.handle(context, response);
+            future_response.setException(e);
+            client.handle(context, future_response);
         }
     }
 
-    protected abstract void encodeRequest(final ChannelHandlerContext context, final Request request, final ByteBuf out) throws RPCException;
+    protected abstract void encodeRequest(final ChannelHandlerContext context, final Integer id, final Method method, Object[] arguments, final ByteBuf out) throws RPCException;
 }

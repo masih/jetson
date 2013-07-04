@@ -18,7 +18,7 @@
  */
 package com.staticiser.jetson.exception;
 
-public class InvalidResponseException extends RPCException {
+public class InvalidResponseException extends ParseException {
 
     private static final long serialVersionUID = 5797975215122969810L;
 

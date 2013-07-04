@@ -22,13 +22,13 @@ import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonGenerationException;
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.staticiser.jetson.Request;
+import com.staticiser.jetson.FutureResponse;
 import com.staticiser.jetson.RequestDecoder;
-import com.staticiser.jetson.exception.InternalServerException;
 import com.staticiser.jetson.exception.InvalidRequestException;
 import com.staticiser.jetson.exception.MethodNotFoundException;
+import com.staticiser.jetson.exception.ParseException;
 import com.staticiser.jetson.exception.RPCException;
+import com.staticiser.jetson.exception.TransportException;
 import com.staticiser.jetson.util.CloseableUtil;
 import com.staticiser.jetson.util.JsonParserUtil;
 import io.netty.buffer.ByteBuf;
@@ -55,23 +55,28 @@ class JsonRequestDecoder extends RequestDecoder {
         this.dispatch = dispatch;
     }
 
-    protected Request decode(final ChannelHandlerContext context, final ByteBuf msg) throws RPCException {
+    @Override
+    protected void decodeAndSetIdMethodArguments(final ChannelHandlerContext context, final ByteBuf buffer, final FutureResponse future_response) throws RPCException {
 
         JsonParser parser = null;
         try {
-            //            System.out.println();
-            //            System.out.println(msg.toString(Charset.defaultCharset()));
-            //            System.out.println();
-            final ByteBufInputStream in = new ByteBufInputStream(msg);
+            final ByteBufInputStream in = new ByteBufInputStream(buffer);
             parser = json_factory.createParser(in);
             parser.nextToken();
+
+            final Integer id = readId(parser);
+            future_response.setId(id);
+
             readAndValidateVersion(parser);
             final String method_name = readAndValidateMethodName(parser);
             final Method method = findServiceMethodByName(method_name);
+            future_response.setMethod(method);
+
             final Object[] arguments = readArguments(parser, method);
-            final Integer id = readId(parser);
+            future_response.setArguments(arguments);
+
             parser.nextToken();
-            return new Request(id, method, arguments);
+
         }
         catch (final JsonParseException e) {
             LOGGER.debug("failed to parse request", e);
@@ -79,15 +84,11 @@ class JsonRequestDecoder extends RequestDecoder {
         }
         catch (final JsonGenerationException e) {
             LOGGER.debug("failed to generate request", e);
-            throw new InternalServerException(e);
-        }
-        catch (final JsonProcessingException e) {
-            LOGGER.debug("failed to decode request", e);
-            throw new InvalidRequestException(e);
+            throw new ParseException(e);
         }
         catch (final IOException e) {
-            LOGGER.debug("IO error occured while decoding response", e);
-            throw new InternalServerException(e);
+            LOGGER.debug("IO error occurred while decoding response", e);
+            throw new TransportException(e);
         }
         finally {
             CloseableUtil.closeQuietly(parser);
@@ -127,5 +128,4 @@ class JsonRequestDecoder extends RequestDecoder {
         if (!dispatch.containsKey(method_name)) { throw new MethodNotFoundException(); }
         return dispatch.get(method_name);
     }
-
 }

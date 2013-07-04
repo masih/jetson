@@ -46,7 +46,6 @@ import org.junit.runners.Parameterized;
 public abstract class AbstractTest {
 
     public static final Codecs CODECS = new Codecs();
-
     static {
         CODECS.register(new Codec() {
 
@@ -79,7 +78,6 @@ public abstract class AbstractTest {
             }
         });
     }
-
     protected static final ServerFactory<TestService> LEAN_SERVER_FACTORY = new LeanServerFactory<TestService>(TestService.class, CODECS);
     protected static final ClientFactory<TestService> LEAN_CLIENT_FACTORY = new LeanClientFactory<TestService>(TestService.class, CODECS);
     protected static final JsonFactory JSON_FACTORY = new JsonFactory(new ObjectMapper());
@@ -127,6 +125,8 @@ public abstract class AbstractTest {
 
         server.unexpose();
         temp_server.unexpose();
+        //        server_factory.shutdown();
+        //        client_factory.shutdown();
     }
 
     protected Server startJsonRpcTestServer() throws IOException {

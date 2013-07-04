@@ -57,12 +57,12 @@ public class NormalOperationTest extends AbstractTest {
     @Test
     public void testGetNumberOfMessages() throws Exception {
 
-        //        Assert.assertEquals(0, client.getNumberOfMessages(new String[0]));
-        //        Assert.assertEquals(0, client.getNumberOfMessages());
+        Assert.assertEquals(0, client.getNumberOfMessages(new String[0]));
+        Assert.assertEquals(0, client.getNumberOfMessages());
         Assert.assertEquals(-1, client.getNumberOfMessages(null));
-        //        Assert.assertEquals(1, client.getNumberOfMessages(""));
-        //        Assert.assertEquals(3, client.getNumberOfMessages("", null, "1"));
-        //        Assert.assertEquals(3, client.getNumberOfMessages(new String[]{"", null, "1"}));
+        Assert.assertEquals(1, client.getNumberOfMessages(""));
+        Assert.assertEquals(3, client.getNumberOfMessages("", null, "1"));
+        Assert.assertEquals(3, client.getNumberOfMessages(new String[]{"", null, "1"}));
     }
 
     @Test
@@ -217,7 +217,7 @@ public class NormalOperationTest extends AbstractTest {
     //    @Ignore
     public void testConcurrentServers() throws RPCException, InterruptedException, ExecutionException {
 
-        final ExecutorService executor = Executors.newFixedThreadPool(100);
+        final ExecutorService executor = Executors.newFixedThreadPool(500);
         try {
             final CountDownLatch start_latch = new CountDownLatch(1);
             final List<Future<Void>> future_concurrent_tests = new ArrayList<Future<Void>>();

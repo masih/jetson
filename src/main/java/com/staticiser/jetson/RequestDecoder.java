@@ -31,21 +31,29 @@ public abstract class RequestDecoder extends MessageToMessageDecoder<ByteBuf> {
     @Override
     protected void decode(final ChannelHandlerContext context, final ByteBuf bytes, final MessageList<Object> out) {
 
-        final Request request;
-        try {
-            request = decode(context, bytes);
-            out.add(request);
+        final FutureResponse future_response;
+        future_response = decode(context, bytes);
+        if (future_response.isDone()) {
+            context.write(future_response);
         }
-        catch (RPCException e) {
-            e.printStackTrace();
-            Response response = new Response(); //TODO cache
-            //            response.setId(request.getId());          //FIXME
-            response.setException(e);
-            context.write(response);
+        else {
+            out.add(future_response);
         }
     }
 
-    protected abstract Request decode(final ChannelHandlerContext context, final ByteBuf bytes) throws RPCException;
+    protected FutureResponse decode(final ChannelHandlerContext context, final ByteBuf in) {
+
+        final FutureResponse future_response = new FutureResponse(context.channel());
+        try {
+            decodeAndSetIdMethodArguments(context, in, future_response);
+        }
+        catch (RPCException e) {
+            future_response.setException(e);
+        }
+        return future_response;
+    }
+
+    protected abstract void decodeAndSetIdMethodArguments(final ChannelHandlerContext context, final ByteBuf in, final FutureResponse future_response) throws RPCException;
 
     protected Server getServer(ChannelHandlerContext context) {
 
