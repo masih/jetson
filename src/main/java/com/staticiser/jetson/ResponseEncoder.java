@@ -18,29 +18,44 @@
  */
 package com.staticiser.jetson;
 
+import com.staticiser.jetson.exception.InternalServerException;
 import com.staticiser.jetson.exception.RPCException;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandler.Sharable;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.MessageToByteEncoder;
+import java.lang.reflect.Method;
+import java.util.concurrent.CancellationException;
+import java.util.concurrent.ExecutionException;
 
 @Sharable
 public abstract class ResponseEncoder extends MessageToByteEncoder<FutureResponse> {
 
     @Override
-    protected void encode(final ChannelHandlerContext context, final FutureResponse response, final ByteBuf out) {
+    protected void encode(final ChannelHandlerContext context, final FutureResponse future_response, final ByteBuf out) throws RPCException {
 
+        final Integer id = future_response.getId();
         try {
-            encodeResponse(context, response, out);
+            encodeResult(context, id, future_response.get(), future_response.getMethod(), out);
+        }
+        catch (InterruptedException e) {
+            final Throwable exception = new InternalServerException(e);
+            encodeException(context, id, exception, out);
+        }
+        catch (ExecutionException e) {
+            encodeException(context, id, e.getCause(), out);
+        }
+        catch (CancellationException e) {
+            final Throwable exception = new InternalServerException(e);
+            encodeException(context, id, exception, out);
         }
         catch (RPCException e) {
-            final Client client = ResponseHandler.getClientFromContext(context);
-            response.setResult(null);
-            response.setException(e);
-            client.handle(context, response);
+            encodeException(context, id, e, out);
         }
     }
 
-    protected abstract void encodeResponse(final ChannelHandlerContext context, final FutureResponse response, final ByteBuf out) throws RPCException;
+    protected abstract void encodeResult(final ChannelHandlerContext context, final Integer id, final Object result, final Method method, final ByteBuf out) throws RPCException;
+
+    protected abstract void encodeException(final ChannelHandlerContext context, final Integer id, final Throwable exception, final ByteBuf out) throws RPCException;
 
 }

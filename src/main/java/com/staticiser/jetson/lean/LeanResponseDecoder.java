@@ -20,28 +20,26 @@ public class LeanResponseDecoder extends ResponseDecoder {
     }
 
     @Override
-    protected FutureResponse decode(final ChannelHandlerContext context, final ByteBuf in) throws RPCException {
+    protected FutureResponse decode(final ChannelHandlerContext context, final ByteBuf in) {
 
         final int id = in.readInt();
         final FutureResponse response = getClient(context).getFutureResponseById(id);
         final boolean error = in.readBoolean();
-        if (error) {
-            final Throwable throwable = codecs.decodeAs(in, Throwable.class);
-            response.setException(throwable);
-        }
-        else {
-            final Method method = response.getMethod();
-            final Object result;
-            if (!method.getReturnType().equals(Void.TYPE)) {
-                final Type return_type = method.getGenericReturnType();
-                result = codecs.decodeAs(in, return_type);
+        try {
+            if (error) {
+                final Throwable throwable = codecs.decodeAs(in, Throwable.class);
+                response.setException(throwable);
             }
             else {
-                result = null;
+                final Method method = response.getMethod();
+                final Type return_type = method.getGenericReturnType();
+                final Object result = codecs.decodeAs(in, return_type);
+                response.setResult(result);
             }
-            response.setResult(result);
         }
-
+        catch (RPCException e) {
+            response.setException(e);
+        }
         return response;
     }
 }
