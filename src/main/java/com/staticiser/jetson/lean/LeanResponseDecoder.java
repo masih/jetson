@@ -1,7 +1,6 @@
 package com.staticiser.jetson.lean;
 
-import com.staticiser.jetson.Request;
-import com.staticiser.jetson.Response;
+import com.staticiser.jetson.FutureResponse;
 import com.staticiser.jetson.ResponseDecoder;
 import com.staticiser.jetson.exception.RPCException;
 import com.staticiser.jetson.lean.codec.Codecs;
@@ -21,24 +20,26 @@ public class LeanResponseDecoder extends ResponseDecoder {
     }
 
     @Override
-    protected Response decode(final ChannelHandlerContext context, final ByteBuf in) throws RPCException {
+    protected FutureResponse decode(final ChannelHandlerContext context, final ByteBuf in) throws RPCException {
 
-        final Response response = new Response();
         final int id = in.readInt();
-        response.setId(id);
+        final FutureResponse response = getClient(context).getFutureResponseById(id);
         final boolean error = in.readBoolean();
         if (error) {
             final Throwable throwable = codecs.decodeAs(in, Throwable.class);
             response.setException(throwable);
         }
         else {
-            final Request request = getClient(context).getPendingRequestById(id);
-            final Method method = request.getMethod();
+            final Method method = response.getMethod();
+            final Object result;
             if (!method.getReturnType().equals(Void.TYPE)) {
                 final Type return_type = method.getGenericReturnType();
-                final Object result = codecs.decodeAs(in, return_type);
-                response.setResult(result);
+                result = codecs.decodeAs(in, return_type);
             }
+            else {
+                result = null;
+            }
+            response.setResult(result);
         }
 
         return response;

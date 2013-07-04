@@ -22,7 +22,6 @@ import com.fasterxml.jackson.core.JsonEncoding;
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.staticiser.jetson.Request;
 import com.staticiser.jetson.RequestEncoder;
 import com.staticiser.jetson.exception.InternalServerException;
 import com.staticiser.jetson.exception.RPCException;
@@ -66,16 +65,16 @@ class JsonRequestEncoder extends RequestEncoder {
     }
 
     @Override
-    protected void encodeRequest(final ChannelHandlerContext ctx, final Request request, final ByteBuf out) throws RPCException {
+    protected void encodeRequest(final ChannelHandlerContext context, final Integer id, final Method method, final Object[] arguments, final ByteBuf out) throws RPCException {
 
         JsonGenerator generator = null;
         try {
             generator = createJsonGenerator(out);
             generator.writeStartObject();
+            generator.writeObjectField(ID_KEY, id);
             generator.writeObjectField(VERSION_KEY, DEFAULT_VERSION);
-            generator.writeObjectField(METHOD_NAME_KEY, dispatch.get(request.getMethod()));
-            writeRequestParameters(request, generator);
-            generator.writeObjectField(ID_KEY, request.getId());
+            generator.writeObjectField(METHOD_NAME_KEY, dispatch.get(method));
+            writeRequestParameters(method, arguments, generator);
             generator.writeEndObject();
             generator.flush();
             generator.close();
@@ -94,11 +93,10 @@ class JsonRequestEncoder extends RequestEncoder {
         }
     }
 
-    private static void writeRequestParameters(final Request request, final JsonGenerator generator) throws IOException {
+    private static void writeRequestParameters(final Method method, Object[] arguments, final JsonGenerator generator) throws IOException {
 
-        final Method target_method = request.getMethod();
-        final Type[] param_types = target_method.getGenericParameterTypes();
-        JsonGeneratorUtil.writeValuesAs(generator, PARAMETERS_KEY, param_types, request.getArguments());
+        final Type[] param_types = method.getGenericParameterTypes();
+        JsonGeneratorUtil.writeValuesAs(generator, PARAMETERS_KEY, param_types, arguments);
     }
 
     private synchronized JsonGenerator createJsonGenerator(final ByteBuf buffer) throws IOException {

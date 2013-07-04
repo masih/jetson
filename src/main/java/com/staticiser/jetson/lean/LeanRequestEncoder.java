@@ -1,6 +1,5 @@
 package com.staticiser.jetson.lean;
 
-import com.staticiser.jetson.Request;
 import com.staticiser.jetson.RequestEncoder;
 import com.staticiser.jetson.exception.MethodNotFoundException;
 import com.staticiser.jetson.exception.RPCException;
@@ -24,12 +23,10 @@ public class LeanRequestEncoder extends RequestEncoder {
     }
 
     @Override
-    protected void encodeRequest(final ChannelHandlerContext context, final Request request, final ByteBuf out) throws RPCException {
+    protected void encodeRequest(final ChannelHandlerContext context, final Integer id, final Method method, final Object[] arguments, final ByteBuf out) throws RPCException {
 
-        final Method method = request.getMethod();
-        final Object[] arguments = request.getArguments();
         final Type[] argument_types = method.getGenericParameterTypes();
-        out.writeInt(request.getId());
+        out.writeInt(id);
         writeMethod(method, out);
         writeArguments(arguments, argument_types, out);
     }

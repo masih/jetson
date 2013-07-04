@@ -1,7 +1,8 @@
 package com.staticiser.jetson.lean;
 
-import com.staticiser.jetson.Request;
+import com.staticiser.jetson.FutureResponse;
 import com.staticiser.jetson.RequestDecoder;
+import com.staticiser.jetson.exception.MethodNotFoundException;
 import com.staticiser.jetson.exception.RPCException;
 import com.staticiser.jetson.lean.codec.Codecs;
 import io.netty.buffer.ByteBuf;
@@ -14,30 +15,42 @@ import java.util.List;
 public class LeanRequestDecoder extends RequestDecoder {
 
     private final List<Method> dispatch;
-    private final Codecs marshallers;
+    private final Codecs codecs;
+    private final int dispatch_size;
 
-    public LeanRequestDecoder(List<Method> dispatch, Codecs marshallers) {
+    public LeanRequestDecoder(List<Method> dispatch, Codecs codecs) {
 
         this.dispatch = dispatch;
-        this.marshallers = marshallers;
+        this.codecs = codecs;
+        dispatch_size = dispatch.size();
     }
 
     @Override
-    protected Request decode(final ChannelHandlerContext context, final ByteBuf in) throws RPCException {
+    protected void decodeAndSetIdMethodArguments(final ChannelHandlerContext context, final ByteBuf in, final FutureResponse future_response) throws RPCException {
 
-        final Request request = new Request(); //TODO cache
         final int id = in.readInt();
-        request.setId(id);
+        future_response.setId(id);
 
         final int method_index = in.readByte();
-        final Method method = dispatch.get(method_index);
-        request.setMethod(method);
+        final Method method = getMethodByIndex(method_index);
+        future_response.setMethod(method);
 
         final Type[] argument_types = method.getGenericParameterTypes();
         final Object[] arguments = readArguments(argument_types, in);
-        request.setArguments(arguments);
+        future_response.setArguments(arguments);
 
-        return request;
+    }
+
+    private Method getMethodByIndex(final int index) throws MethodNotFoundException {
+
+        final Method method = isInRange(index) ? dispatch.get(index) : null;
+        if (method == null) { throw new MethodNotFoundException("no method is found with the index: " + index); }
+        return method;
+    }
+
+    private boolean isInRange(final int index) {
+
+        return index > -1 && index < dispatch_size;
     }
 
     private Object[] readArguments(final Type[] argument_types, final ByteBuf in) throws RPCException {
@@ -48,7 +61,7 @@ public class LeanRequestDecoder extends RequestDecoder {
 
             arguments = new Object[arguments_count];
             for (int i = 0; i < arguments_count; i++) {
-                arguments[i] = marshallers.decodeAs(in, argument_types[i]);
+                arguments[i] = codecs.decodeAs(in, argument_types[i]);
             }
         }
         else {

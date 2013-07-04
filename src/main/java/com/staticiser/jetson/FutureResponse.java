@@ -1,6 +1,7 @@
 package com.staticiser.jetson;
 
 import io.netty.channel.Channel;
+import java.lang.reflect.Method;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
@@ -12,22 +13,31 @@ import java.util.concurrent.TimeoutException;
 public class FutureResponse implements Future<Object> {
 
     private final CountDownLatch job_done_latch;
-    private final Request request;
     private final Channel channel;
-    private State current_state;
-    private volatile Throwable error;
+    private volatile Integer id;
+    private volatile Method method;
+    private volatile Object[] arguments;
+    private volatile State current_state;
+    private volatile Throwable exception;
     private volatile Object result;
 
-    public FutureResponse(Request request, final Channel channel) {
+    public FutureResponse(final Channel channel) {
 
-        this.request = request;
+        this(channel, null, null, null);
+    }
+
+    public FutureResponse(Channel channel, final Integer id, final Method method, final Object[] arguments) {
+
         this.channel = channel;
+        this.id = id;
+        this.method = method;
+        this.arguments = arguments;
         current_state = State.PENDING;
         job_done_latch = new CountDownLatch(1);
     }
 
     @Override
-    public synchronized boolean cancel(final boolean mayInterruptIfRunning) {
+    public synchronized boolean cancel(final boolean interrupt) {
 
         if (isDone()) { return false; }
         return updateState(State.CANCELLED);
@@ -53,9 +63,9 @@ public class FutureResponse implements Future<Object> {
         switch (current_state) {
             case DONE_WITH_RESULT:
                 return result;
-
+                // FIXME cache exceptions
             case DONE_WITH_EXCEPTION:
-                throw new ExecutionException(error);
+                throw new ExecutionException(exception);
             case CANCELLED:
                 throw new CancellationException();
             default:
@@ -72,20 +82,51 @@ public class FutureResponse implements Future<Object> {
         throw new TimeoutException();
     }
 
+    public Integer getId() {
+
+        return id;
+    }
+
+    public void setId(final Integer id) {
+
+        this.id = id;
+    }
+
     public Channel getChannel() {
 
         return channel;
     }
 
-    public void setException(final Throwable exception) {
+    public synchronized void setResult(Object result) {
 
-        this.error = exception;
+        this.result = result;
+        updateState(State.DONE_WITH_RESULT);
+    }
+
+    public synchronized void setException(Throwable exception) {
+
+        this.exception = exception;
         updateState(State.DONE_WITH_EXCEPTION);
     }
 
-    public Request getRequest() {
+    public Method getMethod() {
 
-        return request;
+        return method;
+    }
+
+    public Object[] getArguments() {
+
+        return arguments;
+    }
+
+    public void setMethod(final Method method) {
+
+        this.method = method;
+    }
+
+    public void setArguments(final Object[] arguments) {
+
+        this.arguments = arguments;
     }
 
     private synchronized boolean updateState(final State new_state) {
@@ -99,17 +140,6 @@ public class FutureResponse implements Future<Object> {
             job_done_latch.countDown(); // Release the waiting latch
         }
         return old_state == current_state;
-    }
-
-    synchronized void setResponse(Response response) {
-
-        if (response.isError()) {
-            setException(response.getException());
-        }
-        else {
-            result = response.getResult();
-            updateState(State.DONE_WITH_RESULT);
-        }
     }
 
     private enum State {

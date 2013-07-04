@@ -42,9 +42,9 @@ class ResponseHandler extends ChannelInboundHandlerAdapter {
     @Override
     public void messageReceived(final ChannelHandlerContext context, final MessageList<Object> messages) throws Exception {
 
-        final MessageList<Response> responses = messages.cast();
+        final MessageList<FutureResponse> responses = messages.cast();
         final Client client = getClientFromContext(context);
-        for (final Response response : responses) {
+        for (final FutureResponse response : responses) {
             client.handle(context, response);
         }
         messages.releaseAllAndRecycle();

@@ -94,22 +94,22 @@ public class Server {
         }
     }
 
-    public void handle(final ChannelHandlerContext context, final Request request) throws Exception {
+    public void handle(final ChannelHandlerContext context, final FutureResponse future_response) throws Exception {
 
         final Callable<ChannelFuture> task = new Callable<ChannelFuture>() {
 
             @Override
             public ChannelFuture call() throws Exception {
 
-                final Response response = new Response(); //FIXME cache
-                response.setRequest(request);
+                final Method method = future_response.getMethod();
+                final Object[] arguments = future_response.getArguments();
                 try {
-                    response.setResult(handleRequest(request));
+                    future_response.setResult(handleRequest(method, arguments));
                 }
                 catch (final Throwable e) {
-                    response.setException(e);
+                    future_response.setException(e);
                 }
-                return context.write(response);
+                return context.write(future_response);
             }
         };
         final Future<ChannelFuture> processing_future = executor.submit(task); // TODO add to a map; upon channel inactivation cancel the processing if not done
@@ -171,10 +171,7 @@ public class Server {
         return !isExposed() ? null : endpoint;
     }
 
-    private Object handleRequest(final Request request) throws Throwable {
-
-        final Method method = request.getMethod();
-        final Object[] arguments = request.getArguments();
+    private Object handleRequest(final Method method, final Object[] arguments) throws Throwable {
 
         try {
             return method.invoke(service, arguments);

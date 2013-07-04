@@ -53,9 +53,9 @@ class RequestHandler extends ChannelInboundHandlerAdapter {
     @Override
     public void messageReceived(final ChannelHandlerContext context, final MessageList<Object> messages) throws Exception {
 
-        final MessageList<Request> requests = messages.cast();
+        final MessageList<FutureResponse> requests = messages.cast();
         final Server server = getServerFromContext(context);
-        for (final Request request : requests) {
+        for (final FutureResponse request : requests) {
             server.handle(context, request);
         }
         messages.releaseAllAndRecycle();

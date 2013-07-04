@@ -16,29 +16,29 @@
  * You should have received a copy of the GNU General Public License
  * along with Jetson.  If not, see <http://www.gnu.org/licenses/>.
  */
-package com.staticiser.jetson;
+package com.staticiser.jetson.exception;
 
-/**
- * The base class for any exchanged JSON RPC message.
- *
- * @author Masih Hajiarabderkani (mh638@st-andrews.ac.uk)
- */
-public abstract class Message {
+public class ParseException extends RPCException {
 
-    private Integer id;
+    private static final long serialVersionUID = 5797975215122969810L;
 
-    public Integer getId() {
+    public ParseException() {
 
-        return id;
+        super();
     }
 
-    public void setId(final Integer id) {
+    public ParseException(final Throwable cause) {
 
-        this.id = id;
+        super(cause);
     }
 
-    protected synchronized void reset() {
+    public ParseException(final String message) {
 
-        setId(null);
+        super(message);
+    }
+
+    public ParseException(final String message, final Throwable cause) {
+
+        super(message, cause);
     }
 }

@@ -1,12 +1,14 @@
 package com.staticiser.jetson.lean;
 
-import com.staticiser.jetson.Response;
+import com.staticiser.jetson.FutureResponse;
 import com.staticiser.jetson.ResponseEncoder;
+import com.staticiser.jetson.exception.InternalServerException;
 import com.staticiser.jetson.exception.RPCException;
 import com.staticiser.jetson.lean.codec.Codecs;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import java.lang.reflect.Type;
+import java.util.concurrent.ExecutionException;
 
 /** @author Masih Hajiarabderkani (mh638@st-andrews.ac.uk) */
 public class LeanResponseEncoder extends ResponseEncoder {
@@ -19,19 +21,26 @@ public class LeanResponseEncoder extends ResponseEncoder {
     }
 
     @Override
-    protected void encodeResponse(final ChannelHandlerContext context, final Response response, final ByteBuf out) throws RPCException {
+    protected void encodeResponse(final ChannelHandlerContext context, final FutureResponse response, final ByteBuf out) throws RPCException {
 
         out.writeInt(response.getId());
-        final boolean error = response.isError();
-        out.writeBoolean(error);
 
-        if (error) {
-            codecs.encodeAs(response.getException(), out, Throwable.class);
+        try {
+            final Object result = response.get();
+            out.writeBoolean(false);
+            if (!response.getMethod().getReturnType().equals(Void.TYPE)) { //FIXME null encoding
+                final Type return_type = response.getMethod().getGenericReturnType();
+                codecs.encodeAs(result, out, return_type);
+            }
         }
-        else if (response.getResult() != null) {
+        catch (InterruptedException e) {
+            out.writeBoolean(true);
+            codecs.encodeAs(new InternalServerException(e), out, Throwable.class);
 
-            final Type return_type = response.getRequest().getMethod().getGenericReturnType();
-            codecs.encodeAs(response.getResult(), out, return_type);
+        }
+        catch (ExecutionException e) {
+            out.writeBoolean(true);
+            codecs.encodeAs(e.getCause(), out, Throwable.class);
         }
     }
 }

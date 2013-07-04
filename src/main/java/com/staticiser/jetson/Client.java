@@ -11,9 +11,9 @@ import java.io.IOException;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.net.InetSocketAddress;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.CancellationException;
+import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -30,7 +30,7 @@ public class Client implements InvocationHandler {
     private final ChannelPool channel_pool;
     private final Method[] dispatch;
     private final Executor executor;
-    private final Map<Integer, FutureResponse> future_responses = new HashMap<Integer, FutureResponse>();
+    private final Map<Integer, FutureResponse> future_responses = new ConcurrentSkipListMap<Integer, FutureResponse>();
 
     protected Client(final InetSocketAddress address, final Method[] dispatch, final Bootstrap bootstrap, final Executor executor) {
 
@@ -46,10 +46,9 @@ public class Client implements InvocationHandler {
         return address;
     }
 
-    public Request getPendingRequestById(Integer id) {
+    public FutureResponse getFutureResponseById(Integer id) {
 
-        final FutureResponse response = future_responses.get(id);
-        return response != null ? response.getRequest() : null;
+        return future_responses.get(id);
     }
 
     @Override
@@ -84,44 +83,26 @@ public class Client implements InvocationHandler {
         return new StringBuilder("DefaultInvocationHandler{").append("address=").append(address).append('}').toString();
     }
 
-    public void handle(final ChannelHandlerContext context, final Response response) {
+    public void handle(final ChannelHandlerContext context, final FutureResponse response) {
 
-        executor.execute(new Runnable() {
-
-            @Override
-            public void run() {
-
-                final Integer id = response.getId();
-                synchronized (future_responses) {
-                    if (future_responses.containsKey(id)) {
-                        future_responses.remove(id).setResponse(response);
-                    }
-                    else {
-                        LOGGER.warn("received unknown response: {},from {}", response, context.channel());
-                    }
-                }
-            }
-        });
+        final Integer id = response.getId();
+        if (future_responses.containsKey(id)) {
+            future_responses.remove(id);
+        }
+        else {
+            LOGGER.warn("received unknown response: {},from {}", response, context.channel());
+        }
 
     }
 
     public void notifyChannelInactivation(final Channel channel) {
 
-        executor.execute(new Runnable() {
-
-            @Override
-            public void run() {
-
-                synchronized (future_responses) {
-                    for (Map.Entry<Integer, FutureResponse> entry : future_responses.entrySet()) {
-                        final FutureResponse future_response = entry.getValue();
-                        if (future_response.getChannel().equals(channel)) {
-                            future_response.setException(new TransportException("connection closed"));
-                        }
-                    }
-                }
+        for (Map.Entry<Integer, FutureResponse> entry : future_responses.entrySet()) {
+            final FutureResponse future_response = entry.getValue();
+            if (future_response.getChannel().equals(channel)) {
+                future_response.setException(new TransportException("connection closed"));
             }
-        });
+        }
 
     }
 
@@ -129,11 +110,11 @@ public class Client implements InvocationHandler {
 
         final Channel channel = borrowChannel();
         try {
-            final Request request = createRequest(method, params);
-            final FutureResponse future_response = new FutureResponse(request, channel);
-            synchronized (future_responses) {
-                future_responses.put(request.getId(), future_response);
-                writeRequest(channel, request);
+            final Integer id = generateRequestId();
+            final FutureResponse future_response = new FutureResponse(channel, id, method, params);
+            synchronized (this) {
+                future_responses.put(id, future_response);
+                writeRequest(channel, future_response);
             }
             return future_response;
         }
@@ -148,15 +129,6 @@ public class Client implements InvocationHandler {
             if (method.equals(target)) { return true; }
         }
         return false;
-    }
-
-    protected Request createRequest(final Method method, final Object[] args) {
-
-        final Request request = new Request();
-        request.setId(generateRequestId());
-        request.setMethod(method);
-        request.setArguments(args);
-        return request;
     }
 
     private Integer generateRequestId() {
@@ -192,10 +164,10 @@ public class Client implements InvocationHandler {
         }
     }
 
-    private void writeRequest(final Channel channel, final Request request) throws RPCException {
+    private void writeRequest(final Channel channel, final FutureResponse future_response) throws RPCException {
 
         try {
-            channel.write(request).sync();
+            channel.write(future_response).sync();
         }
         catch (final Exception e) {
             if (e instanceof RPCException) { throw RPCException.class.cast(e); }
