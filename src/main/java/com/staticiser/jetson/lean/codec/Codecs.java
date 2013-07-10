@@ -10,8 +10,8 @@ import java.util.List;
 /** @author Masih Hajiarabderkani (mh638@st-andrews.ac.uk) */
 public class Codecs {
 
-    public static final ArrayCodec ARRAY_CODEC = new ArrayCodec();
-    public static final VoidCodec VOID_CODEC = new VoidCodec();
+    private static final ArrayCodec ARRAY_CODEC = new ArrayCodec();
+    private static final VoidCodec VOID_CODEC = new VoidCodec();
     private static final StringCodec STRING_CODEC = new StringCodec();
     private static final BooleanCodec BOOLEAN_CODEC = new BooleanCodec();
     private static final ThrowableCodec THROWABLE_CODEC = new ThrowableCodec();
@@ -23,6 +23,7 @@ public class Codecs {
     private static final FloatCodec FLOAT_CODEC = new FloatCodec();
     private static final DoubleCodec DOUBLE_CODEC = new DoubleCodec();
     private static final SerializableCodec SERIALIZABLE_CODEC = new SerializableCodec();
+    private static final ObjectCodec OBJECT_CODEC = new ObjectCodec();
     private final List<Codec> codecs;
 
     public Codecs() {
@@ -31,39 +32,48 @@ public class Codecs {
         registerDefaultCodecs();
     }
 
-    public synchronized boolean register(Codec codec) {
+    public synchronized boolean register(final Codec codec) {
 
         return !codecs.contains(codec) && codecs.add(codec);
     }
 
+    public synchronized boolean register(final int index, final Codec codec) {
+
+        if (!codecs.contains(codec)) {
+            codecs.add(index, codec);
+            return true;
+        }
+        return false;
+    }
+
     public boolean isSupported(final Type type) {
 
-        for (Codec codec : codecs) {
+        for (final Codec codec : codecs) {
             if (codec.isSupported(type)) { return true; }
         }
         return false;
     }
 
-    public synchronized void encodeAs(final Object value, final ByteBuf out, Type type) throws RPCException {
+    public synchronized void encodeAs(final Object value, final ByteBuf out, final Type type) throws RPCException {
 
         get(type).encode(value, out, this, type);
     }
 
-    public synchronized <Value> Value decodeAs(final ByteBuf in, Type type) throws RPCException {
+    public synchronized <Value> Value decodeAs(final ByteBuf in, final Type type) throws RPCException {
 
         return get(type).decode(in, this, type);
     }
 
-    protected synchronized Codec get(Type type) throws UnknownTypeException {
+    synchronized Codec get(final Type type) throws UnknownTypeException {
 
-        for (Codec codec : codecs) {
-            if (codec.isSupported(type)) { return codec; }
+        for (final Codec codec : codecs) {
+            if (codec != null && codec.isSupported(type)) { return codec; }
         }
 
         throw new UnknownTypeException(type);
     }
 
-    protected void registerDefaultCodecs() {
+    void registerDefaultCodecs() {
 
         register(VOID_CODEC);
         register(BYTE_CODEC);
@@ -78,5 +88,6 @@ public class Codecs {
         register(THROWABLE_CODEC);
         register(ARRAY_CODEC);
         register(SERIALIZABLE_CODEC);
+        register(OBJECT_CODEC);
     }
 }

@@ -1,6 +1,5 @@
 package com.staticiser.jetson.lean;
 
-import com.staticiser.jetson.FutureResponse;
 import com.staticiser.jetson.RequestDecoder;
 import com.staticiser.jetson.exception.MethodNotFoundException;
 import com.staticiser.jetson.exception.RPCException;
@@ -18,27 +17,11 @@ public class LeanRequestDecoder extends RequestDecoder {
     private final Codecs codecs;
     private final int dispatch_size;
 
-    public LeanRequestDecoder(List<Method> dispatch, Codecs codecs) {
+    public LeanRequestDecoder(final List<Method> dispatch, final Codecs codecs) {
 
         this.dispatch = dispatch;
         this.codecs = codecs;
         dispatch_size = dispatch.size();
-    }
-
-    @Override
-    protected void decodeAndSetIdMethodArguments(final ChannelHandlerContext context, final ByteBuf in, final FutureResponse future_response) throws RPCException {
-
-        final int id = in.readInt();
-        future_response.setId(id);
-
-        final int method_index = in.readByte();
-        final Method method = getMethodByIndex(method_index);
-        future_response.setMethod(method);
-
-        final Type[] argument_types = method.getGenericParameterTypes();
-        final Object[] arguments = readArguments(argument_types, in);
-        future_response.setArguments(arguments);
-
     }
 
     private Method getMethodByIndex(final int index) throws MethodNotFoundException {
@@ -68,5 +51,25 @@ public class LeanRequestDecoder extends RequestDecoder {
             arguments = null;
         }
         return arguments;
+    }
+
+    @Override
+    protected Integer decodeId(final ChannelHandlerContext context, final ByteBuf in) throws RPCException {
+
+        return in.readInt();
+    }
+
+    @Override
+    protected Method decodeMethod(final ChannelHandlerContext context, final ByteBuf in) throws RPCException {
+
+        final int method_index = in.readByte();
+        return getMethodByIndex(method_index);
+    }
+
+    @Override
+    protected Object[] decodeMethodArguments(final ChannelHandlerContext context, final ByteBuf in, final Method method) throws RPCException {
+
+        final Type[] argument_types = method.getGenericParameterTypes();
+        return readArguments(argument_types, in);
     }
 }

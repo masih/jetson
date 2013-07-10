@@ -14,7 +14,7 @@ public class LeanResponseDecoder extends ResponseDecoder {
 
     private final Codecs codecs;
 
-    public LeanResponseDecoder(Codecs codecs) {
+    public LeanResponseDecoder(final Codecs codecs) {
 
         this.codecs = codecs;
     }
@@ -23,7 +23,7 @@ public class LeanResponseDecoder extends ResponseDecoder {
     protected FutureResponse decode(final ChannelHandlerContext context, final ByteBuf in) {
 
         final int id = in.readInt();
-        final FutureResponse response = getClient(context).getFutureResponseById(id);
+        final FutureResponse response = getFutureResponseById(context, id);
         final boolean error = in.readBoolean();
         try {
             if (error) {
@@ -34,7 +34,7 @@ public class LeanResponseDecoder extends ResponseDecoder {
                 final Method method = response.getMethod();
                 final Type return_type = method.getGenericReturnType();
                 final Object result = codecs.decodeAs(in, return_type);
-                response.setResult(result);
+                response.set(result);
             }
         }
         catch (RPCException e) {

@@ -27,7 +27,7 @@ public class IntegerCodecTest extends CodecTest {
         for (final int b : ints) {
             encode(b, Integer.TYPE);
         }
-        Assert.assertEquals(ints.length * 32 / 8, buffer.readableBytes());
+        Assert.assertEquals(ints.length * Integer.SIZE / 8, buffer.readableBytes());
         for (final int b : ints) {
             Assert.assertTrue(decode(Integer.TYPE).equals(b));
         }

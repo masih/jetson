@@ -22,7 +22,7 @@ public class ParseException extends RPCException {
 
     private static final long serialVersionUID = 5797975215122969810L;
 
-    public ParseException() {
+    ParseException() {
 
         super();
     }
@@ -32,12 +32,12 @@ public class ParseException extends RPCException {
         super(cause);
     }
 
-    public ParseException(final String message) {
+    ParseException(final String message) {
 
         super(message);
     }
 
-    public ParseException(final String message, final Throwable cause) {
+    ParseException(final String message, final Throwable cause) {
 
         super(message, cause);
     }

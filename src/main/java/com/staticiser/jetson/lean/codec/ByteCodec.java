@@ -5,7 +5,7 @@ import io.netty.buffer.ByteBuf;
 /** @author Masih Hajiarabderkani (mh638@st-andrews.ac.uk) */
 class ByteCodec extends PrimitiveTypeCodec {
 
-    protected ByteCodec() {
+    ByteCodec() {
 
         super(Byte.class, Byte.TYPE);
     }

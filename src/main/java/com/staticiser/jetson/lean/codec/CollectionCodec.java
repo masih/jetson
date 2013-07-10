@@ -27,7 +27,7 @@ public abstract class CollectionCodec implements Codec {
             final Type component_type = getComponentType(type);
             final int size = collection.size();
             out.writeInt(size);
-            for (Object element : collection) {
+            for (final Object element : collection) {
                 codecs.encodeAs(element, out, component_type);
             }
         }
@@ -47,18 +47,18 @@ public abstract class CollectionCodec implements Codec {
 
     }
 
-    protected boolean isParameterizedCollection(final Type type) {
+    boolean isParameterizedCollection(final Type type) {
 
         return type != null && type instanceof ParameterizedType && Collection.class.isAssignableFrom((Class<?>) ((ParameterizedType) type).getRawType());
     }
 
-    protected boolean isCollection(final Type type) {
+    boolean isCollection(final Type type) {
 
         return type instanceof Class<?> && Collection.class.isAssignableFrom((Class<?>) type);
 
     }
 
-    protected Type getComponentType(final Type type) {
+    Type getComponentType(final Type type) {
 
         return type instanceof ParameterizedType ? ((ParameterizedType) type).getActualTypeArguments()[0] : Object.class;
     }

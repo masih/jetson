@@ -22,7 +22,6 @@ import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonGenerationException;
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.core.JsonParser;
-import com.staticiser.jetson.FutureResponse;
 import com.staticiser.jetson.RequestDecoder;
 import com.staticiser.jetson.exception.InvalidRequestException;
 import com.staticiser.jetson.exception.MethodNotFoundException;
@@ -33,8 +32,10 @@ import com.staticiser.jetson.util.CloseableUtil;
 import com.staticiser.jetson.util.JsonParserUtil;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufInputStream;
+import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandler.Sharable;
 import io.netty.channel.ChannelHandlerContext;
+import io.netty.util.AttributeKey;
 import java.io.IOException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Type;
@@ -45,6 +46,7 @@ import org.slf4j.LoggerFactory;
 @Sharable
 class JsonRequestDecoder extends RequestDecoder {
 
+    private static final AttributeKey<JsonParser> PARSER_ATTRIBUTE_KEY = new AttributeKey<JsonParser>("parser");
     private static final Logger LOGGER = LoggerFactory.getLogger(JsonRequestDecoder.class);
     private final Map<String, Method> dispatch;
     private final JsonFactory json_factory;
@@ -56,27 +58,27 @@ class JsonRequestDecoder extends RequestDecoder {
     }
 
     @Override
-    protected void decodeAndSetIdMethodArguments(final ChannelHandlerContext context, final ByteBuf buffer, final FutureResponse future_response) throws RPCException {
+    protected void beforeDecode(final ChannelHandlerContext context, final ByteBuf buffer) throws TransportException {
 
-        JsonParser parser = null;
+        super.beforeDecode(context, buffer);
+        final Channel channel = context.channel();
+        final ByteBufInputStream in = new ByteBufInputStream(buffer);
         try {
-            final ByteBufInputStream in = new ByteBufInputStream(buffer);
-            parser = json_factory.createParser(in);
+            final JsonParser parser = json_factory.createParser(in);
             parser.nextToken();
+            channel.attr(PARSER_ATTRIBUTE_KEY).set(parser);
+        }
+        catch (IOException e) {
+            throw new TransportException(e);
+        }
+    }
 
-            final Integer id = readId(parser);
-            future_response.setId(id);
+    @Override
+    protected Integer decodeId(final ChannelHandlerContext context, final ByteBuf buffer) throws RPCException {
 
-            readAndValidateVersion(parser);
-            final String method_name = readAndValidateMethodName(parser);
-            final Method method = findServiceMethodByName(method_name);
-            future_response.setMethod(method);
-
-            final Object[] arguments = readArguments(parser, method);
-            future_response.setArguments(arguments);
-
-            parser.nextToken();
-
+        final JsonParser parser = context.channel().attr(PARSER_ATTRIBUTE_KEY).get();
+        try {
+            return readId(parser);
         }
         catch (final JsonParseException e) {
             LOGGER.debug("failed to parse request", e);
@@ -90,9 +92,61 @@ class JsonRequestDecoder extends RequestDecoder {
             LOGGER.debug("IO error occurred while decoding response", e);
             throw new TransportException(e);
         }
-        finally {
-            CloseableUtil.closeQuietly(parser);
+    }
+
+    @Override
+    protected Method decodeMethod(final ChannelHandlerContext context, final ByteBuf buffer) throws RPCException {
+
+        final JsonParser parser = context.channel().attr(PARSER_ATTRIBUTE_KEY).get();
+        try {
+            readAndValidateVersion(parser);
+            final String method_name = readAndValidateMethodName(parser);
+            return findServiceMethodByName(method_name);
         }
+        catch (final JsonParseException e) {
+            LOGGER.debug("failed to parse request", e);
+            throw new InvalidRequestException(e);
+        }
+        catch (final JsonGenerationException e) {
+            LOGGER.debug("failed to generate request", e);
+            throw new ParseException(e);
+        }
+        catch (final IOException e) {
+            LOGGER.debug("IO error occurred while decoding response", e);
+            throw new TransportException(e);
+        }
+    }
+
+    @Override
+    protected Object[] decodeMethodArguments(final ChannelHandlerContext context, final ByteBuf buffer, final Method method) throws RPCException {
+
+        final JsonParser parser = context.channel().attr(PARSER_ATTRIBUTE_KEY).get();
+        try {
+            final Object[] arguments = readArguments(parser, method);
+
+            parser.nextToken();
+            return arguments;
+        }
+        catch (final JsonParseException e) {
+            LOGGER.debug("failed to parse request", e);
+            throw new InvalidRequestException(e);
+        }
+        catch (final JsonGenerationException e) {
+            LOGGER.debug("failed to generate request", e);
+            throw new ParseException(e);
+        }
+        catch (final IOException e) {
+            LOGGER.debug("IO error occurred while decoding response", e);
+            throw new TransportException(e);
+        }
+    }
+
+    @Override
+    protected void afterDecode(final ChannelHandlerContext context, final ByteBuf in) {
+
+        super.afterDecode(context, in);
+        final JsonParser parser = context.channel().attr(PARSER_ATTRIBUTE_KEY).get();
+        CloseableUtil.closeQuietly(parser);
     }
 
     private Integer readId(final JsonParser parser) throws IOException {

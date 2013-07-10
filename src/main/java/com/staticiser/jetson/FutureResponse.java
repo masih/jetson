@@ -1,112 +1,34 @@
 package com.staticiser.jetson;
 
-import io.netty.channel.Channel;
+import com.google.common.util.concurrent.AbstractFuture;
 import java.lang.reflect.Method;
-import java.util.concurrent.CancellationException;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /** @author Masih Hajiarabderkani (mh638@st-andrews.ac.uk) */
-public class FutureResponse implements Future<Object> {
+public class FutureResponse<Result> extends AbstractFuture<Result> implements Comparable<FutureResponse> {
 
-    private final CountDownLatch job_done_latch;
-    private final Channel channel;
-    private volatile Integer id;
+    private static final Logger LOGGER = LoggerFactory.getLogger(FutureResponse.class);
+    private final Integer id;
     private volatile Method method;
     private volatile Object[] arguments;
-    private volatile State current_state;
-    private volatile Throwable exception;
-    private volatile Object result;
 
-    public FutureResponse(final Channel channel) {
+    FutureResponse(final Integer id) {
 
-        this(channel, null, null, null);
+        this.id = id;
+
     }
 
-    public FutureResponse(Channel channel, final Integer id, final Method method, final Object[] arguments) {
+    public FutureResponse(final Integer id, final Method method, final Object[] arguments) {
 
-        this.channel = channel;
         this.id = id;
         this.method = method;
         this.arguments = arguments;
-        current_state = State.PENDING;
-        job_done_latch = new CountDownLatch(1);
-    }
-
-    @Override
-    public synchronized boolean cancel(final boolean interrupt) {
-
-        if (isDone()) { return false; }
-        return updateState(State.CANCELLED);
-    }
-
-    @Override
-    public synchronized boolean isCancelled() {
-
-        return current_state == State.CANCELLED;
-    }
-
-    @Override
-    public synchronized boolean isDone() {
-
-        return current_state != State.PENDING;
-    }
-
-    @Override
-    public Object get() throws InterruptedException, ExecutionException {
-
-        job_done_latch.await(); // Wait until the job is done
-
-        switch (current_state) {
-            case DONE_WITH_RESULT:
-                return result;
-                // FIXME cache exceptions
-            case DONE_WITH_EXCEPTION:
-                throw new ExecutionException(exception);
-            case CANCELLED:
-                throw new CancellationException();
-            default:
-                throw new IllegalStateException("The latch count is zero when the job is not done");
-        }
-
-    }
-
-    @Override
-    public Object get(final long timeout, final TimeUnit unit) throws InterruptedException, ExecutionException, TimeoutException {
-
-        if (job_done_latch.await(timeout, unit)) { return get(); }
-
-        throw new TimeoutException();
     }
 
     public Integer getId() {
 
         return id;
-    }
-
-    public void setId(final Integer id) {
-
-        this.id = id;
-    }
-
-    public Channel getChannel() {
-
-        return channel;
-    }
-
-    public synchronized void setResult(Object result) {
-
-        this.result = result;
-        updateState(State.DONE_WITH_RESULT);
-    }
-
-    public synchronized void setException(Throwable exception) {
-
-        this.exception = exception;
-        updateState(State.DONE_WITH_EXCEPTION);
     }
 
     public Method getMethod() {
@@ -129,31 +51,21 @@ public class FutureResponse implements Future<Object> {
         this.arguments = arguments;
     }
 
-    private synchronized boolean updateState(final State new_state) {
+    @Override
+    public boolean set(final Result value) {
 
-        if (isDone()) { return false; }
-
-        State old_state = current_state;
-        current_state = new_state;
-
-        if (current_state != State.PENDING) { // Check whether this future is no longer pending
-            job_done_latch.countDown(); // Release the waiting latch
-        }
-        return old_state == current_state;
+        return super.set(value);
     }
 
-    private enum State {
+    @Override
+    public boolean setException(final Throwable exception) {
 
-        /** Indicates that this future is pending for the notification from the remote worker. */
-        PENDING,
+        return super.setException(exception);
+    }
 
-        /** Indicates that pending has ended in a result. */
-        DONE_WITH_RESULT,
+    @Override
+    public int compareTo(final FutureResponse o) {
 
-        /** Indicates that pending has ended in an exception. */
-        DONE_WITH_EXCEPTION,
-
-        /** Indicates that pending has ended in cancellation of the job. */
-        CANCELLED;
+        return getId().compareTo(o.getId());
     }
 }

@@ -40,24 +40,22 @@ public class ServerFactory<Service> {
     /**
      * Instantiates a new server factory.
      *
-     * @param service_type the type of the service
      */
-    public ServerFactory(final Class<Service> service_type, ServerChannelInitializer handler) {
+    protected ServerFactory(final ServerChannelInitializer handler) {
 
-        this(service_type, Executors.newCachedThreadPool(new NamingThreadFactory(service_type.getSimpleName() + "_server_factory_")), handler);
-        //        this(service_type, new ThreadPoolExecutor(0, 1000, 1, TimeUnit.SECONDS, new LinkedBlockingQueue<Runnable>(20)), handler);
+        this(Executors.newCachedThreadPool(new NamingThreadFactory("server_factory_")), handler);
+        //        this(service_type, Executors.newFixedThreadPool(500, new NamingThreadFactory(service_type.getSimpleName() + "_server_factory_")), handler);
     }
 
     /**
      * Instantiates a new server factory.
      *
-     * @param service_type the type of the service
      * @param request_executor the executor that is used to process requests by all the servers that are instantiated using this factory
      */
-    public ServerFactory(final Class<Service> service_type, final ExecutorService request_executor, ServerChannelInitializer handler) {
+    private ServerFactory(final ExecutorService request_executor, final ServerChannelInitializer handler) {
 
         this.request_executor = request_executor;
-        server_bootstrap = createServerBootstrap(service_type, handler);
+        server_bootstrap = createServerBootstrap(handler);
     }
 
     /**
@@ -83,12 +81,12 @@ public class ServerFactory<Service> {
         server_bootstrap.group().shutdownGracefully();
     }
 
-    protected ServerBootstrap createServerBootstrap(final Class<?> service_type, final ServerChannelInitializer handler) {
+    ServerBootstrap createServerBootstrap(final ServerChannelInitializer handler) {
 
-        return createDefaultServerBootstrap(service_type, handler);
+        return createDefaultServerBootstrap(handler);
     }
 
-    static ServerBootstrap createDefaultServerBootstrap(final Class<?> service_type, final ServerChannelInitializer handler) {
+    private static ServerBootstrap createDefaultServerBootstrap(final ServerChannelInitializer handler) {
 
         final NioEventLoopGroup parent_event_loop = new NioEventLoopGroup(0, new NamingThreadFactory("server_parent_event_loop_"));
         final NioEventLoopGroup child_event_loop = new NioEventLoopGroup(0, new NamingThreadFactory("server_child_event_loop_"));

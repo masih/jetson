@@ -9,7 +9,7 @@ import org.junit.Test;
 /** @author Masih Hajiarabderkani (mh638@st-andrews.ac.uk) */
 public class ArrayCodecTest extends CodecTest {
 
-    private static final Class<?> NULL_ARRAY_CLASS = new String[]{}.getClass();
+    private static final Class<?> NULL_ARRAY_CLASS = String[].class;
 
     public ArrayCodecTest() {
 
@@ -19,14 +19,14 @@ public class ArrayCodecTest extends CodecTest {
     @Test
     public void testIsSupported() throws Exception {
 
-        Assert.assertTrue(codec.isSupported(new Object[]{}.getClass()));
-        Assert.assertTrue(codec.isSupported(new int[]{}.getClass()));
-        Assert.assertTrue(codec.isSupported(new byte[]{}.getClass()));
+        Assert.assertTrue(codec.isSupported(Object[].class));
+        Assert.assertTrue(codec.isSupported(int[].class));
+        Assert.assertTrue(codec.isSupported(byte[].class));
         Assert.assertTrue(codec.isSupported(Array.newInstance(Integer.TYPE, 5, 5).getClass()));
         Assert.assertFalse(codec.isSupported("".getClass()));
         Assert.assertFalse(codec.isSupported(null));
-        Assert.assertFalse(codec.isSupported(new ArrayList().getClass().getGenericSuperclass()));
-        Assert.assertFalse(codec.isSupported(new ArrayList().getClass()));
+        Assert.assertFalse(codec.isSupported(ArrayList.class.getGenericSuperclass()));
+        Assert.assertFalse(codec.isSupported(ArrayList.class));
     }
 
     @Test
@@ -40,7 +40,7 @@ public class ArrayCodecTest extends CodecTest {
         arrays.add(new Long[]{});
         arrays.add(null);
 
-        for (Object[] value : arrays) {
+        for (final Object[] value : arrays) {
             final Class<?> value_type = value != null ? value.getClass() : NULL_ARRAY_CLASS;
             encode(value, value_type);
             final Object[] decoded_value = (Object[]) decode(value_type);

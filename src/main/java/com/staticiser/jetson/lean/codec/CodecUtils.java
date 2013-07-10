@@ -3,7 +3,7 @@ package com.staticiser.jetson.lean.codec;
 import java.lang.reflect.Type;
 
 /** @author Masih Hajiarabderkani (mh638@st-andrews.ac.uk) */
-public final class CodecUtils {
+final class CodecUtils {
 
     private CodecUtils() {
 
@@ -16,7 +16,7 @@ public final class CodecUtils {
      * @return {@code true} if the given {@code type} presents a primitive type; {@code false otherwise}
      * @see Class#isPrimitive()
      */
-    public static boolean isPrimitive(Type type) {
+    public static boolean isPrimitive(final Type type) {
 
         return type != null && type instanceof Class<?> && ((Class<?>) type).isPrimitive();
     }

@@ -69,7 +69,7 @@ class RequestHandler extends ChannelInboundHandlerAdapter {
         context.close();
     }
 
-    static Server getServerFromContext(final ChannelHandlerContext context) {
+    private static Server getServerFromContext(final ChannelHandlerContext context) {
 
         return context.channel().parent().attr(Server.SERVER_ATTRIBUTE).get();
     }

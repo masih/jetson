@@ -34,7 +34,7 @@ import java.util.Map;
  *
  * @author Masih Hajiarabderkani (mh638@st-andrews.ac.uk)
  */
-public final class JsonRpcExceptions {
+final class JsonRpcExceptions {
 
     private static final Map<Integer, Class<? extends Throwable>> JSON_RPC_ERROR_CODES = new HashMap<Integer, Class<? extends Throwable>>();
     private static final Integer JSON_RPC_APPLICATION_ERROR_CODE = -32500;
@@ -92,7 +92,7 @@ public final class JsonRpcExceptions {
     private static Integer getCode(final Class<? extends Throwable> throwable_class) {
 
         assert isRegistered(throwable_class);
-        for (Map.Entry<Integer, Class<? extends Throwable>> entry : JSON_RPC_ERROR_CODES.entrySet()) {
+        for (final Map.Entry<Integer, Class<? extends Throwable>> entry : JSON_RPC_ERROR_CODES.entrySet()) {
             if (entry.getValue().equals(throwable_class)) { return entry.getKey(); }
         }
         return null;
@@ -108,7 +108,7 @@ public final class JsonRpcExceptions {
         return JSON_RPC_ERROR_CODES.containsKey(code);
     }
 
-    private static Throwable attemptCodeBasedInstantiation(final Integer code, String message) {
+    private static Throwable attemptCodeBasedInstantiation(final Integer code, final String message) {
 
         assert isRegistered(code);
         final Class<? extends Throwable> throwable_class = JSON_RPC_ERROR_CODES.get(code);

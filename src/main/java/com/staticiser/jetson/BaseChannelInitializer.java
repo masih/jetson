@@ -32,14 +32,15 @@ import java.util.concurrent.TimeUnit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public abstract class BaseChannelInitializer extends ChannelInitializer<SocketChannel> {
+abstract class BaseChannelInitializer extends ChannelInitializer<SocketChannel> {
 
+    private static final int DEFAULT_LENGTH_FIELD_LENGTH = 2;
+    private static final int DEFAULT_MAX_FRAME_LENGTH = 0xFFFF;
     private static final Logger LOGGER = LoggerFactory.getLogger(BaseChannelInitializer.class);
     private static final long DEFAULT_READ_TIMEOUT_IN_SECONDS = 30;
     private static final long DEFAULT_WRITE_TIMEOUT_IN_SECONDS = DEFAULT_READ_TIMEOUT_IN_SECONDS;
-    public static final int DEFAULT_LENGTH_FIELD_LENGTH = 2;
     private static final LengthFieldPrepender DEFAULT_FRAME_ENCODER = new LengthFieldPrepender(DEFAULT_LENGTH_FIELD_LENGTH);
-    public static final int DEFAULT_MAX_FRAME_LENGTH = 0xFFFF;
+    private static final LoggingHandler LOGGING = new LoggingHandler(LogLevel.INFO);
     private volatile long read_timeout;
     private volatile TimeUnit read_timeout_unit;
     private volatile long write_timeout;
@@ -51,37 +52,36 @@ public abstract class BaseChannelInitializer extends ChannelInitializer<SocketCh
         setWriteTimeout(DEFAULT_WRITE_TIMEOUT_IN_SECONDS, TimeUnit.SECONDS);
     }
 
-    public void setReadTimeout(final long timeout, final TimeUnit unit) {
+    void setReadTimeout(final long timeout, final TimeUnit unit) {
 
         read_timeout = timeout;
         read_timeout_unit = unit;
     }
 
-    public void setWriteTimeout(final long timeout, final TimeUnit unit) {
+    void setWriteTimeout(final long timeout, final TimeUnit unit) {
 
         write_timeout = timeout;
         write_timeout_unit = unit;
     }
 
-    private static LoggingHandler LOGGING = new LoggingHandler(LogLevel.INFO);
-
     @Override
     public void initChannel(final SocketChannel channel) throws Exception {
 
-        LOGGER.debug("initialising new channel {}", channel);
-        //                channel.pipeline().addLast(LOGGING);
+        if (LOGGER.isDebugEnabled()) {
+            channel.pipeline().addLast(LOGGING);
+        }
         channel.pipeline().addLast("write_timeout", createWriteTimeoutHandler());
         channel.pipeline().addLast("read_timeout", createReadTimeoutHandler());
         channel.pipeline().addLast("frame_decoder", getFrameDecoder());
         channel.pipeline().addLast("frame_encoder", getFrameEncoder());
     }
 
-    protected ChannelOutboundHandler getFrameEncoder() {
+    ChannelOutboundHandler getFrameEncoder() {
 
         return DEFAULT_FRAME_ENCODER;
     }
 
-    protected ChannelInboundHandler getFrameDecoder() {
+    ChannelInboundHandler getFrameDecoder() {
 
         return new LengthFieldBasedFrameDecoder(DEFAULT_MAX_FRAME_LENGTH, 0, DEFAULT_LENGTH_FIELD_LENGTH, 0, DEFAULT_LENGTH_FIELD_LENGTH);
     }

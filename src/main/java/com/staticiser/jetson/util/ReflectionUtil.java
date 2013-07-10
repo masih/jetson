@@ -128,7 +128,7 @@ public final class ReflectionUtil {
      * @param types the types to check its assignability
      * @return true, if the given {@code assignee} is assignable from at least one of the given types
      */
-    public static boolean containsAnyAssignableFrom(final Class<?> assignee, final Class<?>[] types) {
+    private static boolean containsAnyAssignableFrom(final Class<?> assignee, final Class<?>[] types) {
 
         for (final Class<?> exception_type : types) {
             if (exception_type.isAssignableFrom(assignee)) { return true; }

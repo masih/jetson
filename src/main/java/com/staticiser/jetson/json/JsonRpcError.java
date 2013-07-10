@@ -31,11 +31,11 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
 class JsonRpcError {
 
     /** The JSON code key. */
-    static final String CODE_KEY = "code";
+    private static final String CODE_KEY = "code";
     /** The JSON message key. */
-    static final String MESSAGE_KEY = "message";
+    private static final String MESSAGE_KEY = "message";
     /** The JSON data key. */
-    static final String DATA_KEY = "data";
+    private static final String DATA_KEY = "data";
     private volatile int code;
     private volatile String message;
     private volatile Object object;

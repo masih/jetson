@@ -20,6 +20,7 @@ package com.staticiser.jetson;
 
 import com.staticiser.jetson.exception.RPCException;
 import io.netty.buffer.ByteBuf;
+import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandler.Sharable;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.MessageToByteEncoder;
@@ -32,16 +33,22 @@ public abstract class RequestEncoder extends MessageToByteEncoder<FutureResponse
     protected void encode(final ChannelHandlerContext context, final FutureResponse future_response, final ByteBuf out) {
 
         try {
+            addPendingFutureResponse(context, future_response);
             final Integer id = future_response.getId();
             final Method method = future_response.getMethod();
             final Object[] arguments = future_response.getArguments();
             encodeRequest(context, id, method, arguments, out);
+
         }
         catch (final RPCException e) {
-            final Client client = ResponseHandler.getClientFromContext(context);
             future_response.setException(e);
-            client.handle(context, future_response);
         }
+    }
+
+    private void addPendingFutureResponse(final ChannelHandlerContext context, final FutureResponse future_response) {
+
+        final Channel channel = context.channel();
+        ChannelPool.addFutureResponse(channel, future_response);
     }
 
     protected abstract void encodeRequest(final ChannelHandlerContext context, final Integer id, final Method method, Object[] arguments, final ByteBuf out) throws RPCException;

@@ -5,7 +5,7 @@ import io.netty.buffer.ByteBuf;
 /** @author Masih Hajiarabderkani (mh638@st-andrews.ac.uk) */
 class LongCodec extends PrimitiveTypeCodec {
 
-    protected LongCodec() {
+    LongCodec() {
 
         super(Long.class, Long.TYPE);
     }

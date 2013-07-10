@@ -5,7 +5,7 @@ import io.netty.buffer.ByteBuf;
 /** @author Masih Hajiarabderkani (mh638@st-andrews.ac.uk) */
 class IntegerCodec extends PrimitiveTypeCodec {
 
-    protected IntegerCodec() {
+    IntegerCodec() {
 
         super(Integer.class, Integer.TYPE);
     }

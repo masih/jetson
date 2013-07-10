@@ -19,14 +19,20 @@
 package com.staticiser.jetson;
 
 import com.staticiser.jetson.exception.RPCException;
+import com.staticiser.jetson.exception.TransportException;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandler.Sharable;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.MessageList;
 import io.netty.handler.codec.MessageToMessageDecoder;
+import java.lang.reflect.Method;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @Sharable
 public abstract class RequestDecoder extends MessageToMessageDecoder<ByteBuf> {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(RequestDecoder.class);
 
     @Override
     protected void decode(final ChannelHandlerContext context, final ByteBuf bytes, final MessageList<Object> out) {
@@ -41,23 +47,48 @@ public abstract class RequestDecoder extends MessageToMessageDecoder<ByteBuf> {
         }
     }
 
-    protected FutureResponse decode(final ChannelHandlerContext context, final ByteBuf in) {
+    FutureResponse decode(final ChannelHandlerContext context, final ByteBuf in) {
 
-        final FutureResponse future_response = new FutureResponse(context.channel());
+        FutureResponse future_response = null;
+        final Integer id;
+        final Method method;
+        final Object[] arguments;
         try {
-            decodeAndSetIdMethodArguments(context, in, future_response);
+            beforeDecode(context, in);
+            id = decodeId(context, in);
+            future_response = new FutureResponse(id);
+
+            method = decodeMethod(context, in);
+            future_response.setMethod(method);
+
+            arguments = decodeMethodArguments(context, in, method);
+            future_response.setArguments(arguments);
         }
         catch (RPCException e) {
-            future_response.setException(e);
+            if (future_response != null) {
+                future_response.setException(e);
+            }
+            else {
+                LOGGER.debug("cannot handle bad request", e);
+            }
+        }
+        finally {
+            afterDecode(context, in);
         }
         return future_response;
     }
 
-    protected abstract void decodeAndSetIdMethodArguments(final ChannelHandlerContext context, final ByteBuf in, final FutureResponse future_response) throws RPCException;
+    protected void beforeDecode(final ChannelHandlerContext context, final ByteBuf in) throws TransportException {
 
-    protected Server getServer(ChannelHandlerContext context) {
-
-        return RequestHandler.getServerFromContext(context);
     }
 
+    protected abstract Integer decodeId(final ChannelHandlerContext context, final ByteBuf in) throws RPCException;
+
+    protected abstract Method decodeMethod(final ChannelHandlerContext context, final ByteBuf in) throws RPCException;
+
+    protected abstract Object[] decodeMethodArguments(final ChannelHandlerContext context, final ByteBuf in, Method method) throws RPCException;
+
+    protected void afterDecode(final ChannelHandlerContext context, final ByteBuf in) {
+
+    }
 }

@@ -28,7 +28,7 @@ public class LongCodecTest extends CodecTest {
         for (final long b : longs) {
             encode(b, Long.TYPE);
         }
-        Assert.assertEquals(longs.length * 64 / 8, buffer.readableBytes());
+        Assert.assertEquals(longs.length * Long.SIZE / 8, buffer.readableBytes());
         for (final long b : longs) {
             Assert.assertTrue(decode(Long.TYPE).equals(b));
         }

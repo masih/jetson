@@ -23,12 +23,12 @@ public class BooleanCodecTest extends CodecTest {
     @Test
     public void testCodecPrimitive() throws Exception {
 
-        final boolean[] booleans = {true, false, false, true};
-        for (final boolean b : booleans) {
+        final boolean[] flags = {true, false, false, true};
+        for (final boolean b : flags) {
             encode(b, Boolean.TYPE);
         }
-        Assert.assertEquals(booleans.length, buffer.readableBytes());
-        for (final boolean b : booleans) {
+        Assert.assertEquals(flags.length, buffer.readableBytes());
+        for (final boolean b : flags) {
             Assert.assertTrue(decode(Boolean.TYPE) == b);
         }
     }
@@ -36,13 +36,13 @@ public class BooleanCodecTest extends CodecTest {
     @Test
     public void testCodec() throws Exception {
 
-        final Boolean[] booleans = {true, false, null, true};
-        for (final Boolean b : booleans) {
+        final Boolean[] flags = {true, false, null, true};
+        for (final Boolean b : flags) {
             encode(b, Boolean.class);
         }
         // The number of written bytes is 2 for each non-null boolean and 1 for each null boolean
-        Assert.assertEquals(booleans.length * 2 - 1, buffer.readableBytes());
-        for (final Boolean b : booleans) {
+        Assert.assertEquals(flags.length * 2 - 1, buffer.readableBytes());
+        for (final Boolean b : flags) {
             Assert.assertEquals(b, decode(Boolean.class));
         }
     }

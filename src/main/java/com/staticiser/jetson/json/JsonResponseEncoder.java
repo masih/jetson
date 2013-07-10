@@ -50,7 +50,7 @@ class JsonResponseEncoder extends ResponseEncoder {
         this(json_factory, JsonEncoding.UTF8);
     }
 
-    JsonResponseEncoder(final JsonFactory json_factory, final JsonEncoding encoding) {
+    private JsonResponseEncoder(final JsonFactory json_factory, final JsonEncoding encoding) {
 
         this.json_factory = json_factory;
         this.encoding = encoding;
@@ -74,7 +74,7 @@ class JsonResponseEncoder extends ResponseEncoder {
         encodeResultOrException(id, null, exception, out, true);
     }
 
-    protected void encodeResultOrException(final Integer id, final Object result, final Throwable exception, final ByteBuf out, boolean error) throws RPCException {
+    void encodeResultOrException(final Integer id, final Object result, final Throwable exception, final ByteBuf out, final boolean error) throws RPCException {
 
         JsonGenerator generator = null;
         try {

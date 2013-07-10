@@ -42,31 +42,38 @@ import org.junit.rules.Timeout;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
+import static com.staticiser.jetson.TestService.TestObject;
+
 @RunWith(Parameterized.class)
 public abstract class AbstractTest {
 
-    public static final Codecs CODECS = new Codecs();
+    private static final Codecs CODECS = new Codecs();
+    private static final JsonFactory JSON_FACTORY = new JsonFactory(new ObjectMapper());
+    static final ClientFactory<TestService> LEAN_CLIENT_FACTORY = new LeanClientFactory<TestService>(TestService.class, CODECS);
+    static final ClientFactory<TestService> JSON_CLIENT_FACTORY = new JsonClientFactory<TestService>(TestService.class, JSON_FACTORY);
+    private static final ServerFactory<TestService> LEAN_SERVER_FACTORY = new LeanServerFactory<TestService>(TestService.class, CODECS);
+    private static final ServerFactory<TestService> JSON_SERVER_FACTORY = new JsonServerFactory<TestService>(TestService.class, JSON_FACTORY);
     static {
-        CODECS.register(new Codec() {
+        CODECS.register(0, new Codec() {
 
             @Override
             public boolean isSupported(final Type type) {
 
-                return type != null && type instanceof Class<?> && TestService.TestObject.class.isAssignableFrom((Class<?>) type);
+                return type != null && type instanceof Class<?> && TestObject.class.isAssignableFrom((Class<?>) type);
             }
 
             @Override
             public void encode(final Object value, final ByteBuf out, final Codecs codecs, final Type type) throws RPCException {
 
-                final TestService.TestObject testObject = (TestService.TestObject) value;
+                final TestObject testObject = (TestObject) value;
                 codecs.encodeAs(testObject.getMessage(), out, String.class);
             }
 
             @Override
-            public TestService.TestObject decode(final ByteBuf in, final Codecs codecs, final Type type) throws RPCException {
+            public TestObject decode(final ByteBuf in, final Codecs codecs, final Type type) throws RPCException {
 
                 final String message = codecs.decodeAs(in, String.class);
-                return new TestService.TestObject(message);
+                return new TestObject(message);
             }
         });
         CODECS.register(new CollectionCodec() {
@@ -78,23 +85,19 @@ public abstract class AbstractTest {
             }
         });
     }
-    protected static final ServerFactory<TestService> LEAN_SERVER_FACTORY = new LeanServerFactory<TestService>(TestService.class, CODECS);
-    protected static final ClientFactory<TestService> LEAN_CLIENT_FACTORY = new LeanClientFactory<TestService>(TestService.class, CODECS);
-    protected static final JsonFactory JSON_FACTORY = new JsonFactory(new ObjectMapper());
-    protected static final ServerFactory<TestService> JSON_SERVER_FACTORY = new JsonServerFactory<TestService>(TestService.class, JSON_FACTORY);
-    protected static final ClientFactory<TestService> JSON_CLIENT_FACTORY = new JsonClientFactory<TestService>(TestService.class, JSON_FACTORY);
-    protected final ClientFactory<TestService> client_factory;
-    protected final ServerFactory<TestService> server_factory;
+
+    final ClientFactory<TestService> client_factory;
+    private final ServerFactory<TestService> server_factory;
     @Rule
     public Timeout global_timeout = new Timeout(10 * 60 * 1000);
-    protected Server server;
-    protected InetSocketAddress server_address;
-    protected Server temp_server;
-    protected int temp_server_port;
     protected ExecutorService executor;
-    protected TestService client;
+    Server server;
+    int temp_server_port;
+    TestService client;
+    private InetSocketAddress server_address;
+    private Server temp_server;
 
-    protected AbstractTest(ClientFactory<TestService> client_factory, ServerFactory<TestService> server_factory) {
+    protected AbstractTest(final ClientFactory<TestService> client_factory, final ServerFactory<TestService> server_factory) {
 
         this.client_factory = client_factory;
         this.server_factory = server_factory;
@@ -129,7 +132,7 @@ public abstract class AbstractTest {
         //        client_factory.shutdown();
     }
 
-    protected Server startJsonRpcTestServer() throws IOException {
+    Server startJsonRpcTestServer() throws IOException {
 
         final Server server = server_factory.createServer(getService());
         server.expose();
