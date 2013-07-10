@@ -9,16 +9,16 @@ import org.junit.Before;
 /** @author Masih Hajiarabderkani (mh638@st-andrews.ac.uk) */
 public abstract class CodecTest {
 
-    protected final Codec codec;
-    protected final Codecs codecs;
-    protected final ByteBuf buffer;
+    final Codec codec;
+    final Codecs codecs;
+    final ByteBuf buffer;
 
-    protected CodecTest(final Codec codec) {
+    CodecTest(final Codec codec) {
 
         this(codec, new Codecs());
     }
 
-    protected CodecTest(final Codec codec, final Codecs codecs) {
+    private CodecTest(final Codec codec, final Codecs codecs) {
 
         this.codec = codec;
         this.codecs = codecs;
@@ -31,22 +31,22 @@ public abstract class CodecTest {
         buffer.clear();
     }
 
-    protected void encode(final Object value) throws RPCException {
+    void encode(final Object value) throws RPCException {
 
         encode(value, value.getClass());
     }
 
-    protected void encode(final Object value, final Type type) throws RPCException {
+    void encode(final Object value, final Type type) throws RPCException {
 
         codec.encode(value, buffer, codecs, type);
     }
 
-    protected <T> T decode(Class<T> type) throws RPCException {
+    <T> T decode(final Class<T> type) throws RPCException {
 
         return decode((Type) type);
     }
 
-    protected <T> T decode(Type type) throws RPCException {
+    <T> T decode(final Type type) throws RPCException {
 
         return codec.decode(buffer, codecs, type);
     }

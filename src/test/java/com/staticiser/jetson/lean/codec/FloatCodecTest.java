@@ -27,7 +27,7 @@ public class FloatCodecTest extends CodecTest {
         for (final float b : floats) {
             encode(b, Float.TYPE);
         }
-        Assert.assertEquals(floats.length * 32 / 8, buffer.readableBytes());
+        Assert.assertEquals(floats.length * Float.SIZE / 8, buffer.readableBytes());
         for (final float b : floats) {
             Assert.assertTrue(decode(Float.TYPE).equals(b));
         }

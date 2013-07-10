@@ -27,12 +27,6 @@ import io.netty.handler.codec.MessageToMessageDecoder;
 @Sharable
 public abstract class ResponseDecoder extends MessageToMessageDecoder<ByteBuf> {
 
-    protected Client getClient(ChannelHandlerContext context) {
-
-        return ResponseHandler.getClientFromContext(context);
-
-    }
-
     @Override
     protected void decode(final ChannelHandlerContext context, final ByteBuf in, final MessageList<Object> out) {
 
@@ -41,5 +35,11 @@ public abstract class ResponseDecoder extends MessageToMessageDecoder<ByteBuf> {
     }
 
     protected abstract FutureResponse decode(final ChannelHandlerContext context, final ByteBuf in);
+
+    protected FutureResponse getFutureResponseById(final ChannelHandlerContext context, final Integer id) {
+
+        return ChannelPool.getFutureResponse(context.channel(), id);
+
+    }
 
 }

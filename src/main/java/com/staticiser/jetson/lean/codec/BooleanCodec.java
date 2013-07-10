@@ -5,7 +5,7 @@ import io.netty.buffer.ByteBuf;
 /** @author Masih Hajiarabderkani (mh638@st-andrews.ac.uk) */
 class BooleanCodec extends PrimitiveTypeCodec {
 
-    protected BooleanCodec() {
+    BooleanCodec() {
 
         super(Boolean.class, Boolean.TYPE);
     }

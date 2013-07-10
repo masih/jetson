@@ -5,7 +5,7 @@ import io.netty.buffer.ByteBuf;
 /** @author Masih Hajiarabderkani (mh638@st-andrews.ac.uk) */
 class ShortCodec extends PrimitiveTypeCodec {
 
-    protected ShortCodec() {
+    ShortCodec() {
 
         super(Short.class, Short.TYPE);
     }

@@ -5,7 +5,7 @@ import io.netty.buffer.ByteBuf;
 /** @author Masih Hajiarabderkani (mh638@st-andrews.ac.uk) */
 class DoubleCodec extends PrimitiveTypeCodec {
 
-    protected DoubleCodec() {
+    DoubleCodec() {
 
         super(Double.class, Double.TYPE);
     }

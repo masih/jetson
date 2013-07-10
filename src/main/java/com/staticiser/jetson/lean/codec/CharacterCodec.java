@@ -5,7 +5,7 @@ import io.netty.buffer.ByteBuf;
 /** @author Masih Hajiarabderkani (mh638@st-andrews.ac.uk) */
 class CharacterCodec extends PrimitiveTypeCodec {
 
-    protected CharacterCodec() {
+    CharacterCodec() {
 
         super(Character.class, Character.TYPE);
     }

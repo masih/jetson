@@ -18,59 +18,102 @@
  */
 package com.staticiser.jetson;
 
+import com.google.common.util.concurrent.MoreExecutors;
+import com.staticiser.jetson.exception.RPCException;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ConnectTimeoutException;
+import io.netty.util.AttributeKey;
 import java.net.InetSocketAddress;
+import java.util.Set;
+import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.concurrent.TimeUnit;
 import org.apache.commons.pool.BasePoolableObjectFactory;
 import org.apache.commons.pool.impl.GenericObjectPool;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-class ChannelPool extends GenericObjectPool<Channel> {
+public class ChannelPool extends GenericObjectPool<Channel> {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ChannelPool.class);
+    private static final AttributeKey<Set<FutureResponse>> FUTURE_RESPONSES_ATTRIBUTE_KEY = new AttributeKey<Set<FutureResponse>>("future_responses");
 
-    protected ChannelPool(final Bootstrap bootstrap, final Client client) {
+    ChannelPool(final Bootstrap bootstrap, final InetSocketAddress address) {
 
-        this(new PoolableChannelFactory(bootstrap, client));
+        this(new PoolableChannelFactory(bootstrap, address));
     }
 
-    protected ChannelPool(final PoolableChannelFactory poolable_channel_factory) {
+    private ChannelPool(final PoolableChannelFactory poolable_channel_factory) {
 
         super(poolable_channel_factory);
         configure();
-
     }
 
-    protected void configure() {
+    static boolean addFutureResponse(final Channel channel, final FutureResponse response) {
+
+        final Set<FutureResponse> responses = getFutureResponsesByChannel(channel);
+        final boolean added = responses.add(response);
+        if (added) {
+            response.addListener(new Runnable() {
+
+                @Override
+                public void run() {
+
+                    responses.remove(response);
+                }
+            }, MoreExecutors.sameThreadExecutor());
+        }
+        return added;
+    }
+
+    static void setException(final Channel channel, final RPCException exception) {
+
+        final Set<FutureResponse> responses = getFutureResponsesByChannel(channel);
+        for (final FutureResponse r : responses) {
+            r.setException(exception);
+        }
+    }
+
+    static FutureResponse getFutureResponse(final Channel channel, final Integer id) {
+
+        final Set<FutureResponse> responses = getFutureResponsesByChannel(channel);
+        for (final FutureResponse r : responses) {
+            if (r.getId().equals(id)) { return r; }
+        }
+        return null;
+    }
+
+    private static Set<FutureResponse> getFutureResponsesByChannel(final Channel channel) {
+
+        return channel.attr(FUTURE_RESPONSES_ATTRIBUTE_KEY).get();
+    }
+
+    void configure() {
 
         setTestOnBorrow(true);
         setTestOnReturn(true);
+        setMinEvictableIdleTimeMillis(500);
     }
 
-    protected static class PoolableChannelFactory extends BasePoolableObjectFactory<Channel> {
+    static class PoolableChannelFactory extends BasePoolableObjectFactory<Channel> {
 
         private static final long DEFAULT_CONNECTION_TIMEOUT_IN_MILLIS = 5 * 1000;
         private final Bootstrap bootstrap;
         private final InetSocketAddress address;
-        private final Client client;
         private volatile long connection_timeout_in_millis;
 
-        PoolableChannelFactory(final Bootstrap bootstrap, final Client client) {
+        PoolableChannelFactory(final Bootstrap bootstrap, final InetSocketAddress address) {
 
-            this(bootstrap, client, DEFAULT_CONNECTION_TIMEOUT_IN_MILLIS);
+            this(bootstrap, address, DEFAULT_CONNECTION_TIMEOUT_IN_MILLIS);
         }
 
-        PoolableChannelFactory(final Bootstrap bootstrap, final Client client, final long connection_timeout_in_millis) {
+        PoolableChannelFactory(final Bootstrap bootstrap, final InetSocketAddress address, final long connection_timeout_in_millis) {
 
             this.bootstrap = bootstrap;
-            this.client = client;
+            this.address = address;
             this.connection_timeout_in_millis = connection_timeout_in_millis;
-            address = client.getAddress();
         }
 
         @Override
@@ -81,7 +124,7 @@ class ChannelPool extends GenericObjectPool<Channel> {
             connect_future.addListener(ChannelFutureListener.CLOSE_ON_FAILURE);
             if (!connect_future.await(connection_timeout_in_millis)) { throw new ConnectTimeoutException(); }
             final Channel channel = connect_future.channel();
-            channel.attr(Client.CLIENT_ATTRIBUTE_KEY).set(client);
+            channel.attr(FUTURE_RESPONSES_ATTRIBUTE_KEY).set(new ConcurrentSkipListSet<FutureResponse>());
             return channel;
         }
 
@@ -89,6 +132,7 @@ class ChannelPool extends GenericObjectPool<Channel> {
         public void destroyObject(final Channel channel) {
 
             channel.close();
+            channel.disconnect();
         }
 
         @Override

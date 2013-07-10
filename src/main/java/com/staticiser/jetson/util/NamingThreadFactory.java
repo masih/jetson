@@ -30,7 +30,7 @@ import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * A wrapper around {@link Executors#defaultThreadFactory()} that names the threads using a given prefix concatenated with an atomically increasing integer starting from <code>0</code>.
- * 
+ *
  * @author Masih Hajiarabderkani (mh638@st-andrews.ac.uk)
  */
 public final class NamingThreadFactory implements ThreadFactory {
@@ -50,7 +50,7 @@ public final class NamingThreadFactory implements ThreadFactory {
 
     /**
      * Instantiates a new naming thread factory.
-     * 
+     *
      * @param naming_prefix the naming prefix to be given to generated threads
      */
     public NamingThreadFactory(final String naming_prefix) {
@@ -60,11 +60,11 @@ public final class NamingThreadFactory implements ThreadFactory {
 
     /**
      * Instantiates a new naming thread factory.
-     * 
+     *
      * @param naming_prefix the naming prefix to be given to generated threads
      * @param debug whether to print out the stack trace of uncaught exceptions within a created thread
      */
-    public NamingThreadFactory(final String naming_prefix, final boolean debug) {
+    private NamingThreadFactory(final String naming_prefix, final boolean debug) {
 
         this.naming_prefix = naming_prefix;
         this.debug = debug;
@@ -72,9 +72,9 @@ public final class NamingThreadFactory implements ThreadFactory {
     }
 
     @Override
-    public Thread newThread(final Runnable arg0) {
+    public Thread newThread(final Runnable task) {
 
-        final Thread new_thread = Executors.defaultThreadFactory().newThread(arg0);
+        final Thread new_thread = Executors.defaultThreadFactory().newThread(task);
         final String name = generateName();
 
         if (debug) {

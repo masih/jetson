@@ -27,7 +27,7 @@ public class DoubleCodecTest extends CodecTest {
         for (final double b : doubles) {
             encode(b, Double.TYPE);
         }
-        Assert.assertEquals(doubles.length * 64 / 8, buffer.readableBytes());
+        Assert.assertEquals(doubles.length * Double.SIZE / Byte.SIZE, buffer.readableBytes());
         for (final double b : doubles) {
             Assert.assertTrue(decode(Double.TYPE).equals(b));
         }

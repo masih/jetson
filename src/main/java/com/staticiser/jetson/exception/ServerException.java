@@ -22,17 +22,17 @@ public abstract class ServerException extends RPCException {
 
     private static final long serialVersionUID = -3781403268838978789L;
 
-    protected ServerException() {
+    ServerException() {
 
         super();
     }
 
-    protected ServerException(final String message) {
+    ServerException(final String message) {
 
         super(message);
     }
 
-    protected ServerException(final Throwable cause) {
+    ServerException(final Throwable cause) {
 
         super(cause);
     }

@@ -49,7 +49,7 @@ public class RPCException extends IOException {
         super(message, cause);
     }
 
-    protected static String toString(final Object... messages) {
+    static String toString(final Object... messages) {
 
         final String message;
         if (messages != null && messages.length != 0) {

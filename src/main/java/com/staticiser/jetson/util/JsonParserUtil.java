@@ -76,7 +76,7 @@ public final class JsonParserUtil {
      * @return the field name
      * @throws IOException Signals that an I/O exception has occurred.
      */
-    public static String nextFieldName(final JsonParser parser) throws IOException {
+    private static String nextFieldName(final JsonParser parser) throws IOException {
 
         if (parser.nextToken() == JsonToken.FIELD_NAME) { return parser.getCurrentName(); }
         throw new JsonParseException("expected some field name", parser.getCurrentLocation());
@@ -130,7 +130,7 @@ public final class JsonParserUtil {
      * @param parser the parser
      * @throws IOException Signals that an I/O exception has occurred.
      */
-    public static void expectStartArray(final JsonParser parser) throws IOException {
+    private static void expectStartArray(final JsonParser parser) throws IOException {
 
         if (parser.nextToken() != JsonToken.START_ARRAY) { throw new JsonParseException("expected start array", parser.getCurrentLocation()); }
     }
@@ -142,13 +142,13 @@ public final class JsonParserUtil {
      * @param parser the parser to read from
      * @throws IOException Signals that an I/O exception has occurred.
      */
-    public static void expectEndArray(final JsonParser parser) throws IOException {
+    private static void expectEndArray(final JsonParser parser) throws IOException {
 
         if (parser.nextToken() != JsonToken.END_ARRAY) { throw new JsonParseException("expected end array", parser.getCurrentLocation()); }
     }
 
     /**
-     * Reads a field value as the provided type. This method supports parameterised types.
+     * Reads a field value as the provided type. This method supports parametrised types.
      *
      * @param parser the parser
      * @param expected_type the expected type of the value
@@ -176,7 +176,7 @@ public final class JsonParserUtil {
      * @param parser the parser to read from
      * @throws IOException Signals that an I/O exception has occurred.
      */
-    public static void expectNullValue(final JsonParser parser) throws IOException {
+    private static void expectNullValue(final JsonParser parser) throws IOException {
 
         if (parser.nextToken() != JsonToken.VALUE_NULL) { throw new JsonParseException("expected null value", parser.getCurrentLocation()); }
     }

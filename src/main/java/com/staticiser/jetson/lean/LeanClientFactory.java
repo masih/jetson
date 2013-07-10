@@ -37,7 +37,7 @@ public class LeanClientFactory<Service> extends ClientFactory<Service> {
      * Instantiates a new JSON RPC client factory. The {@link ClassLoader#getSystemClassLoader() system class loader} used for constructing new proxy instances.
      *
      * @param service_interface the interface presenting the remote service
-     * @param codecs
+     * @param codecs the codecs
      */
     public LeanClientFactory(final Class<Service> service_interface, final Codecs codecs) {
 

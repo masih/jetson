@@ -12,7 +12,7 @@ import org.junit.runners.Parameterized;
 @RunWith(Parameterized.class)
 public class ClientTest {
 
-    protected final ClientFactory<TestService> client_factory;
+    private final ClientFactory<TestService> client_factory;
 
     @Parameterized.Parameters(name = "{index} -  client:{0}")
     public static Collection<Object[]> getParameters() {

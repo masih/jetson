@@ -27,7 +27,7 @@ public class UnknownTypeException extends RPCException {
         super();
     }
 
-    public UnknownTypeException(Type unknown_type) {
+    public UnknownTypeException(final Type unknown_type) {
 
         super("no codec is registered for type: " + unknown_type);
     }

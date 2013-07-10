@@ -15,7 +15,7 @@ class StringCodec implements Codec {
         this(DEFAULT_CHARSET);
     }
 
-    StringCodec(final Charset charset) {
+    private StringCodec(final Charset charset) {
 
         this.charset = charset;
     }

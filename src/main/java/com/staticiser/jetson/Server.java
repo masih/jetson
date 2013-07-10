@@ -58,7 +58,7 @@ public class Server {
     private volatile InetSocketAddress endpoint;
     private volatile boolean exposed;
 
-    protected Server(final ServerBootstrap server_bootstrap, final Object service, ExecutorService executor) {
+    Server(final ServerBootstrap server_bootstrap, final Object service, final ExecutorService executor) {
 
         this.server_bootstrap = server_bootstrap;
         this.service = service;
@@ -81,20 +81,27 @@ public class Server {
     /**
      * Exposes this server to the incoming connections.
      *
+     * @return whether the exposure of this sever was changed
      * @throws IOException Signals that an I/O exception has occurred.
      */
-    public synchronized void expose() throws IOException {
+    public synchronized boolean expose() throws IOException {
 
+        final boolean exposure_changed;
         if (!isExposed()) {
             attemptBind();
             updateLocalSocketAddress();
             configureServerChannel();
             exposed = true;
             LOGGER.debug("exposed server on {}", endpoint);
+            exposure_changed = true;
         }
+        else {
+            exposure_changed = false;
+        }
+        return exposure_changed;
     }
 
-    public void handle(final ChannelHandlerContext context, final FutureResponse future_response) throws Exception {
+    public void handle(final ChannelHandlerContext context, final FutureResponse future_response) {
 
         final Callable<ChannelFuture> task = new Callable<ChannelFuture>() {
 
@@ -104,7 +111,7 @@ public class Server {
                 final Method method = future_response.getMethod();
                 final Object[] arguments = future_response.getArguments();
                 try {
-                    future_response.setResult(handleRequest(method, arguments));
+                    future_response.set(handleRequest(method, arguments));
                 }
                 catch (final Throwable e) {
                     future_response.setException(e);
@@ -129,16 +136,19 @@ public class Server {
      * Disconnects all the connected clients and stops listening for the incoming connections.
      * This method has no effect if this server is not exposed.
      *
+     * @return whether the exposure of this sever was changed
      * @throws IOException Signals that an I/O exception has occurred.
      */
-    public synchronized void unexpose() throws IOException {
+    public synchronized boolean unexpose() throws IOException {
 
+        final boolean exposure_changed;
         if (isExposed()) {
             try {
                 disconnectActiveClients();
                 unbindServerChannel();
                 exposed = false;
                 LOGGER.debug("unexposed server on {}", endpoint);
+                exposure_changed = true;
             }
             catch (final Exception e) {
                 LOGGER.error("error while unexposing server", e);
@@ -147,7 +157,9 @@ public class Server {
         }
         else {
             LOGGER.warn("unexpose was called when the server is already unexposed; local address: {}", endpoint);
+            exposure_changed = false;
         }
+        return exposure_changed;
     }
 
     /**
@@ -168,7 +180,7 @@ public class Server {
      */
     public InetSocketAddress getLocalSocketAddress() {
 
-        return !isExposed() ? null : endpoint;
+        return endpoint;
     }
 
     private Object handleRequest(final Method method, final Object[] arguments) throws Throwable {

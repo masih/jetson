@@ -5,7 +5,7 @@ import io.netty.buffer.ByteBuf;
 /** @author Masih Hajiarabderkani (mh638@st-andrews.ac.uk) */
 class FloatCodec extends PrimitiveTypeCodec {
 
-    protected FloatCodec() {
+    FloatCodec() {
 
         super(Float.class, Float.TYPE);
     }

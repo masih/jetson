@@ -57,7 +57,7 @@ class JsonRequestEncoder extends RequestEncoder {
         this(json_factory, JsonEncoding.UTF8, dispatch);
     }
 
-    JsonRequestEncoder(final JsonFactory json_factory, final JsonEncoding encoding, final Map<Method, String> dispatch) {
+    private JsonRequestEncoder(final JsonFactory json_factory, final JsonEncoding encoding, final Map<Method, String> dispatch) {
 
         this.json_factory = json_factory;
         this.encoding = encoding;
@@ -93,7 +93,7 @@ class JsonRequestEncoder extends RequestEncoder {
         }
     }
 
-    private static void writeRequestParameters(final Method method, Object[] arguments, final JsonGenerator generator) throws IOException {
+    private static void writeRequestParameters(final Method method, final Object[] arguments, final JsonGenerator generator) throws IOException {
 
         final Type[] param_types = method.getGenericParameterTypes();
         JsonGeneratorUtil.writeValuesAs(generator, PARAMETERS_KEY, param_types, arguments);

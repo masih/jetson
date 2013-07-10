@@ -58,7 +58,7 @@ public class JsonResponseDecoder extends ResponseDecoder {
             parser = json_factory.createParser(new ByteBufInputStream(in));
             parser.nextToken();
             final Integer id = validateAndReadResponseId(parser);
-            future_response = getClient(context).getFutureResponseById(id);
+            future_response = getFutureResponseById(context, id);
             readAndValidateVersion(parser);
 
             final Type expected_return_type = future_response.getMethod().getGenericReturnType();
@@ -96,11 +96,9 @@ public class JsonResponseDecoder extends ResponseDecoder {
         return future_response;
     }
 
-    private FutureResponse checkFutureResponse(final ChannelHandlerContext context, FutureResponse future_response) {
+    private FutureResponse checkFutureResponse(final ChannelHandlerContext context, final FutureResponse future_response) {
 
-        if (future_response == null) {
-            future_response = new FutureResponse(context.channel());
-        }
+        if (future_response == null) { return new FutureResponse(null, null, null); }
         return future_response;
     }
 
@@ -123,7 +121,7 @@ public class JsonResponseDecoder extends ResponseDecoder {
     private void setResponseResult(final JsonParser parser, final FutureResponse response, final Type expected_return_type) throws IOException {
 
         final Object result = JsonParserUtil.readValueAs(parser, expected_return_type);
-        response.setResult(result);
+        response.set(result);
     }
 
     private void setResponseError(final JsonParser parser, final FutureResponse response) throws IOException {

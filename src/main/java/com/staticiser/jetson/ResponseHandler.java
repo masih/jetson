@@ -18,6 +18,9 @@
  */
 package com.staticiser.jetson;
 
+import com.staticiser.jetson.exception.RPCException;
+import com.staticiser.jetson.exception.TransportException;
+import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandler.Sharable;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
@@ -33,34 +36,23 @@ class ResponseHandler extends ChannelInboundHandlerAdapter {
     @Override
     public void channelInactive(final ChannelHandlerContext context) throws Exception {
 
+        final Channel channel = context.channel();
+        ChannelPool.setException(channel, new TransportException("connection closed"));
         LOGGER.debug("client disconencted {}", context.channel().remoteAddress());
-        final Client client = getClientFromContext(context);
-        client.notifyChannelInactivation(context.channel());
         super.channelInactive(context);
     }
 
     @Override
     public void messageReceived(final ChannelHandlerContext context, final MessageList<Object> messages) throws Exception {
 
-        final MessageList<FutureResponse> responses = messages.cast();
-        final Client client = getClientFromContext(context);
-        for (final FutureResponse response : responses) {
-            client.handle(context, response);
-        }
         messages.releaseAllAndRecycle();
     }
 
     @Override
     public void exceptionCaught(final ChannelHandlerContext context, final Throwable cause) {
 
-        final Client client = getClientFromContext(context);
-        client.notifyChannelInactivation(context.channel());
         LOGGER.info("caught on client handler", cause);
+        ChannelPool.setException(context.channel(), new RPCException(cause));
         context.close();
-    }
-
-    static Client getClientFromContext(final ChannelHandlerContext context) {
-
-        return context.channel().attr(Client.CLIENT_ATTRIBUTE_KEY).get();
     }
 }

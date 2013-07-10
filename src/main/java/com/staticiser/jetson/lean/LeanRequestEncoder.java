@@ -16,7 +16,7 @@ public class LeanRequestEncoder extends RequestEncoder {
     private final List<Method> dispatch;
     private final Codecs codecs;
 
-    public LeanRequestEncoder(final List<Method> dispatch, Codecs codecs) {
+    public LeanRequestEncoder(final List<Method> dispatch, final Codecs codecs) {
 
         this.dispatch = dispatch;
         this.codecs = codecs;

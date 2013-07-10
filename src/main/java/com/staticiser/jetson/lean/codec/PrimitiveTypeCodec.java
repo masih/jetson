@@ -9,7 +9,7 @@ abstract class PrimitiveTypeCodec implements Codec {
     private final Class<?> primitive_class;
     private final Type primitive_type;
 
-    protected PrimitiveTypeCodec(Class<?> primitive_class, final Type primitive_type) {
+    PrimitiveTypeCodec(final Class<?> primitive_class, final Type primitive_type) {
 
         this.primitive_class = primitive_class;
         this.primitive_type = primitive_type;
