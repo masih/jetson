@@ -5,7 +5,6 @@ import com.staticiser.jetson.util.CloseableUtil;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufInputStream;
 import io.netty.buffer.ByteBufOutputStream;
-import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
@@ -29,7 +28,7 @@ public class SerializableCodec implements Codec {
             object_out.writeObject(value);
             object_out.flush();
         }
-        catch (final IOException e) {
+        catch (final Exception e) {
             throw new RPCException(e);
         }
         finally {
@@ -45,10 +44,7 @@ public class SerializableCodec implements Codec {
             object_in = new ObjectInputStream(new ByteBufInputStream(in));
             return (Serializable) object_in.readObject();
         }
-        catch (final IOException e) {
-            throw new RPCException(e);
-        }
-        catch (final ClassNotFoundException e) {
+        catch (final Exception e) {
             throw new RPCException(e);
         }
         finally {

@@ -21,6 +21,7 @@ package com.staticiser.jetson.util;
 import com.staticiser.jetson.exception.RPCException;
 import java.io.Serializable;
 import java.lang.reflect.Method;
+import java.lang.reflect.Type;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -39,6 +40,18 @@ public final class ReflectionUtil {
 
     private ReflectionUtil() {
 
+    }
+
+    /**
+     * Checks if the given {@link Type type} is a primitive type.
+     *
+     * @param type the type to check
+     * @return {@code true} if the given {@code type} presents a primitive type; {@code false otherwise}
+     * @see Class#isPrimitive()
+     */
+    public static boolean isPrimitive(final Type type) {
+
+        return type != null && type instanceof Class<?> && ((Class<?>) type).isPrimitive();
     }
 
     /**

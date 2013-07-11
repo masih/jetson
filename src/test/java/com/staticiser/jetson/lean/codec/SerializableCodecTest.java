@@ -1,5 +1,8 @@
 package com.staticiser.jetson.lean.codec;
 
+import com.staticiser.jetson.exception.RPCException;
+import java.io.IOException;
+import java.io.ObjectStreamException;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -41,4 +44,48 @@ public class SerializableCodecTest extends CodecTest {
             Assert.assertTrue(b.equals(decode(Serializable.class)));
         }
     }
+
+    @Test(expected = RPCException.class)
+    public void testSerializableWithNonSerializableFields() throws Exception {
+
+        final SerializableWithNonSerializableFields obj = new SerializableWithNonSerializableFields();
+        encode(obj);
+        Assert.assertTrue(obj.equals(decode(Serializable.class)));
+    }
+
+    @Test(expected = RPCException.class)
+    public void testCorruptSerializable() throws Exception {
+
+        final CorruptSerializable obj = new CorruptSerializable();
+        encode(obj);
+        Assert.assertTrue(obj.equals(decode(Serializable.class)));
+    }
+
+    private static class SerializableWithNonSerializableFields implements Serializable {
+
+        private final Object non_serializable_field;
+
+        private SerializableWithNonSerializableFields() {
+
+            non_serializable_field = new Object();
+        }
+    }
+
+    private static class CorruptSerializable implements Serializable {
+
+        private void writeObject(java.io.ObjectOutputStream out) throws IOException {
+
+        }
+
+        private void readObject(java.io.ObjectInputStream in) throws IOException, ClassNotFoundException {
+
+            throw new IOException("intentional error");
+        }
+
+        private void readObjectNoData() throws ObjectStreamException {
+
+        }
+
+    }
+
 }

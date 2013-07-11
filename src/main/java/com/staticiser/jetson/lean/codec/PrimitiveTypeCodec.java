@@ -1,5 +1,6 @@
 package com.staticiser.jetson.lean.codec;
 
+import com.staticiser.jetson.util.ReflectionUtil;
 import io.netty.buffer.ByteBuf;
 import java.lang.reflect.Type;
 
@@ -24,7 +25,7 @@ abstract class PrimitiveTypeCodec implements Codec {
     @Override
     public void encode(final Object value, final ByteBuf out, final Codecs codecs, final Type type) {
 
-        if (CodecUtils.isPrimitive(type)) {
+        if (ReflectionUtil.isPrimitive(type)) {
             writeValue(out, value);
         }
         else {
@@ -39,7 +40,7 @@ abstract class PrimitiveTypeCodec implements Codec {
     @Override
     public Object decode(final ByteBuf in, final Codecs codecs, final Type type) {
 
-        if (CodecUtils.isPrimitive(type)) {
+        if (ReflectionUtil.isPrimitive(type)) {
             return readValue(in);
         }
         else {
