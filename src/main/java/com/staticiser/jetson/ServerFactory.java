@@ -18,6 +18,8 @@
  */
 package com.staticiser.jetson;
 
+import com.google.common.util.concurrent.ListeningExecutorService;
+import com.google.common.util.concurrent.MoreExecutors;
 import com.staticiser.jetson.util.NamingThreadFactory;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.ChannelOption;
@@ -34,7 +36,7 @@ import java.util.concurrent.Executors;
  */
 public class ServerFactory<Service> {
 
-    private final ExecutorService request_executor;
+    private final ListeningExecutorService request_executor;
     private final ServerBootstrap server_bootstrap;
 
     /**
@@ -43,7 +45,7 @@ public class ServerFactory<Service> {
      */
     protected ServerFactory(final ServerChannelInitializer handler) {
 
-        this(Executors.newCachedThreadPool(new NamingThreadFactory("server_factory_")), handler);
+        this(Executors.newCachedThreadPool(new NamingThreadFactory("server_factory_", true)), handler);
         //        this(service_type, Executors.newFixedThreadPool(500, new NamingThreadFactory(service_type.getSimpleName() + "_server_factory_")), handler);
     }
 
@@ -54,7 +56,7 @@ public class ServerFactory<Service> {
      */
     private ServerFactory(final ExecutorService request_executor, final ServerChannelInitializer handler) {
 
-        this.request_executor = request_executor;
+        this.request_executor = MoreExecutors.listeningDecorator(request_executor);
         server_bootstrap = createServerBootstrap(handler);
     }
 

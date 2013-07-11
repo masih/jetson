@@ -18,6 +18,7 @@
  */
 package com.staticiser.jetson;
 
+import com.staticiser.jetson.exception.RPCException;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandler.Sharable;
 import io.netty.channel.ChannelHandlerContext;
@@ -28,13 +29,13 @@ import io.netty.handler.codec.MessageToMessageDecoder;
 public abstract class ResponseDecoder extends MessageToMessageDecoder<ByteBuf> {
 
     @Override
-    protected void decode(final ChannelHandlerContext context, final ByteBuf in, final MessageList<Object> out) {
+    protected void decode(final ChannelHandlerContext context, final ByteBuf in, final MessageList<Object> out) throws RPCException {
 
         final FutureResponse future_response = decode(context, in);
         out.add(future_response);
     }
 
-    protected abstract FutureResponse decode(final ChannelHandlerContext context, final ByteBuf in);
+    protected abstract FutureResponse decode(final ChannelHandlerContext context, final ByteBuf in) throws RPCException;
 
     protected FutureResponse getFutureResponseById(final ChannelHandlerContext context, final Integer id) {
 

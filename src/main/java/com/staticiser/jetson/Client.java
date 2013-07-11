@@ -12,7 +12,6 @@ import java.net.InetSocketAddress;
 import java.util.NoSuchElementException;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.atomic.AtomicInteger;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -20,7 +19,6 @@ import org.slf4j.LoggerFactory;
 public class Client implements InvocationHandler {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(Client.class);
-    private static final AtomicInteger next_request_id = new AtomicInteger();
     private final InetSocketAddress address;
     private final ChannelPool channel_pool;
     private final Method[] dispatch;
@@ -70,8 +68,10 @@ public class Client implements InvocationHandler {
 
     public FutureResponse newFutureResponse(final Method method, final Object[] params) {
 
-        final Integer id = generateRequestId();
-        return new FutureResponse(id, method, params);
+        final FutureResponse response = new FutureResponse();
+        response.setMethod(method);
+        response.setArguments(params);
+        return response;
     }
 
     protected void addExtras(final MessageList<FutureResponse> messages) throws RPCException {
@@ -81,6 +81,11 @@ public class Client implements InvocationHandler {
     FutureResponse writeRequest(final Method method, final Object[] params) throws RPCException {
 
         final FutureResponse future_response = newFutureResponse(method, params);
+        return writeRequest(future_response);
+    }
+
+    protected FutureResponse writeRequest(FutureResponse future_response) throws RPCException {
+
         final MessageList<FutureResponse> messages = MessageList.newInstance(future_response);
         addExtras(messages);
         writeMessageList(messages);
@@ -111,11 +116,6 @@ public class Client implements InvocationHandler {
             if (method.equals(target)) { return true; }
         }
         return false;
-    }
-
-    private Integer generateRequestId() {
-
-        return next_request_id.getAndIncrement();
     }
 
     private synchronized Channel borrowChannel() throws InternalServerException, TransportException {

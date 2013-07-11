@@ -40,7 +40,8 @@ public abstract class RequestEncoder extends MessageToByteEncoder<FutureResponse
             encodeRequest(context, id, method, arguments, out);
 
         }
-        catch (final RPCException e) {
+        catch (final Exception e) {
+            e.printStackTrace();
             future_response.setException(e);
         }
     }
