@@ -43,7 +43,6 @@ public final class NamingThreadFactory implements ThreadFactory {
             e.printStackTrace();
         }
     };
-
     private final AtomicLong sequence_number;
     private final String naming_prefix;
     private final boolean debug;
@@ -64,7 +63,7 @@ public final class NamingThreadFactory implements ThreadFactory {
      * @param naming_prefix the naming prefix to be given to generated threads
      * @param debug whether to print out the stack trace of uncaught exceptions within a created thread
      */
-    private NamingThreadFactory(final String naming_prefix, final boolean debug) {
+    public NamingThreadFactory(final String naming_prefix, final boolean debug) {
 
         this.naming_prefix = naming_prefix;
         this.debug = debug;

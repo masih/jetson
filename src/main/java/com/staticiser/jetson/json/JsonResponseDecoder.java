@@ -26,6 +26,7 @@ import com.staticiser.jetson.FutureResponse;
 import com.staticiser.jetson.ResponseDecoder;
 import com.staticiser.jetson.exception.InternalServerException;
 import com.staticiser.jetson.exception.InvalidResponseException;
+import com.staticiser.jetson.exception.RPCException;
 import com.staticiser.jetson.exception.ServerRuntimeException;
 import com.staticiser.jetson.exception.TransportException;
 import com.staticiser.jetson.util.CloseableUtil;
@@ -50,7 +51,7 @@ public class JsonResponseDecoder extends ResponseDecoder {
         this.json_factory = json_factory;
     }
 
-    protected FutureResponse decode(final ChannelHandlerContext context, final ByteBuf in) {
+    protected FutureResponse decode(final ChannelHandlerContext context, final ByteBuf in) throws RPCException {
 
         JsonParser parser = null;
         FutureResponse future_response = null;
@@ -68,25 +69,25 @@ public class JsonResponseDecoder extends ResponseDecoder {
         catch (final JsonParseException e) {
             LOGGER.debug("failed to parse response", e);
 
-            future_response = checkFutureResponse(context, future_response);
+            checkFutureResponse(future_response);
             future_response.setException(new InvalidResponseException(e));
         }
         catch (final JsonGenerationException e) {
             LOGGER.debug("failed to generate response", e);
 
-            future_response = checkFutureResponse(context, future_response);
+            checkFutureResponse(future_response);
             future_response.setException(new InternalServerException(e));
         }
         catch (final IOException e) {
             LOGGER.debug("IO error occurred while decoding response", e);
 
-            future_response = checkFutureResponse(context, future_response);
+            checkFutureResponse(future_response);
             future_response.setException(new TransportException("failed to process response", e));
         }
         catch (final RuntimeException e) {
             LOGGER.debug("runtime error while decoding response", e);
 
-            future_response = checkFutureResponse(context, future_response);
+            checkFutureResponse(future_response);
             future_response.setException(new ServerRuntimeException(e));
         }
         finally {
@@ -96,10 +97,9 @@ public class JsonResponseDecoder extends ResponseDecoder {
         return future_response;
     }
 
-    private FutureResponse checkFutureResponse(final ChannelHandlerContext context, final FutureResponse future_response) {
+    private void checkFutureResponse(final FutureResponse future_response) throws RPCException {
 
-        if (future_response == null) { return new FutureResponse(null, null, null); }
-        return future_response;
+        if (future_response == null) { throw new RPCException("failed to process enough response to determine pending future"); }
     }
 
     private Integer validateAndReadResponseId(final JsonParser parser) throws IOException {

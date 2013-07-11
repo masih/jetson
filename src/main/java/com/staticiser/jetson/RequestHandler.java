@@ -56,6 +56,7 @@ class RequestHandler extends ChannelInboundHandlerAdapter {
         final MessageList<FutureResponse> requests = messages.cast();
         final Server server = getServerFromContext(context);
         for (final FutureResponse request : requests) {
+            //            System.out.println("SERVER : "  +request.getMethod().getName() + " : \t" + Arrays.toString(request.getArguments()));
             server.handle(context, request);
         }
         messages.releaseAllAndRecycle();
@@ -64,8 +65,7 @@ class RequestHandler extends ChannelInboundHandlerAdapter {
     @Override
     public void exceptionCaught(final ChannelHandlerContext context, final Throwable cause) {
 
-        LOGGER.info("caught on server handler", cause);
-        cause.printStackTrace();
+        LOGGER.warn("caught on server handler", cause);
         context.close();
     }
 

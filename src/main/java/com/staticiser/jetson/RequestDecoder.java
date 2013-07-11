@@ -65,11 +65,13 @@ public abstract class RequestDecoder extends MessageToMessageDecoder<ByteBuf> {
             future_response.setArguments(arguments);
         }
         catch (RPCException e) {
+            LOGGER.warn("error decoding request", e);
+
             if (future_response != null) {
                 future_response.setException(e);
             }
             else {
-                LOGGER.debug("cannot handle bad request", e);
+                LOGGER.warn("cannot handle bad request", e);
             }
         }
         finally {

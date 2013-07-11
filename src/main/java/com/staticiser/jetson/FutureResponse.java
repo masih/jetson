@@ -2,28 +2,31 @@ package com.staticiser.jetson;
 
 import com.google.common.util.concurrent.AbstractFuture;
 import java.lang.reflect.Method;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /** @author Masih Hajiarabderkani (mh638@st-andrews.ac.uk) */
 public class FutureResponse<Result> extends AbstractFuture<Result> implements Comparable<FutureResponse> {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(FutureResponse.class);
+    private static final AtomicInteger NEXT_ID = new AtomicInteger();
     private final Integer id;
     private volatile Method method;
     private volatile Object[] arguments;
 
-    FutureResponse(final Integer id) {
+    public FutureResponse() {
 
-        this.id = id;
-
+        this(NEXT_ID.incrementAndGet());
     }
 
-    public FutureResponse(final Integer id, final Method method, final Object[] arguments) {
+    public FutureResponse(Method method, Object... arguments) {
+
+        this(NEXT_ID.incrementAndGet());
+        setMethod(method);
+        setArguments(arguments);
+    }
+
+    protected FutureResponse(final Integer id) {
 
         this.id = id;
-        this.method = method;
-        this.arguments = arguments;
     }
 
     public Integer getId() {

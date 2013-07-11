@@ -18,7 +18,6 @@
  */
 package com.staticiser.jetson;
 
-import com.staticiser.jetson.exception.RPCException;
 import com.staticiser.jetson.exception.TransportException;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandler.Sharable;
@@ -45,14 +44,17 @@ class ResponseHandler extends ChannelInboundHandlerAdapter {
     @Override
     public void messageReceived(final ChannelHandlerContext context, final MessageList<Object> messages) throws Exception {
 
+        final MessageList<FutureResponse> cast = messages.cast();
+        //        for (FutureResponse r : cast) {
+        //            System.out.println(r.getMethod().getName() + " : \t" + Arrays.toString(r.getArguments()));
+        //        }
         messages.releaseAllAndRecycle();
     }
 
     @Override
     public void exceptionCaught(final ChannelHandlerContext context, final Throwable cause) {
 
-        LOGGER.info("caught on client handler", cause);
-        ChannelPool.setException(context.channel(), new RPCException(cause));
+        LOGGER.warn("caught on client handler", cause);
         context.close();
     }
 }

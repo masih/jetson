@@ -10,6 +10,8 @@ import java.util.List;
 /** @author Masih Hajiarabderkani (mh638@st-andrews.ac.uk) */
 public class Codecs {
 
+    public static final InetAddressCodec INET_ADDRESS_CODEC = new InetAddressCodec();
+    public static final InetSocketAddressCodec INET_SOCKET_ADDRESS_CODEC = new InetSocketAddressCodec();
     private static final ArrayCodec ARRAY_CODEC = new ArrayCodec();
     private static final VoidCodec VOID_CODEC = new VoidCodec();
     private static final StringCodec STRING_CODEC = new StringCodec();
@@ -85,6 +87,8 @@ public class Codecs {
         register(CHARACTER_CODEC);
         register(STRING_CODEC);
         register(BOOLEAN_CODEC);
+        register(INET_ADDRESS_CODEC);
+        register(INET_SOCKET_ADDRESS_CODEC);
         register(THROWABLE_CODEC);
         register(ARRAY_CODEC);
         register(SERIALIZABLE_CODEC);

@@ -53,15 +53,6 @@ public final class ReflectionUtil {
         return inverse(dispatch);
     }
 
-    private static Map<Method, String> inverse(final Map<String, Method> dispatch) {
-
-        final Map<Method, String> reverse_dispatch = new HashMap<Method, String>();
-        for (final Entry<String, Method> entry : dispatch.entrySet()) {
-            reverse_dispatch.put(entry.getValue(), entry.getKey());
-        }
-        return reverse_dispatch;
-    }
-
     /**
      * Maps names to {@link Class#getMethods() methods} of the given type.
      * If the given type contains overloaded methods, a unique name is mapped to its name. The chosen name is typically the original name with an integer.
@@ -93,6 +84,21 @@ public final class ReflectionUtil {
 
     }
 
+    public static Method[] sort(final Method... methods) {
+
+        Arrays.sort(methods, METHOD_COMPARATOR);
+        return methods;
+    }
+
+    private static Map<Method, String> inverse(final Map<String, Method> dispatch) {
+
+        final Map<Method, String> reverse_dispatch = new HashMap<Method, String>();
+        for (final Entry<String, Method> entry : dispatch.entrySet()) {
+            reverse_dispatch.put(entry.getValue(), entry.getKey());
+        }
+        return reverse_dispatch;
+    }
+
     private static Map<String, Method> getCachedDispatchMap(final Class<?> service) {
 
         return CACHED_DISPATCH_MAPS.get(service);
@@ -108,12 +114,6 @@ public final class ReflectionUtil {
         if (!isCached(service)) {
             CACHED_DISPATCH_MAPS.put(service, dispatch_map);
         }
-    }
-
-    public static Method[] sort(final Method... methods) {
-
-        Arrays.sort(methods, METHOD_COMPARATOR);
-        return methods;
     }
 
     private static void validateJsonRpcExceptionTypes(final Method method) {
