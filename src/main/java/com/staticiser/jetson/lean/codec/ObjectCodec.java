@@ -40,7 +40,7 @@ public class ObjectCodec implements Codec {
         try {
             value_type = Class.forName(value_type_as_string);
         }
-        catch (ClassNotFoundException e) {
+        catch (final Exception e) {
             throw new RPCException(e);
         }
         return codecs.decodeAs(in, value_type);

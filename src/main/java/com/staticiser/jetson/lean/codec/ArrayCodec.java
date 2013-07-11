@@ -21,9 +21,6 @@ class ArrayCodec implements Codec {
             out.writeInt(-1);
         }
         else {
-            if (!value.getClass().isArray()) {
-                System.out.println("SSSSS");
-            }
             final int length = Array.getLength(value);
             out.writeInt(length);
             final Class<?> component_type = ((Class) type).getComponentType();
