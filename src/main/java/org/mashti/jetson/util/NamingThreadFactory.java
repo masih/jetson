@@ -21,7 +21,7 @@
  * along with nds.  If not, see <http://www.gnu.org/licenses/>.            *
  *                                                                         *
  ***************************************************************************/
-package com.staticiser.jetson.util;
+package org.mashti.jetson.util;
 
 import java.lang.Thread.UncaughtExceptionHandler;
 import java.util.concurrent.Executors;

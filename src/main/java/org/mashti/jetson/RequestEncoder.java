@@ -32,20 +32,18 @@ public abstract class RequestEncoder extends MessageToByteEncoder<FutureResponse
     @Override
     protected void encode(final ChannelHandlerContext context, final FutureResponse future_response, final ByteBuf out) {
 
-        int current_index = out.writerIndex();
         try {
             addPendingFutureResponse(context, future_response);
             final Integer id = future_response.getId();
             final Method method = future_response.getMethod();
             final Object[] arguments = future_response.getArguments();
             encodeRequest(context, id, method, arguments, out);
-            future_response.notifyWrittenByteCount(out.writerIndex());
+
         }
-        catch (final RPCException e) {
-            future_response.notifyWrittenByteCount(out.writerIndex() - current_index);
+        catch (final Exception e) {
+            e.printStackTrace();
             future_response.setException(e);
         }
-
     }
 
     private void addPendingFutureResponse(final ChannelHandlerContext context, final FutureResponse future_response) {

@@ -43,8 +43,7 @@ class ResponseHandler extends ChannelInboundHandlerAdapter {
     @Override
     public void exceptionCaught(final ChannelHandlerContext context, final Throwable cause) {
 
-        LOGGER.debug("caught on client handler", cause);
-        ChannelPool.notifyCaughtException(context.channel(), cause);
+        LOGGER.warn("caught on client handler", cause);
         context.close();
     }
 }
