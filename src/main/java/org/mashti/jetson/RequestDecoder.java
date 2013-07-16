@@ -39,7 +39,12 @@ public abstract class RequestDecoder extends MessageToMessageDecoder<ByteBuf> {
 
         final FutureResponse future_response;
         future_response = decode(context, bytes);
-        out.add(future_response);
+        if (future_response.isDone()) {
+            context.writeAndFlush(future_response);
+        }
+        else {
+            out.add(future_response);
+        }
     }
 
     FutureResponse decode(final ChannelHandlerContext context, final ByteBuf in) {

@@ -72,19 +72,8 @@ public class ChannelPool extends GenericObjectPool<Channel> {
     static void notifyChannelInactivation(final Channel channel) {
 
         final Set<FutureResponse> responses = getFutureResponsesByChannel(channel);
-        if (responses != null && !responses.isEmpty()) {
+        if (responses != null && responses.size() > 0) {
             final RPCException exception = new TransportException("channel was closed");
-            for (final FutureResponse r : responses) {
-                r.setException(exception);
-            }
-        }
-    }
-
-    static void notifyCaughtException(final Channel channel, Throwable cause) {
-
-        final Set<FutureResponse> responses = getFutureResponsesByChannel(channel);
-        if (responses != null && !responses.isEmpty()) {
-            final RPCException exception = new RPCException(cause);
             for (final FutureResponse r : responses) {
                 r.setException(exception);
             }
@@ -100,7 +89,7 @@ public class ChannelPool extends GenericObjectPool<Channel> {
         return null;
     }
 
-    static Set<FutureResponse> getFutureResponsesByChannel(final Channel channel) {
+    private static Set<FutureResponse> getFutureResponsesByChannel(final Channel channel) {
 
         return channel.attr(FUTURE_RESPONSES_ATTRIBUTE_KEY).get();
     }

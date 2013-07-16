@@ -29,7 +29,7 @@ import java.lang.reflect.Proxy;
 import java.net.InetSocketAddress;
 import java.util.HashMap;
 import java.util.Map;
-import org.mashti.jetson.util.NamedThreadFactory;
+import org.mashti.jetson.util.NamingThreadFactory;
 import org.mashti.jetson.util.ReflectionUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -45,7 +45,7 @@ public class ClientFactory<Service> {
     private static final int DEFAULT_CONNECTION_TIMEOUT_IN_MILLIS = 5000;
     private static final Logger LOGGER = LoggerFactory.getLogger(ClientFactory.class);
     private static final int THREAD_POOL_SIZE = 0;
-    private static final NioEventLoopGroup CLIENT_EVENT_LOOP = new NioEventLoopGroup(THREAD_POOL_SIZE, new NamedThreadFactory("client_event_loop_"));
+    private static final NioEventLoopGroup CLIENT_EVENT_LOOP = new NioEventLoopGroup(THREAD_POOL_SIZE, new NamingThreadFactory("client_event_loop_"));
     private final Bootstrap bootstrap;
     protected final Method[] dispatch;
     private final ClassLoader class_loader;
