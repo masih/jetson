@@ -16,8 +16,8 @@
     <description>A JSON RPC framework that automatically generates RPC proxies using Java Reflection and uses Jackson streaming API to serialize/deserialize Java objects to/from JSON.</description>
 
     <organization>
-        <name>Staticiser</name>
-        <url>http://staticiser.com</url>
+        <name>Mashti</name>
+        <url>http://mashti.com</url>
     </organization>
 
     <properties>
@@ -34,9 +34,9 @@
         <developer>
             <id>masih</id>
             <name>Masih Hajiarabderkani</name>
-            <email>m@staticiser.com</email>
-            <organization>Staticiser</organization>
-            <organizationUrl>http://staticiser.com</organizationUrl>
+            <email>m@mashti.org</email>
+            <organization>Mashti</organization>
+            <organizationUrl>http://mashti.com</organizationUrl>
             <url>http://masih.host.cs.st-andrews.ac.uk</url>
             <roles>
                 <role>architect</role>
@@ -102,7 +102,7 @@
         <dependency>
             <groupId>io.netty</groupId>
             <artifactId>netty-all</artifactId>
-            <version>4.0.0.CR9</version>
+            <version>4.0.0.Final</version>
         </dependency>
         <dependency>
             <groupId>org.slf4j</groupId>
