@@ -55,13 +55,13 @@ public class FutureResponse<Result> extends AbstractFuture<Result> implements Co
     }
 
     @Override
-    public boolean set(final Result value) {
+    public final boolean set(final Result value) {
 
         return super.set(value);
     }
 
     @Override
-    public boolean setException(final Throwable exception) {
+    public final boolean setException(final Throwable exception) {
 
         return super.setException(exception);
     }
