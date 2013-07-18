@@ -61,6 +61,7 @@ public class Server {
     private volatile Channel server_channel;
     private volatile InetSocketAddress endpoint;
     private volatile boolean exposed;
+    private volatile WrittenByteCountListenner written_byte_count_listener;
 
     Server(final ServerBootstrap server_bootstrap, final Object service, final ListeningExecutorService executor) {
 
@@ -69,6 +70,11 @@ public class Server {
         this.executor = executor;
         endpoint = DEFAULT_ENDPOINT_ADDRESS;
         server_channel_group = new DefaultChannelGroup(ImmediateEventExecutor.INSTANCE);
+    }
+
+    public void setWrittenByteCountListenner(WrittenByteCountListenner listenner) {
+
+        written_byte_count_listener = listenner;
     }
 
     /**
@@ -107,6 +113,7 @@ public class Server {
 
     public void handle(final ChannelHandlerContext context, final FutureResponse future_response) {
 
+        future_response.setWrittenByteCountListener(written_byte_count_listener);
         final Callable<ChannelFuture> task = toExecutableTask(context, future_response);
         executeTask(context, task);
     }
@@ -201,11 +208,13 @@ public class Server {
 
                 final Method method = future_response.getMethod();
                 final Object[] arguments = future_response.getArguments();
-                try {
-                    future_response.set(handleRequest(method, arguments));
-                }
-                catch (final Throwable e) {
-                    future_response.setException(e);
+                if (!future_response.isDone()) {
+                    try {
+                        future_response.set(handleRequest(method, arguments));
+                    }
+                    catch (final Throwable e) {
+                        future_response.setException(e);
+                    }
                 }
                 return context.writeAndFlush(future_response);
             }

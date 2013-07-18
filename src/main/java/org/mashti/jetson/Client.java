@@ -23,6 +23,7 @@ public class Client implements InvocationHandler {
     private final InetSocketAddress address;
     private final ChannelPool channel_pool;
     private final Method[] dispatch;
+    private volatile WrittenByteCountListenner written_byte_count_listener;
 
     protected Client(final InetSocketAddress address, final Method[] dispatch, final ChannelPool channel_pool) {
 
@@ -34,6 +35,11 @@ public class Client implements InvocationHandler {
     public InetSocketAddress getAddress() {
 
         return address;
+    }
+
+    public void setWrittenByteCountListenner(WrittenByteCountListenner listenner) {
+
+        written_byte_count_listener = listenner;
     }
 
     @Override
@@ -67,11 +73,12 @@ public class Client implements InvocationHandler {
         return new StringBuilder("Client{").append("address=").append(address).append('}').toString();
     }
 
-    public FutureResponse newFutureResponse(final Method method, final Object[] params) {
+    public FutureResponse newFutureResponse(final Method method, final Object[] arguments) {
 
         final FutureResponse response = new FutureResponse();
         response.setMethod(method);
-        response.setArguments(params);
+        response.setArguments(arguments);
+        response.setWrittenByteCountListener(written_byte_count_listener);
         return response;
     }
 

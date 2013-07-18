@@ -34,6 +34,7 @@ public abstract class ResponseEncoder extends MessageToByteEncoder<FutureRespons
     @Override
     protected void encode(final ChannelHandlerContext context, final FutureResponse future_response, final ByteBuf out) throws RPCException {
 
+        final int current_index = out.writerIndex();
         final Integer id = future_response.getId();
         try {
             encodeResult(context, id, future_response.get(), future_response.getMethod(), out);
@@ -51,6 +52,9 @@ public abstract class ResponseEncoder extends MessageToByteEncoder<FutureRespons
         }
         catch (RPCException e) {
             encodeException(context, id, e, out);
+        }
+        finally {
+            future_response.notifyWrittenByteCount(out.writerIndex() - current_index);
         }
     }
 
