@@ -52,18 +52,6 @@ abstract class BaseChannelInitializer extends ChannelInitializer<SocketChannel> 
         setWriteTimeout(DEFAULT_WRITE_TIMEOUT_IN_SECONDS, TimeUnit.SECONDS);
     }
 
-    void setReadTimeout(final long timeout, final TimeUnit unit) {
-
-        read_timeout = timeout;
-        read_timeout_unit = unit;
-    }
-
-    void setWriteTimeout(final long timeout, final TimeUnit unit) {
-
-        write_timeout = timeout;
-        write_timeout_unit = unit;
-    }
-
     @Override
     public void initChannel(final SocketChannel channel) throws Exception {
 
@@ -74,6 +62,18 @@ abstract class BaseChannelInitializer extends ChannelInitializer<SocketChannel> 
         channel.pipeline().addLast("read_timeout", createReadTimeoutHandler());
         channel.pipeline().addLast("frame_decoder", getFrameDecoder());
         channel.pipeline().addLast("frame_encoder", getFrameEncoder());
+    }
+
+    void setReadTimeout(final long timeout, final TimeUnit unit) {
+
+        read_timeout = timeout;
+        read_timeout_unit = unit;
+    }
+
+    void setWriteTimeout(final long timeout, final TimeUnit unit) {
+
+        write_timeout = timeout;
+        write_timeout_unit = unit;
     }
 
     ChannelOutboundHandler getFrameEncoder() {
