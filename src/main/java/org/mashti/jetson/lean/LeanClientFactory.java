@@ -33,6 +33,13 @@ import org.mashti.jetson.util.ReflectionUtil;
  */
 public class LeanClientFactory<Service> extends ClientFactory<Service> {
 
+    static final Codecs DEFAULT_CODECS = new Codecs();
+
+    public LeanClientFactory(final Class<Service> service_interface) {
+
+        this(service_interface, DEFAULT_CODECS);
+    }
+
     /**
      * Instantiates a new JSON RPC client factory. The {@link ClassLoader#getSystemClassLoader() system class loader} used for constructing new proxy instances.
      *

@@ -19,7 +19,9 @@
 package org.mashti.jetson.util;
 
 import java.io.Serializable;
+import java.lang.reflect.GenericArrayType;
 import java.lang.reflect.Method;
+import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.util.Arrays;
 import java.util.Comparator;
@@ -40,6 +42,23 @@ public final class ReflectionUtil {
 
     private ReflectionUtil() {
 
+    }
+
+    public static Class<?> getRawClass(final Type type) {
+
+        if (type instanceof Class) {
+            return (Class) type;
+        }
+        else if (type instanceof ParameterizedType) {
+            final ParameterizedType parameterized_type = (ParameterizedType) type;
+            return getRawClass(parameterized_type.getRawType());
+        }
+        else if (type instanceof GenericArrayType) {
+            final GenericArrayType generic_array_type = (GenericArrayType) type;
+            return getRawClass(generic_array_type.getGenericComponentType());
+        }
+
+        return null;
     }
 
     /**
