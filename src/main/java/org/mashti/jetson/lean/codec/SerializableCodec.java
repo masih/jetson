@@ -9,6 +9,7 @@ import java.io.Serializable;
 import java.lang.reflect.Type;
 import org.mashti.jetson.exception.RPCException;
 import org.mashti.jetson.util.CloseableUtil;
+import org.mashti.jetson.util.ReflectionUtil;
 
 /** @author Masih Hajiarabderkani (mh638@st-andrews.ac.uk) */
 public class SerializableCodec implements Codec {
@@ -16,7 +17,8 @@ public class SerializableCodec implements Codec {
     @Override
     public boolean isSupported(final Type type) {
 
-        return type != null && type instanceof Class<?> && Serializable.class.isAssignableFrom((Class<?>) type);
+        final Class<?> class_type = ReflectionUtil.getRawClass(type);
+        return class_type != null && Serializable.class.isAssignableFrom(class_type);
     }
 
     @Override

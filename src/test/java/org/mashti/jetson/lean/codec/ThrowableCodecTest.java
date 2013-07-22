@@ -41,14 +41,14 @@ public class ThrowableCodecTest extends CodecTest {
         }
     }
 
-    private void assertThrowableEquality(final Throwable throwable, final Throwable decoded_throwable) {
+    private static void assertThrowableEquality(final Throwable throwable, final Throwable decoded_throwable) {
 
-        if (throwable != null && decoded_throwable != null) {
+        if (throwable != null) {
             Assert.assertEquals(throwable.getClass(), decoded_throwable.getClass());
             Assert.assertEquals(throwable.getMessage(), decoded_throwable.getMessage());
         }
         else {
-            Assert.assertTrue(throwable == decoded_throwable);
+            Assert.assertSame(throwable, decoded_throwable);
         }
     }
 }

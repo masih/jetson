@@ -7,6 +7,8 @@ import org.mashti.jetson.exception.RPCException;
 /** @author Masih Hajiarabderkani (mh638@st-andrews.ac.uk) */
 class ThrowableCodec extends SerializableCodec {
 
+    public static final StackTraceElement[] EMPTY_STACK_TRACE = new StackTraceElement[0];
+
     @Override
     public boolean isSupported(final Type type) {
 
@@ -16,9 +18,8 @@ class ThrowableCodec extends SerializableCodec {
     @Override
     public void encode(final Object value, final ByteBuf out, final Codecs codecs, final Type type) throws RPCException {
 
-        if (value != null) {
-            ((Throwable) value).setStackTrace(new StackTraceElement[0]); //Skip stack trace
-        }
+        final Throwable throwable = (Throwable) value;
+        skipStackTrace(throwable);
         super.encode(value, out, codecs, type);
     }
 
@@ -26,5 +27,12 @@ class ThrowableCodec extends SerializableCodec {
     public Throwable decode(final ByteBuf in, final Codecs codecs, final Type type) throws RPCException {
 
         return (Throwable) super.decode(in, codecs, type);
+    }
+
+    private void skipStackTrace(final Throwable value) {
+
+        if (value != null) {
+            value.setStackTrace(EMPTY_STACK_TRACE);
+        }
     }
 }
