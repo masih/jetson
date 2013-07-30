@@ -33,6 +33,7 @@ import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.InetSocketAddress;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.Callable;
@@ -121,7 +122,7 @@ public class Server {
     public void notifyChannelActivation(final Channel channel) {
 
         server_channel_group.add(channel);
-        channel.attr(IN_PROGRESS_FUTURES_ATTRIBUTE_KEY).set(new HashSet<ListenableFuture>());
+        channel.attr(IN_PROGRESS_FUTURES_ATTRIBUTE_KEY).set(Collections.synchronizedSet(new HashSet<ListenableFuture>()));
     }
 
     public void notifyChannelInactivation(final Channel channel) {

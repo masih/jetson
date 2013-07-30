@@ -27,7 +27,7 @@ import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import org.mashti.jetson.util.NamingThreadFactory;
+import org.mashti.jetson.util.NamedThreadFactory;
 
 /**
  * A factory for creating Servers.
@@ -45,8 +45,8 @@ public class ServerFactory<Service> {
      */
     protected ServerFactory(final ServerChannelInitializer handler) {
 
-        this(Executors.newCachedThreadPool(new NamingThreadFactory("server_factory_", true)), handler);
-        //        this(service_type, Executors.newFixedThreadPool(500, new NamingThreadFactory(service_type.getSimpleName() + "_server_factory_")), handler);
+        this(Executors.newCachedThreadPool(new NamedThreadFactory("server_factory_", true)), handler);
+        //        this(service_type, Executors.newFixedThreadPool(500, new NamedThreadFactory(service_type.getSimpleName() + "_server_factory_")), handler);
     }
 
     /**
@@ -90,8 +90,8 @@ public class ServerFactory<Service> {
 
     private static ServerBootstrap createDefaultServerBootstrap(final ServerChannelInitializer handler) {
 
-        final NioEventLoopGroup parent_event_loop = new NioEventLoopGroup(0, new NamingThreadFactory("server_parent_event_loop_"));
-        final NioEventLoopGroup child_event_loop = new NioEventLoopGroup(0, new NamingThreadFactory("server_child_event_loop_"));
+        final NioEventLoopGroup parent_event_loop = new NioEventLoopGroup(0, new NamedThreadFactory("server_parent_event_loop_"));
+        final NioEventLoopGroup child_event_loop = new NioEventLoopGroup(0, new NamedThreadFactory("server_child_event_loop_"));
         final ServerBootstrap server_bootstrap = new ServerBootstrap();
         server_bootstrap.group(parent_event_loop, child_event_loop);
         server_bootstrap.channel(NioServerSocketChannel.class);

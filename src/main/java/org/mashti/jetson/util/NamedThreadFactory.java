@@ -33,7 +33,7 @@ import java.util.concurrent.atomic.AtomicLong;
  *
  * @author Masih Hajiarabderkani (mh638@st-andrews.ac.uk)
  */
-public final class NamingThreadFactory implements ThreadFactory {
+public final class NamedThreadFactory implements ThreadFactory {
 
     private static final UncaughtExceptionHandler PRINT_UNCAUGHT_EXCEPTIONS = new UncaughtExceptionHandler() {
 
@@ -46,13 +46,14 @@ public final class NamingThreadFactory implements ThreadFactory {
     private final AtomicLong sequence_number;
     private final String naming_prefix;
     private final boolean debug;
+    private boolean daemon;
 
     /**
      * Instantiates a new naming thread factory.
      *
      * @param naming_prefix the naming prefix to be given to generated threads
      */
-    public NamingThreadFactory(final String naming_prefix) {
+    public NamedThreadFactory(final String naming_prefix) {
 
         this(naming_prefix, false);
     }
@@ -63,7 +64,7 @@ public final class NamingThreadFactory implements ThreadFactory {
      * @param naming_prefix the naming prefix to be given to generated threads
      * @param debug whether to print out the stack trace of uncaught exceptions within a created thread
      */
-    public NamingThreadFactory(final String naming_prefix, final boolean debug) {
+    public NamedThreadFactory(final String naming_prefix, final boolean debug) {
 
         this.naming_prefix = naming_prefix;
         this.debug = debug;
@@ -81,7 +82,18 @@ public final class NamingThreadFactory implements ThreadFactory {
         }
 
         new_thread.setName(name);
+        new_thread.setDaemon(daemon);
         return new_thread;
+    }
+
+    public boolean isDaemon() {
+
+        return daemon;
+    }
+
+    public void setDaemon(final boolean daemon) {
+
+        this.daemon = daemon;
     }
 
     private String generateName() {
