@@ -17,7 +17,7 @@
 
     <organization>
         <name>Mashti</name>
-        <url>http://mashti.com</url>
+        <url>http://mashti.org</url>
     </organization>
 
     <properties>
@@ -36,7 +36,7 @@
             <name>Masih Hajiarabderkani</name>
             <email>m@mashti.org</email>
             <organization>Mashti</organization>
-            <organizationUrl>http://mashti.com</organizationUrl>
+            <organizationUrl>http://mashti.org</organizationUrl>
             <url>http://masih.host.cs.st-andrews.ac.uk</url>
             <roles>
                 <role>architect</role>
@@ -102,7 +102,7 @@
         <dependency>
             <groupId>io.netty</groupId>
             <artifactId>netty-all</artifactId>
-            <version>4.0.6.Final</version>
+            <version>4.0.7.Final</version>
         </dependency>
         <dependency>
             <groupId>org.slf4j</groupId>
