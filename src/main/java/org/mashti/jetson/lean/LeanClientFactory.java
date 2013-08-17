@@ -18,12 +18,8 @@
  */
 package org.mashti.jetson.lean;
 
-import java.lang.reflect.Method;
-import java.util.ArrayList;
-import org.mashti.jetson.ClientChannelInitializer;
 import org.mashti.jetson.ClientFactory;
 import org.mashti.jetson.lean.codec.Codecs;
-import org.mashti.jetson.util.ReflectionUtil;
 
 /**
  * A factory for creating JSON RPC clients. The created clients are cached for future reuse. This class is thread-safe.
@@ -48,6 +44,6 @@ public class LeanClientFactory<Service> extends ClientFactory<Service> {
      */
     public LeanClientFactory(final Class<Service> service_interface, final Codecs codecs) {
 
-        super(service_interface, new ClientChannelInitializer(new LeanRequestEncoder(new ArrayList<Method>(ReflectionUtil.mapMethodsToNames(service_interface).keySet()), codecs), new LeanResponseDecoder(codecs)));
+        super(service_interface, new LeanClientChannelInitializer(service_interface, codecs));
     }
 }

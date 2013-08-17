@@ -22,8 +22,6 @@ import com.fasterxml.jackson.core.JsonFactory;
 import org.mashti.jetson.ClientChannelInitializer;
 import org.mashti.jetson.ClientFactory;
 import org.mashti.jetson.util.ReflectionUtil;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * A factory for creating JSON RPC clients. The created clients are cached for future reuse. This class is thread-safe.
@@ -32,8 +30,6 @@ import org.slf4j.LoggerFactory;
  * @author Masih Hajiarabderkani (mh638@st-andrews.ac.uk)
  */
 public class JsonClientFactory<Service> extends ClientFactory<Service> {
-
-    private static final Logger LOGGER = LoggerFactory.getLogger(JsonClientFactory.class);
 
     /**
      * Instantiates a new JSON RPC client factory. The {@link ClassLoader#getSystemClassLoader() system class loader} used for constructing new proxy instances.
