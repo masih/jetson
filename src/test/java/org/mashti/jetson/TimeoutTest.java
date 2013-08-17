@@ -5,6 +5,7 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.mashti.jetson.exception.RPCException;
+import org.mashti.jetson.exception.TransportException;
 import org.mashti.jetson.lean.LeanClientFactory;
 import org.mashti.jetson.lean.LeanServerChannelInitializer;
 import org.mashti.jetson.lean.codec.Codecs;
@@ -25,8 +26,8 @@ public class TimeoutTest {
 
     }
 
-    @Test(expected = RPCException.class)
-    public void testConnectionTimeout() throws RPCException {
+    @Test(expected = TransportException.class)
+    public void testConnectionRefusal() throws RPCException {
 
         final TestService service = client_factory.get(server.getLocalSocketAddress());
         service.saySomething();

@@ -36,13 +36,10 @@ import org.mashti.jetson.util.NamedThreadFactory;
  */
 public class ServerFactory<Service> {
 
-    private final ListeningExecutorService request_executor;
-    private final ServerBootstrap server_bootstrap;
+    protected final ListeningExecutorService request_executor;
+    protected final ServerBootstrap server_bootstrap;
 
-    /**
-     * Instantiates a new server factory.
-     *
-     */
+    /** Instantiates a new server factory. */
     protected ServerFactory(final ServerChannelInitializer handler) {
 
         this(Executors.newCachedThreadPool(new NamedThreadFactory("server_factory_", true)), handler);
