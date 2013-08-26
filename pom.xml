@@ -3,80 +3,14 @@
     <modelVersion>4.0.0</modelVersion>
 
     <parent>
-        <groupId>uk.ac.standrews.cs</groupId>
-        <artifactId>common-pom</artifactId>
-        <version>2.0-SNAPSHOT</version>
+        <groupId>org.mashti</groupId>
+        <artifactId>parent-pom</artifactId>
+        <version>1.0-SNAPSHOT</version>
     </parent>
 
     <artifactId>jetson</artifactId>
     <version>1.0-SNAPSHOT</version>
-    <packaging>jar</packaging>
-    <name>jetson</name>
-    <url>https://builds.cs.st-andrews.ac.uk/job/jetson</url>
-    <description>A JSON RPC framework that automatically generates RPC proxies using Java Reflection and uses Jackson streaming API to serialize/deserialize Java objects to/from JSON.</description>
-
-    <organization>
-        <name>Mashti</name>
-        <url>http://mashti.org</url>
-    </organization>
-
-    <properties>
-        <repository.type>hg</repository.type>
-        <repository.location>http://quicksilver.hg.cs.st-andrews.ac.uk/jetson</repository.location>
-    </properties>
-
-    <ciManagement>
-        <system>Jenkins</system>
-        <url>https://builds.cs.st-andrews.ac.uk/job/jetson</url>
-    </ciManagement>
-
-    <developers>
-        <developer>
-            <id>masih</id>
-            <name>Masih Hajiarabderkani</name>
-            <email>m@mashti.org</email>
-            <organization>Mashti</organization>
-            <organizationUrl>http://mashti.org</organizationUrl>
-            <url>http://masih.host.cs.st-andrews.ac.uk</url>
-            <roles>
-                <role>architect</role>
-                <role>developer</role>
-            </roles>
-        </developer>
-    </developers>
-
-    <scm>
-        <connection>scm:${repository.type}:${repository.location}</connection>
-        <developerConnection>scm:${repository.type}:${repository.location}</developerConnection>
-        <url>scm:${repository.type}:${repository.location}</url>
-    </scm>
-
-    <repositories>
-        <repository>
-            <id>uk.ac.standrews.cs.maven.repository</id>
-            <name>School of Computer Science Maven Repository</name>
-            <url>http://maven.cs.st-andrews.ac.uk/</url>
-        </repository>
-        <repository>
-            <id>asdasdasda</id>
-            <name>sss</name>
-            <url>https://oss.sonatype.org/content/repositories/snapshots/</url>
-        </repository>
-    </repositories>
-
-    <build>
-        <plugins>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-javadoc-plugin</artifactId>
-                <configuration>
-                    <links>
-                        <link>http://fasterxml.github.com/jackson-core/javadoc/2.1.0</link>
-                    </links>
-                </configuration>
-            </plugin>
-        </plugins>
-    </build>
+    <description>An RPC framework with automatic proxy generation using Java Reflection</description>
 
     <dependencies>
         <dependency>
@@ -102,7 +36,7 @@
         <dependency>
             <groupId>io.netty</groupId>
             <artifactId>netty-all</artifactId>
-            <version>4.0.7.Final</version>
+            <version>4.0.8.Final</version>
         </dependency>
         <dependency>
             <groupId>org.slf4j</groupId>
@@ -125,4 +59,13 @@
             <version>14.0.1</version>
         </dependency>
     </dependencies>
+
+    <repositories>
+        <repository>
+            <id>org.mashti.maven</id>
+            <name>Mashti Maven Repository</name>
+            <url>http://maven.mashti.org</url>
+        </repository>
+    </repositories>
+
 </project>
