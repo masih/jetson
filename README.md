@@ -5,7 +5,7 @@ An RPC framework with automatic proxy generation using Java Reflection
 ## Maven Dependency
 To add Jetson as a Maven dependency:
 
-1. Add Mashti.org Maven repository:
+First, add Mashti.org Maven repository:
 
 ``` xml
 <repository>
@@ -15,7 +15,7 @@ To add Jetson as a Maven dependency:
 </repository>
 ```
 
-2. Add Jetson dependency:
+and finally, add Jetson dependency:
 
 ``` xml
 <dependency>
