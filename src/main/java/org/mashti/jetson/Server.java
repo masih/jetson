@@ -60,7 +60,7 @@ public class Server {
     private volatile Channel server_channel;
     private volatile InetSocketAddress endpoint;
     private volatile boolean exposed;
-    private volatile WrittenByteCountListenner written_byte_count_listener;
+    private volatile WrittenByteCountListener written_byte_count_listener;
 
     Server(final ServerBootstrap server_bootstrap, final Object service, final ListeningExecutorService executor) {
 
@@ -71,7 +71,7 @@ public class Server {
         server_channel_group = new DefaultChannelGroup(ImmediateEventExecutor.INSTANCE);
     }
 
-    public void setWrittenByteCountListenner(WrittenByteCountListenner listenner) {
+    public void setWrittenByteCountListenner(WrittenByteCountListener listenner) {
 
         written_byte_count_listener = listenner;
     }

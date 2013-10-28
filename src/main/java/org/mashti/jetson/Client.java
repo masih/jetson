@@ -39,7 +39,7 @@ public class Client implements InvocationHandler {
     private final InetSocketAddress address;
     private final ChannelPool channel_pool;
     private final Method[] dispatch;
-    private volatile WrittenByteCountListenner written_byte_count_listener;
+    private volatile WrittenByteCountListener written_byte_count_listener;
 
     protected Client(final InetSocketAddress address, final Method[] dispatch, final ChannelPool channel_pool) {
 
@@ -53,7 +53,7 @@ public class Client implements InvocationHandler {
         return address;
     }
 
-    public void setWrittenByteCountListenner(WrittenByteCountListenner listenner) {
+    public void setWrittenByteCountListenner(WrittenByteCountListener listenner) {
 
         written_byte_count_listener = listenner;
     }

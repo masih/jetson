@@ -21,13 +21,13 @@ import java.lang.reflect.Method;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /** @author Masih Hajiarabderkani (mh638@st-andrews.ac.uk) */
-public class FutureResponse extends AbstractFuture<Object> implements Comparable<FutureResponse>, WrittenByteCountListenner {
+public class FutureResponse extends AbstractFuture<Object> implements Comparable<FutureResponse>, WrittenByteCountListener {
 
     private static final AtomicInteger NEXT_ID = new AtomicInteger();
     private final Integer id;
     private volatile Method method;
     private volatile Object[] arguments;
-    private volatile WrittenByteCountListenner written_byte_count_listener;
+    private volatile WrittenByteCountListener written_byte_count_listener;
 
     public FutureResponse() {
 
@@ -112,7 +112,7 @@ public class FutureResponse extends AbstractFuture<Object> implements Comparable
         }
     }
 
-    synchronized void setWrittenByteCountListener(WrittenByteCountListenner written_byte_count_listener) {
+    synchronized void setWrittenByteCountListener(WrittenByteCountListener written_byte_count_listener) {
 
         this.written_byte_count_listener = written_byte_count_listener;
     }
