@@ -77,11 +77,11 @@ public abstract class RequestDecoder extends MessageToMessageDecoder<ByteBuf> {
 
     }
 
-    protected abstract Integer decodeId(final ChannelHandlerContext context, final ByteBuf in) throws RPCException;
+    protected abstract Integer decodeId(ChannelHandlerContext context, ByteBuf in) throws RPCException;
 
-    protected abstract Method decodeMethod(final ChannelHandlerContext context, final ByteBuf in) throws RPCException;
+    protected abstract Method decodeMethod(ChannelHandlerContext context, ByteBuf in) throws RPCException;
 
-    protected abstract Object[] decodeMethodArguments(final ChannelHandlerContext context, final ByteBuf in, Method method) throws RPCException;
+    protected abstract Object[] decodeMethodArguments(ChannelHandlerContext context, ByteBuf in, Method method) throws RPCException;
 
     protected void afterDecode(final ChannelHandlerContext context, final ByteBuf in) {
 

@@ -56,8 +56,8 @@ public abstract class ResponseEncoder extends MessageToByteEncoder<FutureRespons
         }
     }
 
-    protected abstract void encodeResult(final ChannelHandlerContext context, final Integer id, final Object result, final Method method, final ByteBuf out) throws RPCException;
+    protected abstract void encodeResult(ChannelHandlerContext context, Integer id, Object result, Method method, ByteBuf out) throws RPCException;
 
-    protected abstract void encodeException(final ChannelHandlerContext context, final Integer id, final Throwable exception, final ByteBuf out) throws RPCException;
+    protected abstract void encodeException(ChannelHandlerContext context, Integer id, Throwable exception, ByteBuf out) throws RPCException;
 
 }

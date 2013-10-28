@@ -53,7 +53,7 @@ public class Client implements InvocationHandler {
         return address;
     }
 
-    public void setWrittenByteCountListenner(WrittenByteCountListener listenner) {
+    public void setWrittenByteCountListener(WrittenByteCountListener listenner) {
 
         written_byte_count_listener = listenner;
     }
@@ -98,7 +98,7 @@ public class Client implements InvocationHandler {
         return response;
     }
 
-    protected List<FutureResponse> getExtraRequrests() throws RPCException {
+    protected List<FutureResponse> getExtraRequests() throws RPCException {
 
         return null;
     }
@@ -111,16 +111,16 @@ public class Client implements InvocationHandler {
 
     protected FutureResponse writeRequest(FutureResponse future_response) throws RPCException {
 
-        List<FutureResponse> requrests = getExtraRequrests();
-        if (requrests == null) {
-            requrests = new ArrayList<FutureResponse>();
+        List<FutureResponse> requests = getExtraRequests();
+        if (requests == null) {
+            requests = new ArrayList<FutureResponse>();
         }
 
-        requrests.add(0, future_response);
+        requests.add(0, future_response);
 
         final Channel channel = borrowChannel();
         try {
-            for (FutureResponse response : requrests) {
+            for (FutureResponse response : requests) {
                 channel.write(response);
             }
             channel.flush();
