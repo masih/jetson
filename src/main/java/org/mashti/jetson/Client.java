@@ -53,9 +53,9 @@ public class Client implements InvocationHandler {
         return address;
     }
 
-    public void setWrittenByteCountListener(WrittenByteCountListener listenner) {
+    public void setWrittenByteCountListener(WrittenByteCountListener listener) {
 
-        written_byte_count_listener = listenner;
+        written_byte_count_listener = listener;
     }
 
     @Override
