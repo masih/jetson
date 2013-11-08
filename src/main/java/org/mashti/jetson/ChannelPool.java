@@ -37,7 +37,7 @@ import org.slf4j.LoggerFactory;
 public class ChannelPool extends GenericObjectPool<Channel> {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ChannelPool.class);
-    private static final AttributeKey<Set<FutureResponse>> FUTURE_RESPONSES_ATTRIBUTE_KEY = new AttributeKey<Set<FutureResponse>>("future_responses");
+    private static final AttributeKey<Set<FutureResponse>> FUTURE_RESPONSES_ATTRIBUTE_KEY = AttributeKey.valueOf("future_responses");
 
     ChannelPool(final Bootstrap bootstrap, final InetSocketAddress address) {
 

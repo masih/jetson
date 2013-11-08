@@ -49,10 +49,10 @@ import org.slf4j.LoggerFactory;
  */
 public class Server {
 
-    static final AttributeKey<Server> SERVER_ATTRIBUTE = new AttributeKey<Server>("server");
+    static final AttributeKey<Server> SERVER_ATTRIBUTE = AttributeKey.valueOf("server");
     private static final Logger LOGGER = LoggerFactory.getLogger(Server.class);
     private static final InetSocketAddress DEFAULT_ENDPOINT_ADDRESS = new InetSocketAddress(0);
-    private static final AttributeKey<Set<ListenableFuture>> IN_PROGRESS_FUTURES_ATTRIBUTE_KEY = new AttributeKey<Set<ListenableFuture>>("in_progress_futures");
+    private static final AttributeKey<Set<ListenableFuture>> IN_PROGRESS_FUTURES_ATTRIBUTE_KEY = AttributeKey.valueOf("in_progress_futures");
     private final ServerBootstrap server_bootstrap;
     private final ChannelGroup server_channel_group;
     private final Object service;

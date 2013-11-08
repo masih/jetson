@@ -44,7 +44,7 @@ import org.slf4j.LoggerFactory;
 @Sharable
 class JsonRequestDecoder extends RequestDecoder {
 
-    private static final AttributeKey<JsonParser> PARSER_ATTRIBUTE_KEY = new AttributeKey<JsonParser>("parser");
+    private static final AttributeKey<JsonParser> PARSER_ATTRIBUTE_KEY = AttributeKey.valueOf("parser");
     private static final Logger LOGGER = LoggerFactory.getLogger(JsonRequestDecoder.class);
     private final Map<String, Method> dispatch;
     private final JsonFactory json_factory;
