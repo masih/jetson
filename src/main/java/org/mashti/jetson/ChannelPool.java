@@ -151,7 +151,7 @@ public class ChannelPool extends GenericObjectPool<Channel> {
         @Override
         public boolean validateObject(final Channel channel) {
 
-            return channel.isOpen() && channel.isActive() && super.validateObject(channel);
+            return channel.isActive() && super.validateObject(channel);
         }
 
         protected void setConnectionTimeout(final long timeout, final TimeUnit unit) {
