@@ -54,8 +54,8 @@ public class ClientFactory<Service> {
     protected ClientFactory(final Class<Service> service_interface, final ClientChannelInitializer handler) {
 
         dispatch = ReflectionUtil.sort(service_interface.getMethods());
-        this.class_loader = ClassLoader.getSystemClassLoader();
-        this.interfaces = new Class<?>[]{service_interface};
+        class_loader = ClassLoader.getSystemClassLoader();
+        interfaces = new Class<?>[]{service_interface};
         bootstrap = new Bootstrap();
         configure(handler);
     }

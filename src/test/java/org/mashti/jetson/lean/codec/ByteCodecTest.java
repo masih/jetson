@@ -14,15 +14,17 @@
  * You should have received a copy of the GNU General Public License
  * along with jetson.  If not, see <http://www.gnu.org/licenses/>.
  */
+
 package org.mashti.jetson.lean.codec;
 
 import org.junit.Assert;
 import org.junit.Test;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+
 /** @author Masih Hajiarabderkani (mh638@st-andrews.ac.uk) */
 public class ByteCodecTest extends CodecTest {
-
-    //FIXME separate primitives from Objects
 
     public ByteCodecTest() {
 
@@ -32,8 +34,8 @@ public class ByteCodecTest extends CodecTest {
     @Test
     public void testIsSupported() throws Exception {
 
-        Assert.assertTrue(codec.isSupported(Byte.class));
-        Assert.assertTrue(codec.isSupported(Byte.TYPE));
+        assertTrue(codec.isSupported(Byte.class));
+        assertTrue(codec.isSupported(Byte.TYPE));
         Assert.assertFalse(codec.isSupported(null));
         Assert.assertFalse(codec.isSupported(Object.class));
     }
@@ -45,9 +47,9 @@ public class ByteCodecTest extends CodecTest {
         for (final byte b : bytes) {
             encode(b, Byte.TYPE);
         }
-        Assert.assertEquals(bytes.length, buffer.readableBytes());
+        assertEquals(bytes.length, buffer.readableBytes());
         for (final byte b : bytes) {
-            Assert.assertTrue(b == decode(Byte.TYPE));
+            assertEquals(b, (byte) decode(Byte.TYPE));
         }
     }
 }
