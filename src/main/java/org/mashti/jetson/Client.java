@@ -14,6 +14,7 @@
  * You should have received a copy of the GNU General Public License
  * along with jetson.  If not, see <http://www.gnu.org/licenses/>.
  */
+
 package org.mashti.jetson;
 
 import io.netty.channel.Channel;
@@ -21,8 +22,6 @@ import java.io.IOException;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.net.InetSocketAddress;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
@@ -98,12 +97,7 @@ public class Client implements InvocationHandler {
         return response;
     }
 
-    protected List<FutureResponse> getExtraRequests() throws RPCException {
-
-        return null;
-    }
-
-    FutureResponse writeRequest(final Method method, final Object[] params) throws RPCException {
+    private FutureResponse writeRequest(final Method method, final Object[] params) throws RPCException {
 
         final FutureResponse future_response = newFutureResponse(method, params);
         return writeRequest(future_response);
@@ -111,24 +105,21 @@ public class Client implements InvocationHandler {
 
     protected FutureResponse writeRequest(FutureResponse future_response) throws RPCException {
 
-        List<FutureResponse> requests = getExtraRequests();
-        if (requests == null) {
-            requests = new ArrayList<FutureResponse>();
-        }
-
-        requests.add(0, future_response);
-
         final Channel channel = borrowChannel();
         try {
-            for (FutureResponse response : requests) {
-                channel.write(response);
-            }
+            channel.write(future_response);
+            beforeFlush(channel, future_response);
             channel.flush();
         }
         finally {
             returnChannel(channel);
         }
         return future_response;
+    }
+
+    protected void beforeFlush(final Channel channel, final FutureResponse future_response) throws RPCException {
+
+        // Do nothing; reserved for customization via extending classes
     }
 
     boolean dispatchContains(final Method target) {

@@ -14,6 +14,7 @@
  * You should have received a copy of the GNU General Public License
  * along with jetson.  If not, see <http://www.gnu.org/licenses/>.
  */
+
 package org.mashti.jetson;
 
 import io.netty.bootstrap.Bootstrap;
@@ -25,15 +26,14 @@ import io.netty.channel.socket.nio.NioSocketChannel;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.net.InetSocketAddress;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import org.mashti.jetson.util.NamedThreadFactory;
 import org.mashti.jetson.util.ReflectionUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * A factory for creating JSON RPC clients. The created clients are cached for future reuse. This class is thread-safe.
+ * A factory for creating RPC clients. The created clients are cached for future reuse. This class is thread-safe.
  *
  * @param <Service> the type of the remote service
  * @author Masih Hajiarabderkani (mh638@st-andrews.ac.uk)
@@ -44,18 +44,18 @@ public class ClientFactory<Service> {
     private static final Logger LOGGER = LoggerFactory.getLogger(ClientFactory.class);
     private static final int THREAD_POOL_SIZE = 0;
     private static final NioEventLoopGroup CLIENT_EVENT_LOOP = new NioEventLoopGroup(THREAD_POOL_SIZE, new NamedThreadFactory("client_event_loop_"));
-    private final Bootstrap bootstrap;
     protected final Method[] dispatch;
+    private final Bootstrap bootstrap;
     private final ClassLoader class_loader;
     private final Class<?>[] interfaces;
-    private final Map<InetSocketAddress, Service> cached_proxy_map = new HashMap<InetSocketAddress, Service>();
-    private final Map<InetSocketAddress, ChannelPool> channel_pool_map = new HashMap<InetSocketAddress, ChannelPool>();
+    private final ConcurrentHashMap<InetSocketAddress, Service> cached_proxy_map = new ConcurrentHashMap<InetSocketAddress, Service>();
+    private final ConcurrentHashMap<InetSocketAddress, ChannelPool> channel_pool_map = new ConcurrentHashMap<InetSocketAddress, ChannelPool>();
 
     protected ClientFactory(final Class<Service> service_interface, final ClientChannelInitializer handler) {
 
         dispatch = ReflectionUtil.sort(service_interface.getMethods());
         class_loader = ClassLoader.getSystemClassLoader();
-        interfaces = new Class<?>[]{service_interface};
+        interfaces = new Class<?>[] {service_interface};
         bootstrap = new Bootstrap();
         configure(handler);
     }
@@ -91,13 +91,18 @@ public class ClientFactory<Service> {
         bootstrap.handler(handler);
     }
 
-    public ChannelPool getChannelPool(InetSocketAddress address) {
+    protected ChannelPool getChannelPool(InetSocketAddress address) {
 
-        synchronized (channel_pool_map) {
-            if (channel_pool_map.containsKey(address)) { return channel_pool_map.get(address); }
-            final ChannelPool channel_pool = new ChannelPool(bootstrap, address);
-            channel_pool_map.put(address, channel_pool);
-            return channel_pool;
+        if (channel_pool_map.containsKey(address)) { return channel_pool_map.get(address); }
+        final ChannelPool new_channel_pool = new ChannelPool(bootstrap, address);
+        final ChannelPool existing_channel_pool = channel_pool_map.putIfAbsent(address, new_channel_pool);
+
+        if (existing_channel_pool == null) {
+            return new_channel_pool;
+        }
+        else {
+            closeChannelPoolQuietly(new_channel_pool);
+            return existing_channel_pool;
         }
     }
 
@@ -110,5 +115,15 @@ public class ClientFactory<Service> {
     Service createProxy(final Client handler) {
 
         return (Service) Proxy.newProxyInstance(class_loader, interfaces, handler);
+    }
+
+    private static void closeChannelPoolQuietly(final ChannelPool pool) {
+
+        try {
+            pool.close();
+        }
+        catch (Exception e) {
+            LOGGER.trace("failed to close newly created channel pool ", e);
+        }
     }
 }

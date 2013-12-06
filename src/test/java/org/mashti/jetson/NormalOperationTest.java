@@ -56,7 +56,7 @@ public class NormalOperationTest extends AbstractTest {
         Assert.assertEquals(text + integer + object + character, result);
     }
 
-    @Test                                                  
+    @Test
     public void testGetNumberOfMessages() throws Exception {
 
         Assert.assertEquals(0, client.getNumberOfMessages(EMPTY_STRING_ARRAY));
@@ -215,7 +215,6 @@ public class NormalOperationTest extends AbstractTest {
     }
 
     @Test
-    //    @Ignore
     public void testConcurrentServers() throws RPCException, InterruptedException, ExecutionException {
 
         final ExecutorService executor = Executors.newFixedThreadPool(100);
