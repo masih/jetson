@@ -66,13 +66,13 @@ public class ClientFactory<Service> {
      * @param address the address
      * @return the service
      */
-    public synchronized Service get(final InetSocketAddress address) {
+    public Service get(final InetSocketAddress address) {
 
         if (cached_proxy_map.containsKey(address)) { return cached_proxy_map.get(address); }
         final Client handler = createClient(address);
-        final Service proxy = createProxy(handler);
-        cached_proxy_map.put(address, proxy);
-        return proxy;
+        final Service new_proxy = createProxy(handler);
+        final Service existing_proxy = cached_proxy_map.putIfAbsent(address, new_proxy);
+        return existing_proxy != null ? existing_proxy : new_proxy;
     }
 
     /** Shuts down all the {@link EventLoopGroup threads} that are used by any client constructed using this factory. */

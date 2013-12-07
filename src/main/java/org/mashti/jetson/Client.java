@@ -97,12 +97,6 @@ public class Client implements InvocationHandler {
         return response;
     }
 
-    private FutureResponse writeRequest(final Method method, final Object[] params) throws RPCException {
-
-        final FutureResponse future_response = newFutureResponse(method, params);
-        return writeRequest(future_response);
-    }
-
     protected FutureResponse writeRequest(FutureResponse future_response) throws RPCException {
 
         final Channel channel = borrowChannel();
@@ -128,6 +122,12 @@ public class Client implements InvocationHandler {
             if (method.equals(target)) { return true; }
         }
         return false;
+    }
+
+    private FutureResponse writeRequest(final Method method, final Object[] params) throws RPCException {
+
+        final FutureResponse future_response = newFutureResponse(method, params);
+        return writeRequest(future_response);
     }
 
     private synchronized Channel borrowChannel() throws InternalServerException, TransportException {
