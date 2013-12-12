@@ -55,12 +55,12 @@ public class Server {
     private static final InetSocketAddress DEFAULT_ENDPOINT_ADDRESS = new InetSocketAddress(0);
     private static final AttributeKey<Set<ListenableFuture>> IN_PROGRESS_FUTURES_ATTRIBUTE_KEY = AttributeKey.valueOf("in_progress_futures");
     private final ServerBootstrap server_bootstrap;
-    private final ChannelGroup server_channel_group;
+    private final ChannelGroup server_channel_group;                 
     private final Object service;
     private final ListeningExecutorService executor;
     private volatile Channel server_channel;
     private volatile InetSocketAddress endpoint;
-    private volatile boolean exposed;
+    private volatile boolean exposed;             
     private volatile WrittenByteCountListener written_byte_count_listener;
 
     Server(final ServerBootstrap server_bootstrap, final Object service, final ListeningExecutorService executor) {
