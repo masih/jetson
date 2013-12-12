@@ -14,6 +14,7 @@
  * You should have received a copy of the GNU General Public License
  * along with jetson.  If not, see <http://www.gnu.org/licenses/>.
  */
+
 package org.mashti.jetson;
 
 import com.google.common.util.concurrent.ListenableFuture;
@@ -71,9 +72,9 @@ public class Server {
         server_channel_group = new DefaultChannelGroup(ImmediateEventExecutor.INSTANCE);
     }
 
-    public void setWrittenByteCountListenner(WrittenByteCountListener listenner) {
+    public void setWrittenByteCountListener(WrittenByteCountListener listener) {
 
-        written_byte_count_listener = listenner;
+        written_byte_count_listener = listener;
     }
 
     /**
@@ -108,25 +109,6 @@ public class Server {
             exposure_changed = false;
         }
         return exposure_changed;
-    }
-
-    public void handle(final ChannelHandlerContext context, final FutureResponse future_response) {
-
-        future_response.setWrittenByteCountListener(written_byte_count_listener);
-        final Callable<ChannelFuture> task = toExecutableTask(context, future_response);
-        executeTask(context, task);
-    }
-
-    public void notifyChannelActivation(final Channel channel) {
-
-        server_channel_group.add(channel);
-        channel.attr(IN_PROGRESS_FUTURES_ATTRIBUTE_KEY).set(Collections.synchronizedSet(new HashSet<ListenableFuture>()));
-    }
-
-    public void notifyChannelInactivation(final Channel channel) {
-
-        server_channel_group.remove(channel);
-        cancelInProgressResponsesByChannel(channel);
     }
 
     /**
@@ -180,6 +162,25 @@ public class Server {
         return endpoint;
     }
 
+    protected void handle(final ChannelHandlerContext context, final FutureResponse future_response) {
+
+        future_response.setWrittenByteCountListener(written_byte_count_listener);
+        final Callable<ChannelFuture> task = toExecutableTask(context, future_response);
+        executeTask(context, task);
+    }
+
+    protected void notifyChannelActivation(final Channel channel) {
+
+        server_channel_group.add(channel);
+        channel.attr(IN_PROGRESS_FUTURES_ATTRIBUTE_KEY).set(Collections.synchronizedSet(new HashSet<ListenableFuture>()));
+    }
+
+    protected void notifyChannelInactivation(final Channel channel) {
+
+        server_channel_group.remove(channel);
+        cancelInProgressResponsesByChannel(channel);
+    }
+
     private void executeTask(final ChannelHandlerContext context, final Callable<ChannelFuture> task) {
 
         final Channel channel = context.channel();
@@ -220,7 +221,7 @@ public class Server {
         };
     }
 
-    private void cancelInProgressResponsesByChannel(final Channel channel) {
+    private static void cancelInProgressResponsesByChannel(final Channel channel) {
 
         final Set<ListenableFuture> processing_futures = channel.attr(IN_PROGRESS_FUTURES_ATTRIBUTE_KEY).get();
         synchronized (processing_futures) {
