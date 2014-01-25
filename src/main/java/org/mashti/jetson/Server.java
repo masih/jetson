@@ -106,6 +106,7 @@ public class Server {
             exposure_changed = true;
         }
         else {
+            LOGGER.debug("expose was called when the server is already exposed; local address: {}", endpoint);
             exposure_changed = false;
         }
         return exposure_changed;
@@ -135,7 +136,7 @@ public class Server {
             }
         }
         else {
-            LOGGER.warn("unexpose was called when the server is already unexposed; local address: {}", endpoint);
+            LOGGER.debug("unexpose was called when the server is already unexposed; local address: {}", endpoint);
             exposure_changed = false;
         }
         return exposure_changed;
