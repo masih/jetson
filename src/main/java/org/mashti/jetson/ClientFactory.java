@@ -49,10 +49,16 @@ public class ClientFactory<Service> {
     private final ClassLoader class_loader;
     private final Class<?>[] interfaces;
     private final ConcurrentHashMap<InetSocketAddress, Service> cached_proxy_map = new ConcurrentHashMap<InetSocketAddress, Service>();
-    private final ConcurrentHashMap<InetSocketAddress, ChannelPool> channel_pool_map = new ConcurrentHashMap<InetSocketAddress, ChannelPool>();
+    private final ConcurrentHashMap<InetSocketAddress, ChannelPool> channel_pool_map;
 
     protected ClientFactory(final Class<Service> service_interface, final ClientChannelInitializer handler) {
 
+        this(service_interface, handler, new ConcurrentHashMap<InetSocketAddress, ChannelPool>());
+    }
+
+    protected ClientFactory(final Class<Service> service_interface, final ClientChannelInitializer handler, final ConcurrentHashMap<InetSocketAddress, ChannelPool> channel_pool_map) {
+
+        this.channel_pool_map = channel_pool_map;
         dispatch = ReflectionUtil.sort(service_interface.getMethods());
         class_loader = ClassLoader.getSystemClassLoader();
         interfaces = new Class<?>[] {service_interface};

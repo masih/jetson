@@ -14,8 +14,12 @@
  * You should have received a copy of the GNU General Public License
  * along with jetson.  If not, see <http://www.gnu.org/licenses/>.
  */
+
 package org.mashti.jetson.lean;
 
+import java.net.InetSocketAddress;
+import java.util.concurrent.ConcurrentHashMap;
+import org.mashti.jetson.ChannelPool;
 import org.mashti.jetson.ClientFactory;
 import org.mashti.jetson.lean.codec.Codecs;
 
@@ -32,6 +36,11 @@ public class LeanClientFactory<Service> extends ClientFactory<Service> {
     public LeanClientFactory(final Class<Service> service_interface) {
 
         this(service_interface, DEFAULT_CODECS);
+    }
+
+    public LeanClientFactory(final Class<Service> service_interface, final Codecs codecs, final ConcurrentHashMap<InetSocketAddress, ChannelPool> channel_pool_map) {
+
+        super(service_interface, new LeanClientChannelInitializer(service_interface, codecs), channel_pool_map);
     }
 
     /**
