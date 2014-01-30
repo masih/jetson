@@ -230,7 +230,6 @@ public class NormalOperationTest extends AbstractTest {
                         start_latch.await();
                         final Server server = startJsonRpcTestServer();
                         final InetSocketAddress server_address = server.getLocalSocketAddress();
-
                         final TestService client = client_factory.get(server_address);
 
                         try {

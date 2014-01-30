@@ -14,17 +14,14 @@
  * You should have received a copy of the GNU General Public License
  * along with jetson.  If not, see <http://www.gnu.org/licenses/>.
  */
+
 package org.mashti.jetson;
 
-import com.google.common.util.concurrent.ListeningExecutorService;
-import com.google.common.util.concurrent.MoreExecutors;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.ChannelOption;
 import io.netty.channel.EventLoop;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import org.mashti.jetson.util.NamedThreadFactory;
 
 /**
@@ -34,25 +31,18 @@ import org.mashti.jetson.util.NamedThreadFactory;
  */
 public class ServerFactory<Service> {
 
-    protected final ListeningExecutorService request_executor;
     protected final ServerBootstrap server_bootstrap;
 
     /** Instantiates a new server factory. */
-    protected ServerFactory(final ServerChannelInitializer handler) {
+    public ServerFactory(final ServerChannelInitializer handler) {
 
-        this(Executors.newCachedThreadPool(new NamedThreadFactory("server_factory_", true)), handler);
-        //        this(service_type, Executors.newFixedThreadPool(500, new NamedThreadFactory(service_type.getSimpleName() + "_server_factory_")), handler);
+        this(createDefaultServerBootstrap(handler));
     }
 
-    /**
-     * Instantiates a new server factory.
-     *
-     * @param request_executor the executor that is used to process requests by all the servers that are instantiated using this factory
-     */
-    private ServerFactory(final ExecutorService request_executor, final ServerChannelInitializer handler) {
+    /** Instantiates a new server factory. */
+    public ServerFactory(final ServerBootstrap server_bootstrap) {
 
-        this.request_executor = MoreExecutors.listeningDecorator(request_executor);
-        server_bootstrap = createServerBootstrap(handler);
+        this.server_bootstrap = server_bootstrap;
     }
 
     /**
@@ -63,7 +53,7 @@ public class ServerFactory<Service> {
      */
     public Server createServer(final Service service) {
 
-        return new Server(server_bootstrap, service, request_executor);
+        return new Server(server_bootstrap, service);
     }
 
     /**
@@ -74,24 +64,20 @@ public class ServerFactory<Service> {
      */
     public void shutdown() {
 
-        request_executor.shutdownNow();
         server_bootstrap.group().shutdownGracefully();
-    }
-
-    ServerBootstrap createServerBootstrap(final ServerChannelInitializer handler) {
-
-        return createDefaultServerBootstrap(handler);
+        server_bootstrap.childGroup().shutdownGracefully();
     }
 
     private static ServerBootstrap createDefaultServerBootstrap(final ServerChannelInitializer handler) {
 
-        final NioEventLoopGroup parent_event_loop = new NioEventLoopGroup(0, new NamedThreadFactory("server_parent_event_loop_"));
-        final NioEventLoopGroup child_event_loop = new NioEventLoopGroup(0, new NamedThreadFactory("server_child_event_loop_"));
         final ServerBootstrap server_bootstrap = new ServerBootstrap();
+        final NioEventLoopGroup parent_event_loop = new NioEventLoopGroup(100, new NamedThreadFactory("server_parent_event_loop_"));
+        final NioEventLoopGroup child_event_loop = new NioEventLoopGroup(500, new NamedThreadFactory("server_child_event_loop_"));
         server_bootstrap.group(parent_event_loop, child_event_loop);
         server_bootstrap.channel(NioServerSocketChannel.class);
         server_bootstrap.option(ChannelOption.TCP_NODELAY, true);
         server_bootstrap.childOption(ChannelOption.TCP_NODELAY, true);
+        server_bootstrap.childOption(ChannelOption.SO_KEEPALIVE, true);
         server_bootstrap.childHandler(handler);
         return server_bootstrap;
     }

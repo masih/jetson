@@ -18,12 +18,13 @@
 package org.mashti.jetson;
 
 import io.netty.channel.Channel;
+import io.netty.channel.ChannelFuture;
+import io.netty.util.concurrent.GenericFutureListener;
 import java.io.IOException;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.net.InetSocketAddress;
 import java.util.NoSuchElementException;
-import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
 import org.mashti.jetson.exception.InternalServerException;
 import org.mashti.jetson.exception.RPCException;
@@ -72,7 +73,7 @@ public class Client implements InvocationHandler {
             catch (ExecutionException e) {
                 throw e.getCause();
             }
-            catch (CancellationException e) {
+            catch (Exception e) {
                 throw new InternalServerException(e);
             }
         }
@@ -97,11 +98,21 @@ public class Client implements InvocationHandler {
         return response;
     }
 
-    protected FutureResponse writeRequest(FutureResponse future_response) throws RPCException {
+    protected FutureResponse writeRequest(final FutureResponse future_response) throws RPCException {
 
         final Channel channel = borrowChannel();
         try {
-            channel.write(future_response);
+            final ChannelFuture write = channel.write(future_response);
+            write.addListener(new GenericFutureListener<ChannelFuture>() {
+
+                @Override
+                public void operationComplete(final ChannelFuture future) throws Exception {
+
+                    if (!future.isSuccess()) {
+                        future_response.setException(new RPCException(future.cause()));
+                    }
+                }
+            });
             beforeFlush(channel, future_response);
             channel.flush();
         }
@@ -130,10 +141,10 @@ public class Client implements InvocationHandler {
         return writeRequest(future_response);
     }
 
-    private synchronized Channel borrowChannel() throws InternalServerException, TransportException {
+    private Channel borrowChannel() throws InternalServerException, TransportException {
 
         try {
-            return channel_pool.borrowObject();
+            return channel_pool.borrowObject(address);
         }
         catch (final InterruptedException e) {
             throw new InternalServerException(e);
@@ -154,7 +165,7 @@ public class Client implements InvocationHandler {
     private void returnChannel(final Channel channel) throws InternalServerException {
 
         try {
-            channel_pool.returnObject(channel);
+            channel_pool.returnObject(address, channel);
         }
         catch (final Exception e) {
             throw new InternalServerException(e);

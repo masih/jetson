@@ -14,39 +14,39 @@
  * You should have received a copy of the GNU General Public License
  * along with jetson.  If not, see <http://www.gnu.org/licenses/>.
  */
+
 package org.mashti.jetson;
 
 import com.google.common.util.concurrent.MoreExecutors;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
-import io.netty.channel.ChannelFutureListener;
-import io.netty.channel.ConnectTimeoutException;
 import io.netty.util.AttributeKey;
 import java.net.InetSocketAddress;
 import java.util.Set;
 import java.util.concurrent.ConcurrentSkipListSet;
-import java.util.concurrent.TimeUnit;
-import org.apache.commons.pool.BasePoolableObjectFactory;
-import org.apache.commons.pool.impl.GenericObjectPool;
+import org.apache.commons.pool2.BaseKeyedPooledObjectFactory;
+import org.apache.commons.pool2.PooledObject;
+import org.apache.commons.pool2.impl.DefaultPooledObject;
+import org.apache.commons.pool2.impl.GenericKeyedObjectPool;
 import org.mashti.jetson.exception.RPCException;
 import org.mashti.jetson.exception.TransportException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class ChannelPool extends GenericObjectPool<Channel> {
+public class ChannelPool extends GenericKeyedObjectPool<InetSocketAddress, Channel> {
 
+    static final AttributeKey<Set<FutureResponse>> FUTURE_RESPONSES_ATTRIBUTE_KEY = AttributeKey.valueOf("future_responses");
     private static final Logger LOGGER = LoggerFactory.getLogger(ChannelPool.class);
-    private static final AttributeKey<Set<FutureResponse>> FUTURE_RESPONSES_ATTRIBUTE_KEY = AttributeKey.valueOf("future_responses");
 
-    ChannelPool(final Bootstrap bootstrap, final InetSocketAddress address) {
+    public ChannelPool(final Bootstrap bootstrap) {
 
-        this(new PoolableChannelFactory(bootstrap, address));
+        this(new PooledChannelFactory(bootstrap));
     }
 
-    private ChannelPool(final PoolableChannelFactory poolable_channel_factory) {
+    private ChannelPool(final PooledChannelFactory factory) {
 
-        super(poolable_channel_factory);
+        super(factory);
         configure();
     }
 
@@ -105,58 +105,54 @@ public class ChannelPool extends GenericObjectPool<Channel> {
 
     void configure() {
 
-        setTestOnBorrow(true);
         setTestOnReturn(true);
-        setMinEvictableIdleTimeMillis(500);
+        setTestOnBorrow(true);
     }
 
-    static class PoolableChannelFactory extends BasePoolableObjectFactory<Channel> {
+    static class PooledChannelFactory extends BaseKeyedPooledObjectFactory<InetSocketAddress, Channel> {
 
-        private static final long DEFAULT_CONNECTION_TIMEOUT_IN_MILLIS = 5 * 1000;
         private final Bootstrap bootstrap;
-        private final InetSocketAddress address;
-        private volatile long connection_timeout_in_millis;
 
-        PoolableChannelFactory(final Bootstrap bootstrap, final InetSocketAddress address) {
-
-            this(bootstrap, address, DEFAULT_CONNECTION_TIMEOUT_IN_MILLIS);
-        }
-
-        PoolableChannelFactory(final Bootstrap bootstrap, final InetSocketAddress address, final long connection_timeout_in_millis) {
+        PooledChannelFactory(final Bootstrap bootstrap) {
 
             this.bootstrap = bootstrap;
-            this.address = address;
-            this.connection_timeout_in_millis = connection_timeout_in_millis;
         }
 
         @Override
-        public Channel makeObject() throws Exception {
+        public Channel create(InetSocketAddress address) throws Exception {
 
             LOGGER.debug("making new channel for {}", address);
-            final ChannelFuture connect_future = bootstrap.connect(address);
-            connect_future.addListener(ChannelFutureListener.CLOSE_ON_FAILURE);
-            if (!connect_future.await(connection_timeout_in_millis)) { throw new ConnectTimeoutException(); }
-            final Channel channel = connect_future.channel();
+            final Channel channel = makeConnection(address);
             channel.attr(FUTURE_RESPONSES_ATTRIBUTE_KEY).set(new ConcurrentSkipListSet<FutureResponse>());
             return channel;
         }
 
         @Override
-        public void destroyObject(final Channel channel) {
+        public PooledObject<Channel> wrap(final Channel channel) {
 
+            return new DefaultPooledObject<Channel>(channel);
+        }
+
+        @Override
+        public boolean validateObject(final InetSocketAddress address, final PooledObject<Channel> pooled_channel) {
+
+            final Channel channel = pooled_channel.getObject();
+            return channel.isActive() && pooled_channel.getIdleTimeMillis() < 5000;
+        }
+
+        @Override
+        public void destroyObject(final InetSocketAddress address, final PooledObject<Channel> pooled_channel) throws Exception {
+
+            final Channel channel = pooled_channel.getObject();
             channel.close();
             channel.disconnect();
         }
 
-        @Override
-        public boolean validateObject(final Channel channel) {
+        private Channel makeConnection(InetSocketAddress address) throws InterruptedException {
 
-            return channel.isActive() && super.validateObject(channel);
-        }
-
-        protected void setConnectionTimeout(final long timeout, final TimeUnit unit) {
-
-            connection_timeout_in_millis = TimeUnit.MILLISECONDS.convert(timeout, unit);
+            final ChannelFuture connect_future = bootstrap.connect(address);
+            connect_future.sync();
+            return connect_future.channel();
         }
     }
 }

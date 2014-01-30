@@ -33,7 +33,7 @@ class ResponseHandler extends ChannelInboundHandlerAdapter {
 
         final Channel channel = context.channel();
         ChannelPool.notifyChannelInactivation(channel);
-        LOGGER.debug("client disconencted {}", channel.remoteAddress());
+        LOGGER.debug("client disconnected {}", channel.remoteAddress());
 
         super.channelInactive(context);
     }

@@ -14,6 +14,7 @@
  * You should have received a copy of the GNU General Public License
  * along with jetson.  If not, see <http://www.gnu.org/licenses/>.
  */
+
 package org.mashti.jetson;
 
 import io.netty.channel.ChannelHandlerContext;
@@ -30,7 +31,7 @@ public class FaultyServerFactory<Service> extends ServerFactory<Service> {
     @Override
     public Server createServer(Service service) {
 
-        return new Server(server_bootstrap, service, request_executor) {
+        return new Server(server_bootstrap, service) {
 
             @Override
             public void handle(final ChannelHandlerContext context, final FutureResponse future_response) {

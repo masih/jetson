@@ -17,12 +17,8 @@
 
 package org.mashti.jetson;
 
-import com.google.common.util.concurrent.ListenableFuture;
-import com.google.common.util.concurrent.ListeningExecutorService;
-import com.google.common.util.concurrent.MoreExecutors;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.Channel;
-import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.group.ChannelGroup;
 import io.netty.channel.group.DefaultChannelGroup;
@@ -32,10 +28,8 @@ import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.InetSocketAddress;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Set;
-import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import org.mashti.jetson.exception.IllegalAccessException;
 import org.mashti.jetson.exception.IllegalArgumentException;
 import org.mashti.jetson.exception.InternalServerException;
@@ -53,21 +47,19 @@ public class Server {
     static final AttributeKey<Server> SERVER_ATTRIBUTE = AttributeKey.valueOf("server");
     private static final Logger LOGGER = LoggerFactory.getLogger(Server.class);
     private static final InetSocketAddress DEFAULT_ENDPOINT_ADDRESS = new InetSocketAddress(0);
-    private static final AttributeKey<Set<ListenableFuture>> IN_PROGRESS_FUTURES_ATTRIBUTE_KEY = AttributeKey.valueOf("in_progress_futures");
+    private static final ExecutorService EXECUTOR_SERVICE = Executors.newCachedThreadPool();
     private final ServerBootstrap server_bootstrap;
     private final ChannelGroup server_channel_group;
     private final Object service;
-    private final ListeningExecutorService executor;
     private volatile Channel server_channel;
     private volatile InetSocketAddress endpoint;
     private volatile boolean exposed;
     private volatile WrittenByteCountListener written_byte_count_listener;
 
-    protected Server(final ServerBootstrap server_bootstrap, final Object service, final ListeningExecutorService executor) {
+    protected Server(final ServerBootstrap server_bootstrap, final Object service) {
 
         this.server_bootstrap = server_bootstrap;
         this.service = service;
-        this.executor = executor;
         endpoint = DEFAULT_ENDPOINT_ADDRESS;
         server_channel_group = new DefaultChannelGroup(ImmediateEventExecutor.INSTANCE);
     }
@@ -165,47 +157,13 @@ public class Server {
 
     protected void handle(final ChannelHandlerContext context, final FutureResponse future_response) {
 
+        assert isExposed();
+
         future_response.setWrittenByteCountListener(written_byte_count_listener);
-        final Callable<ChannelFuture> task = toExecutableTask(context, future_response);
-        executeTask(context, task);
-    }
-
-    protected void notifyChannelActivation(final Channel channel) {
-
-        server_channel_group.add(channel);
-        channel.attr(IN_PROGRESS_FUTURES_ATTRIBUTE_KEY).set(Collections.synchronizedSet(new HashSet<ListenableFuture>()));
-    }
-
-    protected void notifyChannelInactivation(final Channel channel) {
-
-        server_channel_group.remove(channel);
-        cancelInProgressResponsesByChannel(channel);
-    }
-
-    private void executeTask(final ChannelHandlerContext context, final Callable<ChannelFuture> task) {
-
-        final Channel channel = context.channel();
-        final Set<ListenableFuture> in_progress_responses = channel.attr(IN_PROGRESS_FUTURES_ATTRIBUTE_KEY).get();
-        final ListenableFuture<ChannelFuture> processing_future = executor.submit(task);
-        synchronized (in_progress_responses) {
-            in_progress_responses.add(processing_future);
-        }
-        processing_future.addListener(new Runnable() {
+        EXECUTOR_SERVICE.execute(new Runnable() {
 
             @Override
             public void run() {
-
-                in_progress_responses.remove(processing_future);
-            }
-        }, MoreExecutors.sameThreadExecutor());
-    }
-
-    private Callable<ChannelFuture> toExecutableTask(final ChannelHandlerContext context, final FutureResponse future_response) {
-
-        return new Callable<ChannelFuture>() {
-
-            @Override
-            public ChannelFuture call() throws Exception {
 
                 final Method method = future_response.getMethod();
                 final Object[] arguments = future_response.getArguments();
@@ -217,19 +175,19 @@ public class Server {
                         future_response.setException(e);
                     }
                 }
-                return context.writeAndFlush(future_response);
+                context.writeAndFlush(future_response);
             }
-        };
+        });
     }
 
-    private static void cancelInProgressResponsesByChannel(final Channel channel) {
+    protected void notifyChannelActivation(final Channel channel) {
 
-        final Set<ListenableFuture> processing_futures = channel.attr(IN_PROGRESS_FUTURES_ATTRIBUTE_KEY).get();
-        synchronized (processing_futures) {
-            for (ListenableFuture future : processing_futures) {
-                future.cancel(true);
-            }
-        }
+        server_channel_group.add(channel);
+    }
+
+    protected void notifyChannelInactivation(final Channel channel) {
+
+        server_channel_group.remove(channel);
     }
 
     private Object handleRequest(final Method method, final Object[] arguments) throws Throwable {

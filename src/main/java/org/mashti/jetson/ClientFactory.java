@@ -42,28 +42,30 @@ public class ClientFactory<Service> {
 
     private static final int DEFAULT_CONNECTION_TIMEOUT_IN_MILLIS = 5000;
     private static final Logger LOGGER = LoggerFactory.getLogger(ClientFactory.class);
-    private static final int THREAD_POOL_SIZE = 0;
-    private static final NioEventLoopGroup CLIENT_EVENT_LOOP = new NioEventLoopGroup(THREAD_POOL_SIZE, new NamedThreadFactory("client_event_loop_"));
     protected final Method[] dispatch;
     private final Bootstrap bootstrap;
     private final ClassLoader class_loader;
     private final Class<?>[] interfaces;
     private final ConcurrentHashMap<InetSocketAddress, Service> cached_proxy_map = new ConcurrentHashMap<InetSocketAddress, Service>();
-    private final ConcurrentHashMap<InetSocketAddress, ChannelPool> channel_pool_map;
+    private final ChannelPool channel_pool;
 
     protected ClientFactory(final Class<Service> service_interface, final ClientChannelInitializer handler) {
 
-        this(service_interface, handler, new ConcurrentHashMap<InetSocketAddress, ChannelPool>());
+        this(service_interface, createDefaultBootstrap(handler));
     }
 
-    protected ClientFactory(final Class<Service> service_interface, final ClientChannelInitializer handler, final ConcurrentHashMap<InetSocketAddress, ChannelPool> channel_pool_map) {
+    protected ClientFactory(final Class<Service> service_interface, final Bootstrap bootstrap) {
 
-        this.channel_pool_map = channel_pool_map;
+        this(service_interface, bootstrap, new ChannelPool(bootstrap));
+    }
+
+    protected ClientFactory(final Class<Service> service_interface, final Bootstrap bootstrap, ChannelPool channel_pool) {
+
         dispatch = ReflectionUtil.sort(service_interface.getMethods());
         class_loader = ClassLoader.getSystemClassLoader();
         interfaces = new Class<?>[] {service_interface};
-        bootstrap = new Bootstrap();
-        configure(handler);
+        this.bootstrap = bootstrap;
+        this.channel_pool = channel_pool;
     }
 
     /**
@@ -88,33 +90,9 @@ public class ClientFactory<Service> {
         bootstrap.group().shutdownGracefully();
     }
 
-    void configure(final ChannelHandler handler) {
-
-        bootstrap.group(CLIENT_EVENT_LOOP);
-        bootstrap.channel(NioSocketChannel.class);
-        bootstrap.option(ChannelOption.CONNECT_TIMEOUT_MILLIS, DEFAULT_CONNECTION_TIMEOUT_IN_MILLIS);
-        bootstrap.option(ChannelOption.TCP_NODELAY, true);
-        bootstrap.handler(handler);
-    }
-
-    protected ChannelPool getChannelPool(InetSocketAddress address) {
-
-        if (channel_pool_map.containsKey(address)) { return channel_pool_map.get(address); }
-        final ChannelPool new_channel_pool = new ChannelPool(bootstrap, address);
-        final ChannelPool existing_channel_pool = channel_pool_map.putIfAbsent(address, new_channel_pool);
-
-        if (existing_channel_pool == null) {
-            return new_channel_pool;
-        }
-        else {
-            closeChannelPoolQuietly(new_channel_pool);
-            return existing_channel_pool;
-        }
-    }
-
     protected Client createClient(final InetSocketAddress address) {
 
-        return new Client(address, dispatch, getChannelPool(address));
+        return new Client(address, dispatch, channel_pool);
     }
 
     @SuppressWarnings("unchecked")
@@ -123,13 +101,15 @@ public class ClientFactory<Service> {
         return (Service) Proxy.newProxyInstance(class_loader, interfaces, handler);
     }
 
-    private static void closeChannelPoolQuietly(final ChannelPool pool) {
+    private static Bootstrap createDefaultBootstrap(final ChannelHandler handler) {
 
-        try {
-            pool.close();
-        }
-        catch (Exception e) {
-            LOGGER.trace("failed to close newly created channel pool ", e);
-        }
+        final Bootstrap bootstrap = new Bootstrap();
+        final NioEventLoopGroup client_event_loop = new NioEventLoopGroup(0, new NamedThreadFactory("client_event_loop_"));
+        bootstrap.group(client_event_loop);
+        bootstrap.channel(NioSocketChannel.class);
+        bootstrap.option(ChannelOption.CONNECT_TIMEOUT_MILLIS, DEFAULT_CONNECTION_TIMEOUT_IN_MILLIS);
+        bootstrap.option(ChannelOption.TCP_NODELAY, true);
+        bootstrap.handler(handler);
+        return bootstrap;
     }
 }
