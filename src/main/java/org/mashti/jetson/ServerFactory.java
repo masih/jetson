@@ -22,6 +22,8 @@ import io.netty.channel.ChannelOption;
 import io.netty.channel.EventLoop;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import org.mashti.jetson.util.NamedThreadFactory;
 
 /**
@@ -32,17 +34,19 @@ import org.mashti.jetson.util.NamedThreadFactory;
 public class ServerFactory<Service> {
 
     protected final ServerBootstrap server_bootstrap;
+    protected final ExecutorService server_request_handler;
 
     /** Instantiates a new server factory. */
     public ServerFactory(final ServerChannelInitializer handler) {
 
-        this(createDefaultServerBootstrap(handler));
+        this(createDefaultServerBootstrap(handler), Executors.newCachedThreadPool(new NamedThreadFactory("server_request_handler")));
     }
 
     /** Instantiates a new server factory. */
-    public ServerFactory(final ServerBootstrap server_bootstrap) {
+    public ServerFactory(final ServerBootstrap server_bootstrap, final ExecutorService server_request_handler) {
 
         this.server_bootstrap = server_bootstrap;
+        this.server_request_handler = server_request_handler;
     }
 
     /**
@@ -53,7 +57,7 @@ public class ServerFactory<Service> {
      */
     public Server createServer(final Service service) {
 
-        return new Server(server_bootstrap, service);
+        return new Server(server_bootstrap, service, server_request_handler);
     }
 
     /**
@@ -68,7 +72,7 @@ public class ServerFactory<Service> {
         server_bootstrap.childGroup().shutdownGracefully();
     }
 
-    private static ServerBootstrap createDefaultServerBootstrap(final ServerChannelInitializer handler) {
+    protected static ServerBootstrap createDefaultServerBootstrap(final ServerChannelInitializer handler) {
 
         final ServerBootstrap server_bootstrap = new ServerBootstrap();
         final NioEventLoopGroup parent_event_loop = new NioEventLoopGroup(100, new NamedThreadFactory("server_parent_event_loop_"));

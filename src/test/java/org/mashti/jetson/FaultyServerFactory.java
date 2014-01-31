@@ -31,7 +31,7 @@ public class FaultyServerFactory<Service> extends ServerFactory<Service> {
     @Override
     public Server createServer(Service service) {
 
-        return new Server(server_bootstrap, service) {
+        return new Server(server_bootstrap, service, server_request_handler) {
 
             @Override
             public void handle(final ChannelHandlerContext context, final FutureResponse future_response) {

@@ -29,7 +29,6 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.InetSocketAddress;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import org.mashti.jetson.exception.IllegalAccessException;
 import org.mashti.jetson.exception.IllegalArgumentException;
 import org.mashti.jetson.exception.InternalServerException;
@@ -47,19 +46,20 @@ public class Server {
     static final AttributeKey<Server> SERVER_ATTRIBUTE = AttributeKey.valueOf("server");
     private static final Logger LOGGER = LoggerFactory.getLogger(Server.class);
     private static final InetSocketAddress DEFAULT_ENDPOINT_ADDRESS = new InetSocketAddress(0);
-    private static final ExecutorService EXECUTOR_SERVICE = Executors.newCachedThreadPool();
     private final ServerBootstrap server_bootstrap;
     private final ChannelGroup server_channel_group;
     private final Object service;
+    private final ExecutorService executor;
     private volatile Channel server_channel;
     private volatile InetSocketAddress endpoint;
     private volatile boolean exposed;
     private volatile WrittenByteCountListener written_byte_count_listener;
 
-    protected Server(final ServerBootstrap server_bootstrap, final Object service) {
+    protected Server(final ServerBootstrap server_bootstrap, final Object service, ExecutorService executor) {
 
         this.server_bootstrap = server_bootstrap;
         this.service = service;
+        this.executor = executor;
         endpoint = DEFAULT_ENDPOINT_ADDRESS;
         server_channel_group = new DefaultChannelGroup(ImmediateEventExecutor.INSTANCE);
     }
@@ -160,7 +160,7 @@ public class Server {
         assert isExposed();
 
         future_response.setWrittenByteCountListener(written_byte_count_listener);
-        EXECUTOR_SERVICE.execute(new Runnable() {
+        executor.execute(new Runnable() {
 
             @Override
             public void run() {
