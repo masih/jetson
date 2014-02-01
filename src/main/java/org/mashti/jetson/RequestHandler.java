@@ -14,6 +14,7 @@
  * You should have received a copy of the GNU General Public License
  * along with jetson.  If not, see <http://www.gnu.org/licenses/>.
  */
+
 package org.mashti.jetson;
 
 import io.netty.channel.Channel;
@@ -33,7 +34,7 @@ class RequestHandler extends ChannelInboundHandlerAdapter {
     public void channelActive(final ChannelHandlerContext context) throws Exception {
 
         final Channel channel = context.channel();
-        final Server server = getServerFromContext(context);
+        final Server server = Server.getServerFromContext(context);
         server.notifyChannelActivation(channel);
         super.channelActive(context);
     }
@@ -42,7 +43,7 @@ class RequestHandler extends ChannelInboundHandlerAdapter {
     public void channelInactive(final ChannelHandlerContext context) throws Exception {
 
         final Channel channel = context.channel();
-        final Server server = getServerFromContext(context);
+        final Server server = Server.getServerFromContext(context);
         server.notifyChannelInactivation(channel);
         super.channelInactive(context);
     }
@@ -50,20 +51,15 @@ class RequestHandler extends ChannelInboundHandlerAdapter {
     @Override
     public void channelRead(final ChannelHandlerContext context, final Object message) throws Exception {
 
-        final Server server = getServerFromContext(context);
+        final Server server = Server.getServerFromContext(context);
         server.handle(context, (FutureResponse) message);
     }
 
     @Override
     public void exceptionCaught(final ChannelHandlerContext context, final Throwable cause) {
 
-        LOGGER.debug("caught on server handler", cause);
+        LOGGER.trace("caught on server handler", cause);
         ChannelPool.notifyCaughtException(context.channel(), cause);
         context.close();
-    }
-
-    private static Server getServerFromContext(final ChannelHandlerContext context) {
-
-        return context.channel().parent().attr(Server.SERVER_ATTRIBUTE).get();
     }
 }

@@ -72,8 +72,10 @@ public class ChannelPool extends GenericKeyedObjectPool<InetSocketAddress, Chann
         final Set<FutureResponse> responses = getFutureResponsesByChannel(channel);
         if (responses != null && !responses.isEmpty()) {
             final RPCException exception = new TransportException("channel was closed");
-            for (final FutureResponse r : responses) {
-                r.setException(exception);
+            for (final FutureResponse future_response : responses) {
+                if (!future_response.isDone()) {
+                    future_response.setException(exception);
+                }
             }
         }
     }
@@ -92,9 +94,13 @@ public class ChannelPool extends GenericKeyedObjectPool<InetSocketAddress, Chann
     static FutureResponse getFutureResponse(final Channel channel, final Integer id) {
 
         final Set<FutureResponse> responses = getFutureResponsesByChannel(channel);
-        for (final FutureResponse r : responses) {
-            if (r.getId().equals(id)) { return r; }
+        assert responses != null : id + " unknown channel: " + channel;
+        if (responses != null) {
+            for (final FutureResponse r : responses) {
+                if (r.getId().equals(id)) { return r; }
+            }
         }
+        LOGGER.warn("received response with id {} from an unknown channel {}", id, channel);
         return null;
     }
 
@@ -121,7 +127,7 @@ public class ChannelPool extends GenericKeyedObjectPool<InetSocketAddress, Chann
         @Override
         public Channel create(InetSocketAddress address) throws Exception {
 
-            LOGGER.debug("making new channel for {}", address);
+            LOGGER.trace("making new channel for {}", address);
             final Channel channel = makeConnection(address);
             channel.attr(FUTURE_RESPONSES_ATTRIBUTE_KEY).set(new ConcurrentSkipListSet<FutureResponse>());
             return channel;

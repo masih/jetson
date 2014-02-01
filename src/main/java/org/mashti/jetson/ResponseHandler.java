@@ -14,6 +14,7 @@
  * You should have received a copy of the GNU General Public License
  * along with jetson.  If not, see <http://www.gnu.org/licenses/>.
  */
+
 package org.mashti.jetson;
 
 import io.netty.channel.Channel;
@@ -33,7 +34,7 @@ class ResponseHandler extends ChannelInboundHandlerAdapter {
 
         final Channel channel = context.channel();
         ChannelPool.notifyChannelInactivation(channel);
-        LOGGER.debug("client disconnected {}", channel.remoteAddress());
+        LOGGER.trace("client disconnected {}", channel);
 
         super.channelInactive(context);
     }
@@ -41,7 +42,7 @@ class ResponseHandler extends ChannelInboundHandlerAdapter {
     @Override
     public void exceptionCaught(final ChannelHandlerContext context, final Throwable cause) {
 
-        LOGGER.debug("caught on client handler", cause);
+        LOGGER.trace("caught on client handler", cause);
         ChannelPool.notifyCaughtException(context.channel(), cause);
         context.close();
     }

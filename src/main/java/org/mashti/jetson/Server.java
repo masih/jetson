@@ -155,6 +155,11 @@ public class Server {
         return endpoint;
     }
 
+    static Server getServerFromContext(final ChannelHandlerContext context) {
+
+        return context.channel().parent().attr(SERVER_ATTRIBUTE).get();
+    }
+
     protected void handle(final ChannelHandlerContext context, final FutureResponse future_response) {
 
         assert isExposed();
