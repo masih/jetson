@@ -59,7 +59,7 @@ class RequestHandler extends ChannelInboundHandlerAdapter {
     public void exceptionCaught(final ChannelHandlerContext context, final Throwable cause) {
 
         LOGGER.trace("caught on server handler", cause);
-        ChannelPool.notifyCaughtException(context.channel(), cause);
+        ChannelUtils.notifyCaughtException(context.channel(), cause);
         context.close();
     }
 }

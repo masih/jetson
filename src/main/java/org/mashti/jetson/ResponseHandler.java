@@ -33,7 +33,7 @@ class ResponseHandler extends ChannelInboundHandlerAdapter {
     public void channelInactive(final ChannelHandlerContext context) throws Exception {
 
         final Channel channel = context.channel();
-        ChannelPool.notifyChannelInactivation(channel);
+        ChannelUtils.notifyChannelInactivation(channel);
         LOGGER.trace("client disconnected {}", channel);
 
         super.channelInactive(context);
@@ -43,7 +43,7 @@ class ResponseHandler extends ChannelInboundHandlerAdapter {
     public void exceptionCaught(final ChannelHandlerContext context, final Throwable cause) {
 
         LOGGER.trace("caught on client handler", cause);
-        ChannelPool.notifyCaughtException(context.channel(), cause);
+        ChannelUtils.notifyCaughtException(context.channel(), cause);
         context.close();
     }
 }

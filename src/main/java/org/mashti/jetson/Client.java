@@ -17,14 +17,13 @@
 
 package org.mashti.jetson;
 
+import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
 import io.netty.util.concurrent.GenericFutureListener;
-import java.io.IOException;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.net.InetSocketAddress;
-import java.util.NoSuchElementException;
 import java.util.concurrent.ExecutionException;
 import org.mashti.jetson.exception.InternalServerException;
 import org.mashti.jetson.exception.RPCException;
@@ -37,15 +36,16 @@ public class Client implements InvocationHandler {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(Client.class);
     private final InetSocketAddress address;
-    private final ChannelPool channel_pool;
     private final Method[] dispatch;
+    private final Bootstrap bootstrap;
     private volatile WrittenByteCountListener written_byte_count_listener;
+    private volatile Channel channel;
 
-    protected Client(final InetSocketAddress address, final Method[] dispatch, final ChannelPool channel_pool) {
+    protected Client(final InetSocketAddress address, final Method[] dispatch, final Bootstrap bootstrap) {
 
         this.address = address;
         this.dispatch = dispatch;
-        this.channel_pool = channel_pool;
+        this.bootstrap = bootstrap;
     }
 
     public InetSocketAddress getAddress() {
@@ -100,25 +100,22 @@ public class Client implements InvocationHandler {
 
     protected FutureResponse writeRequest(final FutureResponse future_response) throws RPCException {
 
-        final Channel channel = borrowChannel();
-        try {
-            final ChannelFuture write = channel.write(future_response);
-            write.addListener(new GenericFutureListener<ChannelFuture>() {
+        final Channel channel = getChannel();
+        final ChannelFuture write = channel.write(future_response);
+        write.addListener(new GenericFutureListener<ChannelFuture>() {
 
-                @Override
-                public void operationComplete(final ChannelFuture future) throws Exception {
+            @Override
+            public void operationComplete(final ChannelFuture future) throws Exception {
 
-                    if (!future.isSuccess()) {
-                        future_response.setException(new RPCException(future.cause()));
-                    }
+                if (!future.isSuccess()) {
+                    final Throwable cause = future.cause();
+                    RPCException rpc_error = cause instanceof RPCException ? (RPCException) cause : new RPCException(cause);
+                    future_response.setException(rpc_error);
                 }
-            });
-            beforeFlush(channel, future_response);
-            channel.flush();
-        }
-        finally {
-            returnChannel(channel);
-        }
+            }
+        });
+        beforeFlush(channel, future_response);
+        channel.flush();
         return future_response;
     }
 
@@ -141,34 +138,19 @@ public class Client implements InvocationHandler {
         return writeRequest(future_response);
     }
 
-    private Channel borrowChannel() throws InternalServerException, TransportException {
+    private synchronized Channel getChannel() throws RPCException {
 
-        try {
-            return channel_pool.borrowObject(address);
+        if (channel == null || !channel.isActive()) {
+            try {
+                channel = ChannelUtils.create(address, bootstrap);
+            }
+            catch (InterruptedException e) {
+                throw new InternalServerException(e);
+            }
+            catch (Exception e) {
+                throw e instanceof RPCException ? (RPCException) e : new TransportException(e);
+            }
         }
-        catch (final InterruptedException e) {
-            throw new InternalServerException(e);
-        }
-        catch (final ExecutionException e) {
-            final Throwable cause = e.getCause();
-            if (cause instanceof IOException) { throw new TransportException(cause); }
-            throw new InternalServerException(e);
-        }
-        catch (final NoSuchElementException e) {
-            throw new TransportException(e);
-        }
-        catch (final Exception e) {
-            throw new InternalServerException(e);
-        }
-    }
-
-    private void returnChannel(final Channel channel) throws InternalServerException {
-
-        try {
-            channel_pool.returnObject(address, channel);
-        }
-        catch (final Exception e) {
-            throw new InternalServerException(e);
-        }
+        return channel;
     }
 }

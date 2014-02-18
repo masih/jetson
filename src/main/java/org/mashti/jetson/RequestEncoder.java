@@ -49,7 +49,7 @@ public abstract class RequestEncoder extends MessageToByteEncoder<FutureResponse
     private void addPendingFutureResponse(final ChannelHandlerContext context, final FutureResponse future_response) {
 
         final Channel channel = context.channel();
-        ChannelPool.addFutureResponse(channel, future_response);
+        ChannelUtils.addFutureResponse(channel, future_response);
     }
 
     protected abstract void encodeRequest(final ChannelHandlerContext context, final Integer id, final Method method, Object[] arguments, final ByteBuf out) throws RPCException;

@@ -25,30 +25,15 @@ import io.netty.util.AttributeKey;
 import java.net.InetSocketAddress;
 import java.util.Set;
 import java.util.concurrent.ConcurrentSkipListSet;
-import org.apache.commons.pool2.BaseKeyedPooledObjectFactory;
-import org.apache.commons.pool2.PooledObject;
-import org.apache.commons.pool2.impl.DefaultPooledObject;
-import org.apache.commons.pool2.impl.GenericKeyedObjectPool;
 import org.mashti.jetson.exception.RPCException;
 import org.mashti.jetson.exception.TransportException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class ChannelPool extends GenericKeyedObjectPool<InetSocketAddress, Channel> {
+public class ChannelUtils {
 
     static final AttributeKey<Set<FutureResponse>> FUTURE_RESPONSES_ATTRIBUTE_KEY = AttributeKey.valueOf("future_responses");
-    private static final Logger LOGGER = LoggerFactory.getLogger(ChannelPool.class);
-
-    public ChannelPool(final Bootstrap bootstrap) {
-
-        this(new PooledChannelFactory(bootstrap));
-    }
-
-    private ChannelPool(final PooledChannelFactory factory) {
-
-        super(factory);
-        configure();
-    }
+    private static final Logger LOGGER = LoggerFactory.getLogger(ChannelUtils.class);
 
     static boolean addFutureResponse(final Channel channel, final FutureResponse response) {
 
@@ -109,56 +94,19 @@ public class ChannelPool extends GenericKeyedObjectPool<InetSocketAddress, Chann
         return channel.attr(FUTURE_RESPONSES_ATTRIBUTE_KEY).get();
     }
 
-    void configure() {
+    static Channel create(InetSocketAddress address, Bootstrap bootstrap) throws Exception {
 
-        setTestOnReturn(true);
-        setTestOnBorrow(true);
+        LOGGER.trace("making new channel for {}", address);
+        final Channel channel = makeConnection(address, bootstrap);
+        channel.attr(FUTURE_RESPONSES_ATTRIBUTE_KEY).set(new ConcurrentSkipListSet<FutureResponse>());
+        return channel;
     }
 
-    static class PooledChannelFactory extends BaseKeyedPooledObjectFactory<InetSocketAddress, Channel> {
+    private static Channel makeConnection(InetSocketAddress address, Bootstrap bootstrap) throws InterruptedException {
 
-        private final Bootstrap bootstrap;
-
-        PooledChannelFactory(final Bootstrap bootstrap) {
-
-            this.bootstrap = bootstrap;
-        }
-
-        @Override
-        public Channel create(InetSocketAddress address) throws Exception {
-
-            LOGGER.trace("making new channel for {}", address);
-            final Channel channel = makeConnection(address);
-            channel.attr(FUTURE_RESPONSES_ATTRIBUTE_KEY).set(new ConcurrentSkipListSet<FutureResponse>());
-            return channel;
-        }
-
-        @Override
-        public PooledObject<Channel> wrap(final Channel channel) {
-
-            return new DefaultPooledObject<Channel>(channel);
-        }
-
-        @Override
-        public boolean validateObject(final InetSocketAddress address, final PooledObject<Channel> pooled_channel) {
-
-            final Channel channel = pooled_channel.getObject();
-            return channel.isActive() && pooled_channel.getIdleTimeMillis() < 5000;
-        }
-
-        @Override
-        public void destroyObject(final InetSocketAddress address, final PooledObject<Channel> pooled_channel) throws Exception {
-
-            final Channel channel = pooled_channel.getObject();
-            channel.close();
-            channel.disconnect();
-        }
-
-        private Channel makeConnection(InetSocketAddress address) throws InterruptedException {
-
-            final ChannelFuture connect_future = bootstrap.connect(address);
-            connect_future.sync();
-            return connect_future.channel();
-        }
+        final ChannelFuture connect_future = bootstrap.connect(address);
+        connect_future.sync();
+        return connect_future.channel();
     }
+
 }
