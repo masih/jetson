@@ -36,7 +36,7 @@ abstract class BaseChannelInitializer extends ChannelInitializer<SocketChannel> 
     private static final int DEFAULT_LENGTH_FIELD_LENGTH = 2;
     private static final int DEFAULT_MAX_FRAME_LENGTH = 0xFFFF;
     private static final Logger LOGGER = LoggerFactory.getLogger(BaseChannelInitializer.class);
-    private static final long DEFAULT_READ_TIMEOUT_IN_SECONDS = 30;
+    private static final long DEFAULT_READ_TIMEOUT_IN_SECONDS = 10;
     private static final long DEFAULT_WRITE_TIMEOUT_IN_SECONDS = DEFAULT_READ_TIMEOUT_IN_SECONDS;
     private static final LengthFieldPrepender DEFAULT_FRAME_ENCODER = new LengthFieldPrepender(DEFAULT_LENGTH_FIELD_LENGTH);
     private static final LoggingHandler LOGGING = new LoggingHandler(LogLevel.INFO);

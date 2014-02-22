@@ -14,6 +14,7 @@
  * You should have received a copy of the GNU General Public License
  * along with jetson.  If not, see <http://www.gnu.org/licenses/>.
  */
+
 package org.mashti.jetson;
 
 import java.util.Collection;
@@ -36,6 +37,8 @@ public interface TestService {
     Boolean sayTrue() throws RPCException;
 
     Boolean sayFalse() throws RPCException;
+
+    void sleepForFiveSeconds() throws RPCException;
 
     Boolean sayFalseOnRemote(Integer port) throws RPCException;
 

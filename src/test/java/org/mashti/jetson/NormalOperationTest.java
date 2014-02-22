@@ -78,7 +78,7 @@ public class NormalOperationTest extends AbstractTest {
     @Test
     public void testConcurrentClients() throws RPCException, InterruptedException, ExecutionException {
 
-        final ExecutorService executor = Executors.newFixedThreadPool(100);
+        final ExecutorService executor = Executors.newFixedThreadPool(500);
         try {
             final CountDownLatch start_latch = new CountDownLatch(1);
             final List<Future<Void>> future_concurrent_tests = new ArrayList<Future<Void>>();
@@ -97,6 +97,7 @@ public class NormalOperationTest extends AbstractTest {
                         testSay65535();
                         testSayFalse();
                         testSayFalseOnRemote();
+                        client.sleepForFiveSeconds();
                         testSayMinus65535();
                         testSaySomething();
                         testSayTrue();
@@ -217,7 +218,7 @@ public class NormalOperationTest extends AbstractTest {
     @Test
     public void testConcurrentServers() throws RPCException, InterruptedException, ExecutionException {
 
-        final ExecutorService executor = Executors.newFixedThreadPool(100);
+        final ExecutorService executor = Executors.newFixedThreadPool(500);
         try {
             final CountDownLatch start_latch = new CountDownLatch(1);
             final List<Future<Void>> future_concurrent_tests = new ArrayList<Future<Void>>();
@@ -234,6 +235,7 @@ public class NormalOperationTest extends AbstractTest {
 
                         try {
                             testAddOnClient(client);
+                            client.sleepForFiveSeconds();
                             testAddOnRemoteClient(client);
                         }
                         finally {

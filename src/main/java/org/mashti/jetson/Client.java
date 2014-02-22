@@ -17,13 +17,14 @@
 
 package org.mashti.jetson;
 
-import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
 import io.netty.util.concurrent.GenericFutureListener;
+import java.io.IOException;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.net.InetSocketAddress;
+import java.util.NoSuchElementException;
 import java.util.concurrent.ExecutionException;
 import org.mashti.jetson.exception.InternalServerException;
 import org.mashti.jetson.exception.RPCException;
@@ -37,15 +38,15 @@ public class Client implements InvocationHandler {
     private static final Logger LOGGER = LoggerFactory.getLogger(Client.class);
     private final InetSocketAddress address;
     private final Method[] dispatch;
-    private final Bootstrap bootstrap;
+    private final ChannelPool channel_pool;
     private volatile WrittenByteCountListener written_byte_count_listener;
-    private volatile Channel channel;
 
-    protected Client(final InetSocketAddress address, final Method[] dispatch, final Bootstrap bootstrap) {
+    protected Client(final InetSocketAddress address, final Method[] dispatch, final ChannelPool channel_pool) {
 
         this.address = address;
         this.dispatch = dispatch;
-        this.bootstrap = bootstrap;
+        this.channel_pool = channel_pool;
+
     }
 
     public InetSocketAddress getAddress() {
@@ -62,6 +63,7 @@ public class Client implements InvocationHandler {
     public Object invoke(final Object proxy, final Method method, final Object[] params) throws Throwable {
 
         if (dispatchContains(method)) {
+
             final FutureResponse future_response = writeRequest(method, params);
 
             try {
@@ -100,23 +102,48 @@ public class Client implements InvocationHandler {
 
     protected FutureResponse writeRequest(final FutureResponse future_response) throws RPCException {
 
-        final Channel channel = getChannel();
-        final ChannelFuture write = channel.write(future_response);
-        write.addListener(new GenericFutureListener<ChannelFuture>() {
+        final ChannelFuture channel_future = borrowAndReturnChannelFuture();
+        channel_future.addListener(new GenericFutureListener<ChannelFuture>() {
 
             @Override
             public void operationComplete(final ChannelFuture future) throws Exception {
 
-                if (!future.isSuccess()) {
-                    final Throwable cause = future.cause();
-                    RPCException rpc_error = cause instanceof RPCException ? (RPCException) cause : new RPCException(cause);
-                    future_response.setException(rpc_error);
+                if (future.isSuccess()) {
+                    final Channel channel = channel_future.channel();
+                    final ChannelFuture write = channel.write(future_response);
+                    write.addListener(new GenericFutureListener<ChannelFuture>() {
+
+                        @Override
+                        public void operationComplete(final ChannelFuture future) throws Exception {
+
+                            if (!future.isSuccess()) {
+                                setException(future.cause(), future_response);
+                            }
+                        }
+                    });
+                    beforeFlush(channel, future_response);
+                    channel.flush();
+                }
+                else {
+                    setException(future.cause(), future_response);
                 }
             }
         });
-        beforeFlush(channel, future_response);
-        channel.flush();
+
         return future_response;
+    }
+
+    private ChannelFuture borrowAndReturnChannelFuture() throws RPCException {
+
+        final ChannelFuture channel_future = borrowChannel();
+        returnChannel(channel_future);
+        return channel_future;
+    }
+
+    private void setException(final Throwable cause, final FutureResponse future_response) {
+
+        RPCException rpc_error = cause instanceof RPCException ? (RPCException) cause : new TransportException(cause);
+        future_response.setException(rpc_error);
     }
 
     protected void beforeFlush(final Channel channel, final FutureResponse future_response) throws RPCException {
@@ -138,19 +165,29 @@ public class Client implements InvocationHandler {
         return writeRequest(future_response);
     }
 
-    private synchronized Channel getChannel() throws RPCException {
+    protected ChannelFuture borrowChannel() throws RPCException {
 
-        if (channel == null || !channel.isActive()) {
-            try {
-                channel = ChannelUtils.create(address, bootstrap);
-            }
-            catch (InterruptedException e) {
-                throw new InternalServerException(e);
-            }
-            catch (Exception e) {
-                throw e instanceof RPCException ? (RPCException) e : new TransportException(e);
-            }
+        try {
+            return channel_pool.borrowObject(address);
         }
-        return channel;
+        catch (final InterruptedException e) {
+            throw new InternalServerException(e);
+        }
+        catch (final ExecutionException e) {
+            final Throwable cause = e.getCause();
+            if (cause instanceof IOException) { throw new TransportException(cause); }
+            throw new InternalServerException(e);
+        }
+        catch (final NoSuchElementException e) {
+            throw new TransportException(e);
+        }
+        catch (final Exception e) {
+            throw new InternalServerException(e);
+        }
+    }
+
+    protected void returnChannel(ChannelFuture channel) {
+
+        channel_pool.returnObject(address, channel);
     }
 }

@@ -38,6 +38,6 @@ public abstract class ResponseDecoder extends MessageToMessageDecoder<ByteBuf> {
 
     protected FutureResponse getFutureResponseById(final ChannelHandlerContext context, final Integer id) {
 
-        return ChannelUtils.getFutureResponse(context.channel(), id);
+        return ChannelPool.getFutureResponse(context.channel(), id);
     }
 }
