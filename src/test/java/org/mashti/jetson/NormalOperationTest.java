@@ -113,7 +113,7 @@ public class NormalOperationTest extends AbstractTest {
             }
         }
         finally {
-            executor.shutdown();
+            executor.shutdownNow();
         }
     }
 
@@ -239,7 +239,12 @@ public class NormalOperationTest extends AbstractTest {
                             testAddOnRemoteClient(client);
                         }
                         finally {
-                            server.unexpose();
+                            try {
+                                server.unexpose();
+                            }
+                            catch (IOException e) {
+
+                            }
                         }
                         return null;
                     }
@@ -251,7 +256,7 @@ public class NormalOperationTest extends AbstractTest {
             }
         }
         finally {
-            executor.shutdown();
+            executor.shutdownNow();
         }
     }
 
