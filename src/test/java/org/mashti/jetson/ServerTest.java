@@ -32,7 +32,7 @@ public class ServerTest extends AbstractTest {
     }
 
     @Test
-    public void testExposure() throws IOException {
+    public void testExposure() throws IOException, InterruptedException {
 
         client.saySomething();
         server.unexpose();
@@ -45,6 +45,7 @@ public class ServerTest extends AbstractTest {
         }
 
         server.expose();
+        Thread.sleep(5000);
         client.saySomething();
         server.unexpose();
         try {

@@ -14,6 +14,7 @@
  * You should have received a copy of the GNU General Public License
  * along with jetson.  If not, see <http://www.gnu.org/licenses/>.
  */
+
 package org.mashti.jetson;
 
 import com.fasterxml.jackson.core.JsonFactory;
@@ -49,6 +50,7 @@ public abstract class AbstractTest {
     static final ClientFactory<TestService> JSON_CLIENT_FACTORY = new JsonClientFactory<TestService>(TestService.class, JSON_FACTORY);
     private static final ServerFactory<TestService> LEAN_SERVER_FACTORY = new LeanServerFactory<TestService>(TestService.class, CODECS);
     private static final ServerFactory<TestService> JSON_SERVER_FACTORY = new JsonServerFactory<TestService>(TestService.class, JSON_FACTORY);
+
     static {
         CODECS.register(0, new Codec() {
 
@@ -103,8 +105,8 @@ public abstract class AbstractTest {
     public static Collection<Object[]> getParameters() {
 
         final Collection<Object[]> parameters = new ArrayList<Object[]>();
-        parameters.add(new Object[]{LEAN_CLIENT_FACTORY, LEAN_SERVER_FACTORY});
-        parameters.add(new Object[]{JSON_CLIENT_FACTORY, JSON_SERVER_FACTORY});
+        parameters.add(new Object[] {LEAN_CLIENT_FACTORY, LEAN_SERVER_FACTORY});
+        parameters.add(new Object[] {JSON_CLIENT_FACTORY, JSON_SERVER_FACTORY});
 
         return parameters;
     }
@@ -112,9 +114,9 @@ public abstract class AbstractTest {
     @Before
     public void setUp() throws Exception {
 
-        server = startJsonRpcTestServer();
+        server = startTestServer();
         server_address = server.getLocalSocketAddress();
-        temp_server = startJsonRpcTestServer();
+        temp_server = startTestServer();
         temp_server_port = temp_server.getLocalSocketAddress().getPort();
         client = client_factory.get(server_address);
     }
@@ -128,9 +130,10 @@ public abstract class AbstractTest {
         //        client_factory.shutdown();
     }
 
-    Server startJsonRpcTestServer() throws IOException {
+    Server startTestServer() throws IOException {
 
         final Server server = server_factory.createServer(getService());
+        server.setBindAddress(new InetSocketAddress("localhost", 0));
         server.expose();
         return server;
     }
