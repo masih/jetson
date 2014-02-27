@@ -126,8 +126,6 @@ public abstract class AbstractTest {
 
         server.unexpose();
         temp_server.unexpose();
-        //        server_factory.shutdown();
-        //        client_factory.shutdown();
     }
 
     Server startTestServer() throws IOException {

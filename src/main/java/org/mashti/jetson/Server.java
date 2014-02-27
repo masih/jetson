@@ -28,7 +28,6 @@ import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.InetSocketAddress;
-import java.util.concurrent.ExecutorService;
 import org.mashti.jetson.exception.IllegalAccessException;
 import org.mashti.jetson.exception.IllegalArgumentException;
 import org.mashti.jetson.exception.InternalServerException;
@@ -49,17 +48,15 @@ public class Server {
     private final ServerBootstrap server_bootstrap;
     private final ChannelGroup server_channel_group;
     private final Object service;
-    private final ExecutorService executor;
     private volatile Channel server_channel;
     private volatile InetSocketAddress endpoint;
     private volatile boolean exposed;
     private volatile WrittenByteCountListener written_byte_count_listener;
 
-    protected Server(final ServerBootstrap server_bootstrap, final Object service, ExecutorService executor) {
+    protected Server(final ServerBootstrap server_bootstrap, final Object service) {
 
         this.server_bootstrap = server_bootstrap;
         this.service = service;
-        this.executor = executor;
         endpoint = DEFAULT_ENDPOINT_ADDRESS;
         server_channel_group = new DefaultChannelGroup(ImmediateEventExecutor.INSTANCE);
     }
@@ -165,24 +162,17 @@ public class Server {
         assert isExposed();
 
         future_response.setWrittenByteCountListener(written_byte_count_listener);
-        executor.execute(new Runnable() {
-
-            @Override
-            public void run() {
-
-                final Method method = future_response.getMethod();
-                final Object[] arguments = future_response.getArguments();
-                if (!future_response.isDone()) {
-                    try {
-                        future_response.set(handleRequest(method, arguments));
-                    }
-                    catch (final Throwable e) {
-                        future_response.setException(e);
-                    }
-                }
-                context.writeAndFlush(future_response);
+        final Method method = future_response.getMethod();
+        final Object[] arguments = future_response.getArguments();
+        if (!future_response.isDone()) {
+            try {
+                future_response.set(handleRequest(method, arguments));
             }
-        });
+            catch (final Throwable e) {
+                future_response.setException(e);
+            }
+        }
+        context.writeAndFlush(future_response);
     }
 
     protected void notifyChannelActivation(final Channel channel) {

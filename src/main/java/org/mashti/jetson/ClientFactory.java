@@ -104,7 +104,7 @@ public class ClientFactory<Service> {
     private static Bootstrap createDefaultBootstrap(final ChannelHandler handler) {
 
         final Bootstrap bootstrap = new Bootstrap();
-        final NioEventLoopGroup client_event_loop = new NioEventLoopGroup(100, new NamedThreadFactory("client_event_loop_"));
+        final NioEventLoopGroup client_event_loop = new NioEventLoopGroup(0, new NamedThreadFactory("client_event_loop_"));
         bootstrap.group(client_event_loop);
         bootstrap.channel(NioSocketChannel.class);
         bootstrap.option(ChannelOption.CONNECT_TIMEOUT_MILLIS, DEFAULT_CONNECTION_TIMEOUT_IN_MILLIS);

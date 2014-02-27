@@ -97,7 +97,6 @@ public class NormalOperationTest extends AbstractTest {
                         testSay65535();
                         testSayFalse();
                         testSayFalseOnRemote();
-                        client.sleepForFiveSeconds();
                         testSayMinus65535();
                         testSaySomething();
                         testSayTrue();
@@ -235,15 +234,13 @@ public class NormalOperationTest extends AbstractTest {
 
                         try {
                             testAddOnClient(client);
-                            client.sleepForFiveSeconds();
-                            testAddOnRemoteClient(client);
                         }
                         finally {
                             try {
                                 server.unexpose();
                             }
                             catch (IOException e) {
-
+                                e.printStackTrace();
                             }
                         }
                         return null;

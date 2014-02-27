@@ -97,7 +97,7 @@ public class NormalOperationTestService implements TestService {
     @Override
     public Boolean sayFalseOnRemote(final Integer port) throws RPCException {
 
-        final TestService remote_service = proxy_factory.get(new InetSocketAddress(port));
+        final TestService remote_service = proxy_factory.get(new InetSocketAddress("localhost", port));
         return remote_service.sayFalse();
     }
 
@@ -110,7 +110,7 @@ public class NormalOperationTestService implements TestService {
     @Override
     public void throwExceptionOnRemote(final Integer port) throws Exception {
 
-        final TestService remote_service = proxy_factory.get(new InetSocketAddress(port));
+        final TestService remote_service = proxy_factory.get(new InetSocketAddress("localhost", port));
         remote_service.throwException();
     }
 
@@ -123,7 +123,7 @@ public class NormalOperationTestService implements TestService {
     @Override
     public Integer addOnRemote(final Integer a, final Integer b, final Integer port) throws RPCException {
 
-        final TestService remote_service = proxy_factory.get(new InetSocketAddress(port));
+        final TestService remote_service = proxy_factory.get(new InetSocketAddress("localhost", port));
         return remote_service.add(a, b);
     }
 
@@ -136,7 +136,7 @@ public class NormalOperationTestService implements TestService {
     @Override
     public TestObject getObjectOnRemote(final Integer port) throws RPCException {
 
-        final TestService remote_service = proxy_factory.get(new InetSocketAddress(port));
+        final TestService remote_service = proxy_factory.get(new InetSocketAddress("localhost", port));
         return remote_service.getObject();
     }
 
