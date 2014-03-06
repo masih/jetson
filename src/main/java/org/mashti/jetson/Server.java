@@ -120,7 +120,7 @@ public class Server {
                 exposure_changed = true;
             }
             catch (final Exception e) {
-                LOGGER.error("error while un-exposing server", e);
+                LOGGER.debug("error while un-exposing server", e);
                 throw new IOException(e);
             }
         }
@@ -223,7 +223,7 @@ public class Server {
             server_channel = server_bootstrap.bind(endpoint).sync().channel();
         }
         catch (final Exception e) {
-            LOGGER.error("error while waiting for channel exposure", e);
+            LOGGER.debug("error while waiting for channel exposure", e);
             throw new IOException(e);
         }
     }
