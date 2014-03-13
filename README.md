@@ -35,7 +35,7 @@ and finally, add Jetson dependency:
 The project is licensed under GNU GPL version 3.0.
 
 ## Acknowledgements
-Thanks to [YourKit][http://www.yourkit.com/java/profiler/index.jsp] for supporting Jetson with its full-featured Java Profiler.
+Thanks to [YourKit](http://www.yourkit.com/java/profiler/index.jsp) for supporting Jetson with its full-featured Java Profiler.
 
 
 
