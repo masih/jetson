@@ -37,7 +37,3 @@ The project is licensed under GNU GPL version 3.0.
 ## Acknowledgements
 Thanks to [YourKit](http://www.yourkit.com/java/profiler/index.jsp) for supporting Jetson with its full-featured Java Profiler.
 
-
-
-[![Bitdeli Badge](https://d2weczhvl823v0.cloudfront.net/mashti/jetson/trend.png)](https://bitdeli.com/free "Bitdeli Badge")
-
