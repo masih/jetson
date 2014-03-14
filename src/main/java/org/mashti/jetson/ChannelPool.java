@@ -38,6 +38,7 @@ public class ChannelPool extends GenericKeyedObjectPool<InetSocketAddress, Chann
 
     static final AttributeKey<Set<FutureResponse>> FUTURE_RESPONSES_ATTRIBUTE_KEY = AttributeKey.valueOf("future_responses");
     private static final Logger LOGGER = LoggerFactory.getLogger(ChannelPool.class);
+    private final PooledChannelFactory factory;
 
     public ChannelPool(final Bootstrap bootstrap) {
 
@@ -47,7 +48,13 @@ public class ChannelPool extends GenericKeyedObjectPool<InetSocketAddress, Chann
     private ChannelPool(final PooledChannelFactory factory) {
 
         super(factory);
+        this.factory = factory;
         configure();
+    }
+
+    public void setMaxPooledObjectAgeInMillis(int max_age_millis) {
+
+        factory.max_age_millis = max_age_millis;
     }
 
     static boolean addFutureResponse(final Channel channel, final FutureResponse response) {
@@ -85,8 +92,8 @@ public class ChannelPool extends GenericKeyedObjectPool<InetSocketAddress, Chann
         final Set<FutureResponse> responses = getFutureResponsesByChannel(channel);
         if (responses != null && !responses.isEmpty()) {
             final RPCException exception = new RPCException(cause);
-            for (final FutureResponse r : responses) {
-                r.setException(exception);
+            for (final FutureResponse future_response : responses) {
+                future_response.setException(exception);
             }
         }
     }
@@ -118,6 +125,7 @@ public class ChannelPool extends GenericKeyedObjectPool<InetSocketAddress, Chann
     static class PooledChannelFactory extends BaseKeyedPooledObjectFactory<InetSocketAddress, ChannelFuture> {
 
         private final Bootstrap bootstrap;
+        private int max_age_millis = 2000;
 
         PooledChannelFactory(final Bootstrap bootstrap) {
 
@@ -144,7 +152,7 @@ public class ChannelPool extends GenericKeyedObjectPool<InetSocketAddress, Chann
 
             final ChannelFuture channel_future = pooled_channel.getObject();
             final long since_creation_time = System.currentTimeMillis() - pooled_channel.getCreateTime();
-            return !channel_future.isDone() || (!channel_future.isSuccess() && since_creation_time < 2000) || (channel_future.isSuccess() && !channel_future.channel().closeFuture().isSuccess());
+            return !channel_future.isDone() || (!channel_future.isSuccess() && since_creation_time < max_age_millis) || (channel_future.isSuccess() && !channel_future.channel().closeFuture().isSuccess());
         }
 
         @Override

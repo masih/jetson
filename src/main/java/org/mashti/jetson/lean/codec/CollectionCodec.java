@@ -14,6 +14,7 @@
  * You should have received a copy of the GNU General Public License
  * along with jetson.  If not, see <http://www.gnu.org/licenses/>.
  */
+
 package org.mashti.jetson.lean.codec;
 
 import io.netty.buffer.ByteBuf;
@@ -74,7 +75,7 @@ public abstract class CollectionCodec implements Codec {
 
     }
 
-    Type getComponentType(final Type type) {
+    protected Type getComponentType(final Type type) {
 
         return type instanceof ParameterizedType ? ((ParameterizedType) type).getActualTypeArguments()[0] : Object.class;
     }

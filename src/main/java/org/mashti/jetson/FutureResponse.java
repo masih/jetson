@@ -14,6 +14,7 @@
  * You should have received a copy of the GNU General Public License
  * along with jetson.  If not, see <http://www.gnu.org/licenses/>.
  */
+
 package org.mashti.jetson;
 
 import com.google.common.util.concurrent.AbstractFuture;
@@ -21,7 +22,7 @@ import java.lang.reflect.Method;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /** @author Masih Hajiarabderkani (mh638@st-andrews.ac.uk) */
-public class FutureResponse extends AbstractFuture<Object> implements Comparable<FutureResponse>, WrittenByteCountListener {
+public class FutureResponse<Result> extends AbstractFuture<Result> implements Comparable<FutureResponse<?>>, WrittenByteCountListener {
 
     private static final AtomicInteger NEXT_ID = new AtomicInteger();
     private final Integer id;
@@ -72,7 +73,7 @@ public class FutureResponse extends AbstractFuture<Object> implements Comparable
     }
 
     @Override
-    public final boolean set(final Object value) {
+    public final boolean set(final Result value) {
 
         return super.set(value);
     }
@@ -84,7 +85,7 @@ public class FutureResponse extends AbstractFuture<Object> implements Comparable
     }
 
     @Override
-    public int compareTo(final FutureResponse o) {
+    public int compareTo(final FutureResponse<?> o) {
 
         return getId().compareTo(o.getId());
     }
@@ -100,7 +101,7 @@ public class FutureResponse extends AbstractFuture<Object> implements Comparable
 
         if (this == other) { return true; }
         if (!(other instanceof FutureResponse)) { return false; }
-        final FutureResponse that = (FutureResponse) other;
+        final FutureResponse<?> that = (FutureResponse<?>) other;
         return id.equals(that.id);
     }
 

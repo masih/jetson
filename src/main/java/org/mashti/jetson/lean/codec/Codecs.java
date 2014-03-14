@@ -14,11 +14,13 @@
  * You should have received a copy of the GNU General Public License
  * along with jetson.  If not, see <http://www.gnu.org/licenses/>.
  */
+
 package org.mashti.jetson.lean.codec;
 
 import io.netty.buffer.ByteBuf;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import org.mashti.jetson.exception.RPCException;
 import org.mashti.jetson.exception.UnknownTypeException;
@@ -72,20 +74,23 @@ public class Codecs {
         return false;
     }
 
-    public synchronized void encodeAs(final Object value, final ByteBuf out, final Type type) throws RPCException {
+    public void encodeAs(final Object value, final ByteBuf out, final Type type) throws RPCException {
 
         get(type).encode(value, out, this, type);
     }
 
-    public synchronized <Value> Value decodeAs(final ByteBuf in, final Type type) throws RPCException {
+    public <Value> Value decodeAs(final ByteBuf in, final Type type) throws RPCException {
 
         return get(type).decode(in, this, type);
     }
 
-    synchronized Codec get(final Type type) throws UnknownTypeException {
+    Codec get(final Type type) throws UnknownTypeException {
 
-        for (final Codec codec : codecs) {
+        final Iterator<Codec> codecs_iterator = codecs.iterator();
+        while (codecs_iterator.hasNext()) {
+            Codec codec = codecs_iterator.next();
             if (codec != null && codec.isSupported(type)) { return codec; }
+
         }
 
         throw new UnknownTypeException(type);

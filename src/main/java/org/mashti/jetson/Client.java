@@ -100,10 +100,18 @@ public class Client implements InvocationHandler {
         return response;
     }
 
-    protected FutureResponse writeRequest(final FutureResponse future_response) throws RPCException {
+    protected FutureResponse writeRequest(final FutureResponse future_response) {
 
-        final ChannelFuture channel_future = borrowAndReturnChannelFuture();
-        channel_future.addListener(new GenericFutureListener<ChannelFuture>() {
+        final ChannelFuture channel_future;
+        try {
+            channel_future = borrowAndReturnChannelFuture();
+        }
+        catch (RPCException e) {
+            future_response.setException(e);
+            return future_response;
+        }
+
+        final GenericFutureListener<ChannelFuture> listener = new GenericFutureListener<ChannelFuture>() {
 
             @Override
             public void operationComplete(final ChannelFuture future) throws Exception {
@@ -128,19 +136,20 @@ public class Client implements InvocationHandler {
                     setException(future.cause(), future_response);
                 }
             }
-        });
+        };
+        channel_future.addListener(listener);
 
         return future_response;
     }
 
-    private ChannelFuture borrowAndReturnChannelFuture() throws RPCException {
+    protected ChannelFuture borrowAndReturnChannelFuture() throws RPCException {
 
         final ChannelFuture channel_future = borrowChannel();
         returnChannel(channel_future);
         return channel_future;
     }
 
-    private void setException(final Throwable cause, final FutureResponse future_response) {
+    protected void setException(final Throwable cause, final FutureResponse future_response) {
 
         RPCException rpc_error = cause instanceof RPCException ? (RPCException) cause : new TransportException(cause);
         future_response.setException(rpc_error);
@@ -151,7 +160,7 @@ public class Client implements InvocationHandler {
         // Do nothing; reserved for customization via extending classes
     }
 
-    boolean dispatchContains(final Method target) {
+    protected boolean dispatchContains(final Method target) {
 
         for (final Method method : dispatch) {
             if (method.equals(target)) { return true; }
@@ -159,7 +168,7 @@ public class Client implements InvocationHandler {
         return false;
     }
 
-    private FutureResponse writeRequest(final Method method, final Object[] params) throws RPCException {
+    private FutureResponse writeRequest(final Method method, final Object[] params) {
 
         final FutureResponse future_response = newFutureResponse(method, params);
         return writeRequest(future_response);
