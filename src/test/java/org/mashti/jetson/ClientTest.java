@@ -14,6 +14,7 @@
  * You should have received a copy of the GNU General Public License
  * along with jetson.  If not, see <http://www.gnu.org/licenses/>.
  */
+
 package org.mashti.jetson;
 
 import java.net.InetSocketAddress;
@@ -34,8 +35,8 @@ public class ClientTest {
     public static Collection<Object[]> getParameters() {
 
         final Collection<Object[]> parameters = new ArrayList<Object[]>();
-        parameters.add(new Object[]{AbstractTest.LEAN_CLIENT_FACTORY});
-        parameters.add(new Object[]{AbstractTest.JSON_CLIENT_FACTORY});
+        parameters.add(new Object[] {AbstractTest.LEAN_CLIENT_FACTORY});
+        parameters.add(new Object[] {AbstractTest.JSON_CLIENT_FACTORY});
 
         return parameters;
     }

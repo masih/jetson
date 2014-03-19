@@ -47,7 +47,7 @@ public class ClientFactory<Service> {
     private final ClassLoader class_loader;
     private final Class<?>[] interfaces;
     private final ConcurrentHashMap<InetSocketAddress, Service> cached_proxy_map = new ConcurrentHashMap<InetSocketAddress, Service>();
-    protected final ChannelPool channel_pool;
+    protected final ChannelFuturePool channel_pool;
 
     protected ClientFactory(final Class<Service> service_interface, final ClientChannelInitializer handler) {
 
@@ -56,16 +56,22 @@ public class ClientFactory<Service> {
 
     protected ClientFactory(final Class<Service> service_interface, final Bootstrap bootstrap) {
 
-        dispatch = ReflectionUtil.sort(service_interface.getMethods());
+        this(service_interface, ReflectionUtil.sort(service_interface.getMethods()), bootstrap);
+
+    }
+
+    protected ClientFactory(final Class<Service> service_interface, Method[] dispatch, final Bootstrap bootstrap) {
+
+        this.dispatch = dispatch;
         class_loader = ClassLoader.getSystemClassLoader();
         interfaces = new Class<?>[] {service_interface};
         this.bootstrap = bootstrap;
         channel_pool = constructChannelPool(bootstrap);
     }
 
-    protected ChannelPool constructChannelPool(final Bootstrap bootstrap) {
+    protected ChannelFuturePool constructChannelPool(final Bootstrap bootstrap) {
 
-        return new ChannelPool(bootstrap);
+        return new ChannelFuturePool(bootstrap);
     }
 
     /**
