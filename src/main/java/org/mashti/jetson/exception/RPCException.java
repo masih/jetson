@@ -28,8 +28,6 @@ public class RPCException extends IOException {
     private static final long serialVersionUID = 2666032021060461206L;
 
     public RPCException() {
-
-        super();
     }
 
     public RPCException(final String message) {
