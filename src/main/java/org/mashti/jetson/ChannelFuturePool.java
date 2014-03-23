@@ -58,6 +58,11 @@ public class ChannelFuturePool {
         return max_age_millis;
     }
 
+    public Set<Map.Entry<InetSocketAddress, ChannelFuture>> getPooledEntries() {
+
+        return channel_future_pool.entrySet();
+    }
+
     public synchronized void clear() {
 
         final Iterator<Map.Entry<InetSocketAddress, ChannelFuture>> iterator = channel_future_pool.entrySet().iterator();

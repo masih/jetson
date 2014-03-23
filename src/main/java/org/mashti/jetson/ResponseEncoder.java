@@ -14,6 +14,7 @@
  * You should have received a copy of the GNU General Public License
  * along with jetson.  If not, see <http://www.gnu.org/licenses/>.
  */
+
 package org.mashti.jetson;
 
 import io.netty.buffer.ByteBuf;
@@ -29,6 +30,7 @@ import org.mashti.jetson.exception.RPCException;
 @Sharable
 public abstract class ResponseEncoder extends MessageToByteEncoder<FutureResponse> {
 
+    //TODO http://normanmaurer.me/presentations/2014-facebook-eng-netty/slides.html#32.0
     @Override
     protected void encode(final ChannelHandlerContext context, final FutureResponse future_response, final ByteBuf out) throws RPCException {
 

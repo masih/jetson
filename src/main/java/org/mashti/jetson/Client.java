@@ -101,38 +101,12 @@ public class Client implements InvocationHandler {
     protected FutureResponse writeRequest(final FutureResponse future_response) {
 
         final ChannelFuture channel_future = channel_pool.get(address);
-        final GenericFutureListener<ChannelFuture> listener = new GenericFutureListener<ChannelFuture>() {
-
-            @Override
-            public void operationComplete(final ChannelFuture future) throws Exception {
-
-                if (future.isSuccess()) {
-                    final Channel channel = channel_future.channel();
-                    final ChannelFuture write = channel.write(future_response);
-                    write.addListener(new GenericFutureListener<ChannelFuture>() {
-
-                        @Override
-                        public void operationComplete(final ChannelFuture future) throws Exception {
-
-                            if (!future.isSuccess()) {
-                                setException(future.cause(), future_response);
-                            }
-                        }
-                    });
-                    beforeFlush(channel, future_response);
-                    channel.flush();
-                }
-                else {
-                    setException(future.cause(), future_response);
-                }
-            }
-        };
+        final GenericFutureListener<ChannelFuture> listener = new WriteRequestListener(channel_future, future_response);
         channel_future.addListener(listener);
-
         return future_response;
     }
 
-    protected void setException(final Throwable cause, final FutureResponse future_response) {
+    protected static void setException(final Throwable cause, final FutureResponse future_response) {
 
         RPCException rpc_error = cause instanceof RPCException ? (RPCException) cause : new TransportException(cause);
         future_response.setException(rpc_error);
@@ -155,5 +129,50 @@ public class Client implements InvocationHandler {
 
         final FutureResponse future_response = newFutureResponse(method, params);
         return writeRequest(future_response);
+    }
+
+    protected static class ExceptionListener implements GenericFutureListener<ChannelFuture> {
+
+        private final FutureResponse future_response;
+
+        public ExceptionListener(final FutureResponse future_response) {
+
+            this.future_response = future_response;
+        }
+
+        @Override
+        public void operationComplete(final ChannelFuture future) throws Exception {
+
+            if (!future.isSuccess()) {
+                setException(future.cause(), future_response);
+            }
+        }
+    }
+
+    protected class WriteRequestListener implements GenericFutureListener<ChannelFuture> {
+
+        private final ChannelFuture channel_future;
+        private final FutureResponse future_response;
+
+        public WriteRequestListener(final ChannelFuture channel_future, final FutureResponse future_response) {
+
+            this.channel_future = channel_future;
+            this.future_response = future_response;
+        }
+
+        @Override
+        public void operationComplete(final ChannelFuture future) throws Exception {
+
+            if (future.isSuccess()) {
+                final Channel channel = channel_future.channel();
+                final ChannelFuture write = channel.write(future_response);
+                write.addListener(new ExceptionListener(future_response));
+                beforeFlush(channel, future_response);
+                channel.flush();
+            }
+            else {
+                setException(future.cause(), future_response);
+            }
+        }
     }
 }

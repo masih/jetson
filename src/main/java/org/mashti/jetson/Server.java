@@ -113,8 +113,8 @@ public class Server {
         final boolean exposure_changed;
         if (isExposed()) {
             try {
-                disconnectActiveClients();
                 unbindServerChannel();
+                disconnectActiveClients();
                 exposed = false;
                 LOGGER.debug("unexposed server on {}", endpoint);
                 exposure_changed = true;

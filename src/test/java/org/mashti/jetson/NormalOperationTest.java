@@ -234,14 +234,21 @@ public class NormalOperationTest extends AbstractTest {
 
                         try {
                             testAddOnClient(client);
+//                            testAddOnRemoteClient(client);
+//                            testAddOnRemoteClient(client);
+//                            testAddOnRemoteClient(client);
+//                            testAddOnRemoteClient(client);
+//                            testAddOnRemoteClient(client);
+//                            testAddOnRemoteClient(client);
+//                            testAddOnRemoteClient(client);
+//                            testAddOnRemoteClient(client);
+//                            testAddOnRemoteClient(client);
+//                            testAddOnRemoteClient(client);
+//                            testAddOnRemoteClient(client);
+//                            testAddOnRemoteClient(client);
                         }
                         finally {
-                            try {
-                                server.unexpose();
-                            }
-                            catch (IOException e) {
-                                e.printStackTrace();
-                            }
+                            server.unexpose();
                         }
                         return null;
                     }
