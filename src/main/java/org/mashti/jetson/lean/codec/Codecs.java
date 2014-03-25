@@ -22,6 +22,7 @@ import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.concurrent.ConcurrentHashMap;
 import org.mashti.jetson.exception.RPCException;
 import org.mashti.jetson.exception.UnknownTypeException;
 
@@ -44,6 +45,7 @@ public class Codecs {
     private static final DoubleCodec DOUBLE_CODEC = new DoubleCodec();
     private static final SerializableCodec SERIALIZABLE_CODEC = new SerializableCodec();
     private static final ObjectCodec OBJECT_CODEC = new ObjectCodec();
+    private final ConcurrentHashMap<Type, Codec> cached_codec_mapping = new ConcurrentHashMap<Type, Codec>();
     private final List<Codec> codecs;
 
     public Codecs() {
@@ -86,14 +88,35 @@ public class Codecs {
 
     Codec get(final Type type) throws UnknownTypeException {
 
+        if (isCodecMappingCached(type)) {
+            return getCachedCodecMapping(type);
+        }
+
         final Iterator<Codec> codecs_iterator = codecs.iterator();
         while (codecs_iterator.hasNext()) {
             Codec codec = codecs_iterator.next();
-            if (codec != null && codec.isSupported(type)) { return codec; }
-
+            if (codec != null && codec.isSupported(type)) {
+                cacheCodecMapping(type, codec);
+                return codec;
+            }
         }
 
         throw new UnknownTypeException(type);
+    }
+
+    private Codec getCachedCodecMapping(final Type type) {
+
+        return cached_codec_mapping.get(type);
+    }
+
+    private boolean isCodecMappingCached(final Type type) {
+
+        return cached_codec_mapping.containsKey(type);
+    }
+
+    private void cacheCodecMapping(final Type type, final Codec codec) {
+
+        cached_codec_mapping.putIfAbsent(type, codec);
     }
 
     void registerDefaultCodecs() {
