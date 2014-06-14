@@ -41,7 +41,7 @@ public abstract class RequestEncoder extends MessageToByteEncoder<FutureResponse
         }
         catch (final RPCException e) {
             future_response.notifyWrittenByteCount(out.writerIndex() - current_index);
-            future_response.setException(e);
+            future_response.completeExceptionally(e);
         }
 
     }

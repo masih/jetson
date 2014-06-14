@@ -17,12 +17,12 @@
 
 package org.mashti.jetson;
 
-import com.google.common.util.concurrent.AbstractFuture;
 import java.lang.reflect.Method;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /** @author Masih Hajiarabderkani (mh638@st-andrews.ac.uk) */
-public class FutureResponse<Result> extends AbstractFuture<Result> implements Comparable<FutureResponse<?>>, WrittenByteCountListener {
+public class FutureResponse<Result> extends CompletableFuture<Result> implements Comparable<FutureResponse<?>>, WrittenByteCountListener {
 
     private static final AtomicInteger NEXT_ID = new AtomicInteger();
     private final Integer id;
@@ -70,18 +70,6 @@ public class FutureResponse<Result> extends AbstractFuture<Result> implements Co
     public void setArguments(final Object[] arguments) {
 
         this.arguments = arguments;
-    }
-
-    @Override
-    public final boolean set(final Result value) {
-
-        return super.set(value);
-    }
-
-    @Override
-    public final boolean setException(final Throwable exception) {
-
-        return super.setException(exception);
     }
 
     @Override

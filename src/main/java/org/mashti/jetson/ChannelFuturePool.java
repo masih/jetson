@@ -17,7 +17,6 @@
 
 package org.mashti.jetson;
 
-import com.google.common.util.concurrent.MoreExecutors;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
@@ -80,14 +79,7 @@ public class ChannelFuturePool {
         final Set<FutureResponse<?>> responses = getFutureResponsesByChannel(channel);
         final boolean added = responses.add(response);
         if (added) {
-            response.addListener(new Runnable() {
-
-                @Override
-                public void run() {
-
-                    responses.remove(response);
-                }
-            }, MoreExecutors.sameThreadExecutor());
+            response.thenRun(() -> responses.remove(response));
         }
         return added;
     }
@@ -97,11 +89,9 @@ public class ChannelFuturePool {
         final Set<FutureResponse<?>> responses = getFutureResponsesByChannel(channel);
         if (responses != null && !responses.isEmpty()) {
             final RPCException exception = new TransportException("channel was closed");
-            for (final FutureResponse future_response : responses) {
-                if (!future_response.isDone()) {
-                    future_response.setException(exception);
-                }
-            }
+            responses.stream().filter(future_response -> !future_response.isDone()).forEach(future_response -> {
+                future_response.completeExceptionally(exception);
+            });
         }
     }
 
@@ -110,9 +100,9 @@ public class ChannelFuturePool {
         final Set<FutureResponse<?>> responses = getFutureResponsesByChannel(channel);
         if (responses != null && !responses.isEmpty()) {
             final RPCException exception = new RPCException(cause);
-            for (final FutureResponse future_response : responses) {
-                future_response.setException(exception);
-            }
+            responses.stream().forEach(future_response -> {
+                future_response.completeExceptionally(exception);
+            });
         }
     }
 

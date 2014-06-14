@@ -61,7 +61,7 @@ public abstract class RequestDecoder extends MessageToMessageDecoder<ByteBuf> {
             LOGGER.warn("error decoding request", e);
 
             if (future_response != null) {
-                future_response.setException(e);
+                future_response.completeExceptionally(e);
             }
             else {
                 LOGGER.warn("cannot handle bad request", e);

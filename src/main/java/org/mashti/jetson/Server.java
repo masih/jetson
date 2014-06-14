@@ -166,10 +166,10 @@ public class Server {
         final Object[] arguments = future_response.getArguments();
         if (!future_response.isDone()) {
             try {
-                future_response.set(handleRequest(method, arguments));
+                future_response.complete(handleRequest(method, arguments));
             }
             catch (final Throwable e) {
-                future_response.setException(e);
+                future_response.completeExceptionally(e);
             }
         }
         context.writeAndFlush(future_response);

@@ -109,7 +109,7 @@ public class Client implements InvocationHandler {
     protected static void setException(final Throwable cause, final FutureResponse future_response) {
 
         RPCException rpc_error = cause instanceof RPCException ? (RPCException) cause : new TransportException(cause);
-        future_response.setException(rpc_error);
+        future_response.completeExceptionally(rpc_error);
     }
 
     protected void beforeFlush(final Channel channel, final FutureResponse future_response) throws RPCException {

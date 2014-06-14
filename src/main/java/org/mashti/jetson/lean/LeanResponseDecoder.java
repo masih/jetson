@@ -44,17 +44,17 @@ public class LeanResponseDecoder extends ResponseDecoder {
         try {
             if (error) {
                 final Throwable throwable = codecs.decodeAs(in, Throwable.class);
-                response.setException(throwable);
+                response.completeExceptionally(throwable);
             }
             else {
                 final Method method = response.getMethod();
                 final Type return_type = method.getGenericReturnType();
                 final Object result = codecs.decodeAs(in, return_type);
-                response.set(result);
+                response.complete(result);
             }
         }
         catch (RPCException e) {
-            response.setException(e);
+            response.completeExceptionally(e);
         }
         return response;
     }
