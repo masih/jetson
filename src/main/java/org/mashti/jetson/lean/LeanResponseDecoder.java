@@ -19,6 +19,7 @@ package org.mashti.jetson.lean;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import java.lang.reflect.Method;
+import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import org.mashti.jetson.FutureResponse;
 import org.mashti.jetson.ResponseDecoder;
@@ -36,7 +37,7 @@ public class LeanResponseDecoder extends ResponseDecoder {
     }
 
     @Override
-    protected FutureResponse decode(final ChannelHandlerContext context, final ByteBuf in) {
+    protected FutureResponse<?> decode(final ChannelHandlerContext context, final ByteBuf in) {
 
         final int id = in.readInt();
         final FutureResponse response = getFutureResponseById(context, id);
@@ -49,7 +50,7 @@ public class LeanResponseDecoder extends ResponseDecoder {
             else {
                 final Method method = response.getMethod();
                 final Type return_type = method.getGenericReturnType();
-                final Object result = codecs.decodeAs(in, return_type);
+                final Object result = codecs.decodeAs(in, ((ParameterizedType)return_type).getActualTypeArguments()[0]);
                 response.complete(result);
             }
         }

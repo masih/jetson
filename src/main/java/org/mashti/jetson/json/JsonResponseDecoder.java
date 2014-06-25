@@ -25,6 +25,7 @@ import io.netty.buffer.ByteBufInputStream;
 import io.netty.channel.ChannelHandler.Sharable;
 import io.netty.channel.ChannelHandlerContext;
 import java.io.IOException;
+import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import org.mashti.jetson.FutureResponse;
 import org.mashti.jetson.ResponseDecoder;
@@ -61,7 +62,7 @@ public class JsonResponseDecoder extends ResponseDecoder {
             readAndValidateVersion(parser);
 
             final Type expected_return_type = future_response.getMethod().getGenericReturnType();
-            setResponseResultOrError(parser, future_response, expected_return_type);
+            setResponseResultOrError(parser, future_response, ((ParameterizedType)expected_return_type).getActualTypeArguments()[0]);
             parser.nextToken();
         }
         catch (final JsonParseException e) {

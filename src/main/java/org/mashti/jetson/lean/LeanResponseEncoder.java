@@ -19,6 +19,7 @@ package org.mashti.jetson.lean;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import java.lang.reflect.Method;
+import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import org.mashti.jetson.ResponseEncoder;
 import org.mashti.jetson.exception.RPCException;
@@ -40,7 +41,7 @@ public class LeanResponseEncoder extends ResponseEncoder {
         out.writeInt(id);
         out.writeBoolean(false);
         final Type return_type = method.getGenericReturnType();
-        codecs.encodeAs(result, out, return_type);
+        codecs.encodeAs(result, out, ((ParameterizedType)return_type).getActualTypeArguments()[0]);
     }
 
     @Override

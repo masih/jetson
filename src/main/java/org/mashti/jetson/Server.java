@@ -28,6 +28,7 @@ import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.InetSocketAddress;
+import java.util.concurrent.CompletableFuture;
 import org.mashti.jetson.exception.IllegalAccessException;
 import org.mashti.jetson.exception.IllegalArgumentException;
 import org.mashti.jetson.exception.InternalServerException;
@@ -157,7 +158,7 @@ public class Server {
         return context.channel().parent().attr(SERVER_ATTRIBUTE).get();
     }
 
-    protected void handle(final ChannelHandlerContext context, final FutureResponse future_response) {
+    protected void handle(final ChannelHandlerContext context, final FutureResponse<Object> future_response) {
 
         assert isExposed();
 
@@ -165,14 +166,23 @@ public class Server {
         final Method method = future_response.getMethod();
         final Object[] arguments = future_response.getArguments();
         if (!future_response.isDone()) {
+
             try {
-                future_response.complete(handleRequest(method, arguments));
+                handleRequest(method, arguments).whenCompleteAsync((Object result, Throwable error) -> {
+                    if (error == null) {
+                        future_response.complete(result);
+                    }
+                    else {
+                        future_response.completeExceptionally(error);
+                    }
+                    context.writeAndFlush(future_response);
+                });
             }
             catch (final Throwable e) {
                 future_response.completeExceptionally(e);
+                context.writeAndFlush(future_response);
             }
         }
-        context.writeAndFlush(future_response);
     }
 
     protected void notifyChannelActivation(final Channel channel) {
@@ -185,10 +195,10 @@ public class Server {
         server_channel_group.remove(channel);
     }
 
-    private Object handleRequest(final Method method, final Object[] arguments) throws Throwable {
+    private CompletableFuture<?> handleRequest(final Method method, final Object[] arguments) throws Throwable {
 
         try {
-            return method.invoke(service, arguments);
+            return (CompletableFuture<?>) method.invoke(service, arguments);
         }
         catch (final java.lang.IllegalArgumentException e) {
             throw new IllegalArgumentException(e);

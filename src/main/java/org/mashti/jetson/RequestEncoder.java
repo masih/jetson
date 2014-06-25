@@ -25,10 +25,10 @@ import java.lang.reflect.Method;
 import org.mashti.jetson.exception.RPCException;
 
 @Sharable
-public abstract class RequestEncoder extends MessageToByteEncoder<FutureResponse> {
+public abstract class RequestEncoder extends MessageToByteEncoder<FutureResponse<?>> {
 
     @Override
-    protected void encode(final ChannelHandlerContext context, final FutureResponse future_response, final ByteBuf out) {
+    protected void encode(final ChannelHandlerContext context, final FutureResponse<?> future_response, final ByteBuf out) {
 
         int current_index = out.writerIndex();
         try {
@@ -46,11 +46,11 @@ public abstract class RequestEncoder extends MessageToByteEncoder<FutureResponse
 
     }
 
-    private void addPendingFutureResponse(final ChannelHandlerContext context, final FutureResponse future_response) {
+    private void addPendingFutureResponse(final ChannelHandlerContext context, final FutureResponse<?> future_response) {
 
         final Channel channel = context.channel();
         ChannelFuturePool.addFutureResponse(channel, future_response);
     }
 
-    protected abstract void encodeRequest(final ChannelHandlerContext context, final Integer id, final Method method, Object[] arguments, final ByteBuf out) throws RPCException;
+    protected abstract void encodeRequest(ChannelHandlerContext context, Integer id, Method method, Object[] arguments, ByteBuf out) throws RPCException;
 }

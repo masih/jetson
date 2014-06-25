@@ -35,14 +35,14 @@ public abstract class RequestDecoder extends MessageToMessageDecoder<ByteBuf> {
     @Override
     protected void decode(final ChannelHandlerContext context, final ByteBuf bytes, final List<Object> out) {
 
-        final FutureResponse future_response;
+        final FutureResponse<?> future_response;
         future_response = decode(context, bytes);
         out.add(future_response);
     }
 
-    FutureResponse decode(final ChannelHandlerContext context, final ByteBuf in) {
+    FutureResponse<?> decode(final ChannelHandlerContext context, final ByteBuf in) {
 
-        FutureResponse future_response = null;
+        FutureResponse<?> future_response = null;
         final Integer id;
         final Method method;
         final Object[] arguments;

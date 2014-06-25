@@ -30,13 +30,13 @@ public abstract class ResponseDecoder extends MessageToMessageDecoder<ByteBuf> {
     @Override
     protected void decode(final ChannelHandlerContext context, final ByteBuf in, final List<Object> out) throws RPCException {
 
-        final FutureResponse future_response = decode(context, in);
+        final FutureResponse<?> future_response = decode(context, in);
         out.add(future_response);
     }
 
-    protected abstract FutureResponse decode(ChannelHandlerContext context, ByteBuf in) throws RPCException;
+    protected abstract FutureResponse<?> decode(ChannelHandlerContext context, ByteBuf in) throws RPCException;
 
-    protected FutureResponse getFutureResponseById(final ChannelHandlerContext context, final Integer id) {
+    protected FutureResponse<?> getFutureResponseById(final ChannelHandlerContext context, final Integer id) {
 
         return ChannelFuturePool.getFutureResponse(context.channel(), id);
     }

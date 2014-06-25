@@ -17,7 +17,6 @@
 
 package org.mashti.jetson;
 
-import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -46,33 +45,33 @@ public class NormalOperationTest extends AbstractTest {
     }
 
     @Test
-    public void testConcatenate() throws RPCException {
+    public void testConcatenate() throws Exception {
 
         final String text = "some text";
         final int integer = 8852456;
         final TestObject object = new TestObject("X_1_23");
         final char character = '=';
-        final String result = client.concatenate(text, integer, object, character);
+        final String result = client.concatenate(text, integer, object, character).get();
         Assert.assertEquals(text + integer + object + character, result);
     }
 
     @Test
     public void testGetNumberOfMessages() throws Exception {
 
-        Assert.assertEquals(0, client.getNumberOfMessages(EMPTY_STRING_ARRAY));
-        Assert.assertEquals(0, client.getNumberOfMessages());
-        Assert.assertEquals(-1, client.getNumberOfMessages(null));
-        Assert.assertEquals(1, client.getNumberOfMessages(""));
-        Assert.assertEquals(3, client.getNumberOfMessages("", null, "1"));
+        Assert.assertEquals(Integer.valueOf(0), client.getNumberOfMessages(EMPTY_STRING_ARRAY).get());
+        Assert.assertEquals(Integer.valueOf(0), client.getNumberOfMessages().get());
+        Assert.assertEquals(Integer.valueOf(-1), client.getNumberOfMessages(null).get());
+        Assert.assertEquals(Integer.valueOf(1), client.getNumberOfMessages("").get());
+        Assert.assertEquals(Integer.valueOf(3), client.getNumberOfMessages("", null, "1").get());
     }
 
     @Test
     public void testGetCollectionSize() throws Exception {
 
-        Assert.assertEquals(0, client.getCollectionSize(new ArrayList<String>()));
-        Assert.assertEquals(-1, client.getCollectionSize(null));
-        Assert.assertEquals(1, client.getCollectionSize(Collections.singletonList((String) null)));
-        Assert.assertEquals(3, client.getCollectionSize(Arrays.asList("", null, "1")));
+        Assert.assertEquals(Integer.valueOf(0), client.getCollectionSize(new ArrayList<String>()).get());
+        Assert.assertEquals(Integer.valueOf(-1), client.getCollectionSize(null).get());
+        Assert.assertEquals(Integer.valueOf(1), client.getCollectionSize(Collections.singletonList((String) null)).get());
+        Assert.assertEquals(Integer.valueOf(3), client.getCollectionSize(Arrays.asList("", null, "1")).get());
     }
 
     @Test
@@ -117,94 +116,94 @@ public class NormalOperationTest extends AbstractTest {
     }
 
     @Test
-    public void testGetObjectOnRemote() throws IOException {
+    public void testGetObjectOnRemote() throws Exception {
 
-        Assert.assertEquals(NormalOperationTestService.TEST_OBJECT_MESSAGE, client.getObjectOnRemote(temp_server_port).getMessage());
+        Assert.assertEquals(NormalOperationTestService.TEST_OBJECT_MESSAGE, client.getObjectOnRemote(temp_server_port).get().getMessage());
     }
 
     @Test
-    public void testSayFalseOnRemote() throws IOException {
+    public void testSayFalseOnRemote() throws Exception {
 
-        final Boolean _false = client.sayFalseOnRemote(temp_server_port);
+        final Boolean _false = client.sayFalseOnRemote(temp_server_port).get();
         Assert.assertFalse(_false);
     }
 
     @Test
-    public void testGetObject() throws RPCException {
+    public void testGetObject() throws Exception {
 
-        Assert.assertEquals(NormalOperationTestService.TEST_OBJECT_MESSAGE, client.getObject().getMessage());
+        Assert.assertEquals(NormalOperationTestService.TEST_OBJECT_MESSAGE, client.getObject().get().getMessage());
     }
 
     @Test
-    public void testAddOnRemote() throws RPCException {
+    public void testAddOnRemote() throws Exception {
 
         testAddOnRemoteClient(client);
     }
 
     @Test
-    public void testAdd() throws RPCException {
+    public void testAdd() throws Exception {
 
         testAddOnClient(client);
     }
 
     @Test
-    public void testThrowExceptionOnRemote() {
+    public void testThrowExceptionOnRemote() throws InterruptedException {
 
         try {
-            client.throwExceptionOnRemote(temp_server_port);
+            client.throwExceptionOnRemote(temp_server_port).get();
             fail("expected exception");
         }
-        catch (final Exception e) {
-            Assert.assertEquals(NormalOperationTestService.TEST_EXCEPTION.getClass(), e.getClass());
-            Assert.assertEquals(NormalOperationTestService.TEST_EXCEPTION.getMessage(), e.getMessage());
+        catch (final ExecutionException e) {
+            Assert.assertEquals(NormalOperationTestService.TEST_EXCEPTION.getClass(), e.getCause().getClass());
+            Assert.assertEquals(NormalOperationTestService.TEST_EXCEPTION.getMessage(), e.getCause().getMessage());
         }
     }
 
     @Test
-    public void testThrowException() {
+    public void testThrowException() throws InterruptedException {
 
         try {
-            client.throwException();
+            client.throwException().get();
             fail("expected exception");
         }
-        catch (final Exception e) {
-            Assert.assertEquals(NormalOperationTestService.TEST_EXCEPTION.getClass(), e.getClass());
-            Assert.assertEquals(NormalOperationTestService.TEST_EXCEPTION.getMessage(), e.getMessage());
+        catch (final ExecutionException e) {
+            Assert.assertEquals(NormalOperationTestService.TEST_EXCEPTION.getClass(), e.getCause().getClass());
+            Assert.assertEquals(NormalOperationTestService.TEST_EXCEPTION.getMessage(), e.getCause().getMessage());
         }
     }
 
     @Test
-    public void testSayFalse() throws RPCException {
+    public void testSayFalse() throws Exception {
 
-        final Boolean _false = client.sayFalse();
+        final Boolean _false = client.sayFalse().get();
         Assert.assertFalse(_false);
     }
 
     @Test
-    public void testSayTrue() throws RPCException {
+    public void testSayTrue() throws Exception {
 
-        final Boolean _true = client.sayTrue();
+        final Boolean _true = client.sayTrue().get();
         Assert.assertTrue(_true);
     }
 
     @Test
-    public void testSayMinus65535() throws RPCException {
+    public void testSayMinus65535() throws Exception {
 
-        final Integer minus65535 = client.sayMinus65535();
+        final Integer minus65535 = client.sayMinus65535().get();
         Assert.assertEquals(Integer.valueOf(-65535), minus65535);
     }
 
     @Test
-    public void testSay65535() throws RPCException {
+    public void testSay65535() throws Exception {
 
-        final Integer _65535 = client.say65535();
+        final Integer _65535 = client.say65535().get();
         Assert.assertEquals(Integer.valueOf(65535), _65535);
     }
 
     @Test
-    public void testSaySomething() throws RPCException {
+    public void testSaySomething() throws Exception {
 
-        final String something = client.saySomething();
+        final String something = client.saySomething().get();
         Assert.assertEquals("something", something);
     }
 
@@ -270,27 +269,27 @@ public class NormalOperationTest extends AbstractTest {
         return new NormalOperationTestService(client_factory);
     }
 
-    private void testAddOnRemoteClient(final TestService client) throws RPCException {
+    private void testAddOnRemoteClient(final TestService client) throws Exception {
 
-        final Integer three = client.addOnRemote(1, 2, temp_server_port);
+        final Integer three = client.addOnRemote(1, 2, temp_server_port).get();
         Assert.assertEquals(Integer.valueOf(1 + 2), three);
-        final Integer eleven = client.addOnRemote(12, -1, temp_server_port);
+        final Integer eleven = client.addOnRemote(12, -1, temp_server_port).get();
         Assert.assertEquals(Integer.valueOf(12 - 1), eleven);
-        final Integer fifty_one = client.addOnRemote(-61, 112, temp_server_port);
+        final Integer fifty_one = client.addOnRemote(-61, 112, temp_server_port).get();
         Assert.assertEquals(Integer.valueOf(-61 + 112), fifty_one);
-        final Integer minus_seven = client.addOnRemote(-4, -3, temp_server_port);
+        final Integer minus_seven = client.addOnRemote(-4, -3, temp_server_port).get();
         Assert.assertEquals(Integer.valueOf(-4 - 3), minus_seven);
     }
 
-    private static void testAddOnClient(final TestService client) throws RPCException {
+    private static void testAddOnClient(final TestService client) throws Exception {
 
-        final Integer three = client.add(1, 2);
+        final Integer three = client.add(1, 2).get();
         Assert.assertEquals(Integer.valueOf(1 + 2), three);
-        final Integer eleven = client.add(12, -1);
+        final Integer eleven = client.add(12, -1).get();
         Assert.assertEquals(Integer.valueOf(12 - 1), eleven);
-        final Integer fifty_one = client.add(-61, 112);
+        final Integer fifty_one = client.add(-61, 112).get();
         Assert.assertEquals(Integer.valueOf(-61 + 112), fifty_one);
-        final Integer minus_seven = client.add(-4, -3);
+        final Integer minus_seven = client.add(-4, -3).get();
         Assert.assertEquals(Integer.valueOf(-4 - 3), minus_seven);
     }
 

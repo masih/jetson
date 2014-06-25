@@ -17,6 +17,7 @@
 
 package org.mashti.jetson;
 
+import java.util.concurrent.ExecutionException;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -39,14 +40,13 @@ public class TimeoutTest {
         client_factory = new LeanClientFactory<TestService>(TestService.class);
         server = faultyServerFactory.createServer(new NormalOperationTestService(client_factory));
         server.expose();
-
     }
 
-    @Test(expected = RPCException.class)
-    public void testConnectionTimeout() throws RPCException {
+    @Test(expected = ExecutionException.class)
+    public void testConnectionTimeout() throws RPCException, ExecutionException, InterruptedException {
 
         final TestService service = client_factory.get(server.getLocalSocketAddress());
-        service.saySomething();
+        service.saySomething().get();
         Assert.fail();
     }
 

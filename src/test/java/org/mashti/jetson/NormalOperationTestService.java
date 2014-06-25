@@ -19,7 +19,7 @@ package org.mashti.jetson;
 
 import java.net.InetSocketAddress;
 import java.util.Collection;
-import org.mashti.jetson.exception.RPCException;
+import java.util.concurrent.CompletableFuture;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -30,119 +30,129 @@ public class NormalOperationTestService implements TestService {
     private static final Logger LOGGER = LoggerFactory.getLogger(NormalOperationTestService.class);
     private final ClientFactory<TestService> proxy_factory;
 
-    public NormalOperationTestService(final ClientFactory proxy_factory) {
+    public NormalOperationTestService(final ClientFactory<TestService> proxy_factory) {
 
         this.proxy_factory = proxy_factory;
     }
 
     @Override
-    public void doVoidWithNoParams() {
+    public CompletableFuture<Void> doVoidWithNoParams() {
 
-        LOGGER.debug("doing nothing");
+        return CompletableFuture.runAsync(() -> {LOGGER.debug("doing nothing");});
     }
 
     @Override
-    public int getNumberOfMessages(final String... messages) {
+    public CompletableFuture<Integer> getNumberOfMessages(final String... messages) {
 
-        return messages != null ? messages.length : -1;
+        return CompletableFuture.supplyAsync(() -> {return messages != null ? messages.length : -1;});
     }
 
     @Override
-    public int getCollectionSize(final Collection<String> collection) throws RPCException {
+    public CompletableFuture<Integer> getCollectionSize(final Collection<String> collection) {
 
-        return collection != null ? collection.size() : -1;
+        return CompletableFuture.supplyAsync(() -> {
+            return collection != null ? collection.size() : -1;
+        });
     }
 
     @Override
-    public String saySomething() {
+    public CompletableFuture<String> saySomething() {
 
-        return "something";
+        return CompletableFuture.supplyAsync(() -> {return "something";});
     }
 
     @Override
-    public Integer say65535() {
+    public CompletableFuture<Integer> say65535() {
 
-        return 65535;
+        return CompletableFuture.completedFuture(65535);
     }
 
     @Override
-    public Integer sayMinus65535() {
+    public CompletableFuture<Integer> sayMinus65535() {
 
-        return -65535;
+        return CompletableFuture.completedFuture(-65535);
     }
 
     @Override
-    public Boolean sayTrue() {
+    public CompletableFuture<Boolean> sayTrue() {
 
-        return true;
+        return CompletableFuture.completedFuture(Boolean.TRUE);
     }
 
     @Override
-    public Boolean sayFalse() {
+    public CompletableFuture<Boolean> sayFalse() {
 
-        return false;
+        return CompletableFuture.completedFuture(Boolean.FALSE);
     }
 
     @Override
-    public void sleepForFiveSeconds() throws RPCException {
+    public CompletableFuture<Void> sleepForFiveSeconds() {
 
-        try {
-            Thread.sleep(5000);
-        }
-        catch (InterruptedException e) {
-            throw new RPCException(e);
-        }
+        CompletableFuture<Void> future = new CompletableFuture<>();
+        CompletableFuture.runAsync(() -> {
+
+            try {
+                Thread.sleep(5000);
+                future.complete(null);
+            }
+            catch (InterruptedException e) {
+                future.completeExceptionally(e);
+            }
+        });
+        return future;
     }
 
     @Override
-    public Boolean sayFalseOnRemote(final Integer port) throws RPCException {
+    public CompletableFuture<Boolean> sayFalseOnRemote(final Integer port) {
 
         final TestService remote_service = proxy_factory.get(new InetSocketAddress("localhost", port));
         return remote_service.sayFalse();
     }
 
     @Override
-    public void throwException() throws Exception {
+    public CompletableFuture<Void> throwException() {
 
-        throw TEST_EXCEPTION;
+        final CompletableFuture<Void> future = new CompletableFuture<>();
+        future.completeExceptionally(TEST_EXCEPTION);
+        return future;
     }
 
     @Override
-    public void throwExceptionOnRemote(final Integer port) throws Exception {
+    public CompletableFuture<Void> throwExceptionOnRemote(final Integer port) {
 
         final TestService remote_service = proxy_factory.get(new InetSocketAddress("localhost", port));
-        remote_service.throwException();
+        return remote_service.throwException();
     }
 
     @Override
-    public Integer add(final Integer a, final Integer b) {
+    public CompletableFuture<Integer> add(final Integer a, final Integer b) {
 
-        return a + b;
+        return CompletableFuture.supplyAsync(() -> {return a + b;});
     }
 
     @Override
-    public Integer addOnRemote(final Integer a, final Integer b, final Integer port) throws RPCException {
+    public CompletableFuture<Integer> addOnRemote(final Integer a, final Integer b, final Integer port) {
 
         final TestService remote_service = proxy_factory.get(new InetSocketAddress("localhost", port));
         return remote_service.add(a, b);
     }
 
     @Override
-    public TestObject getObject() {
+    public CompletableFuture<TestObject> getObject() {
 
-        return new TestObject(TEST_OBJECT_MESSAGE);
+        return CompletableFuture.supplyAsync(() -> { return new TestObject(TEST_OBJECT_MESSAGE);});
     }
 
     @Override
-    public TestObject getObjectOnRemote(final Integer port) throws RPCException {
+    public CompletableFuture<TestObject> getObjectOnRemote(final Integer port) {
 
         final TestService remote_service = proxy_factory.get(new InetSocketAddress("localhost", port));
         return remote_service.getObject();
     }
 
     @Override
-    public String concatenate(final String text, final Integer integer, final TestObject object, final char character) throws RPCException {
+    public CompletableFuture<String> concatenate(final String text, final Integer integer, final TestObject object, final char character) {
 
-        return text + integer + object + character;
+        return CompletableFuture.supplyAsync(() -> {return text + integer + object + character;});
     }
 }

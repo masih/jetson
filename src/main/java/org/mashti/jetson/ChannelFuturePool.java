@@ -166,7 +166,7 @@ public class ChannelFuturePool {
     protected boolean isValid(ChannelFuture channel_future) {
 
         final long since_creation_time = System.currentTimeMillis() - channel_future.channel().attr(CREATION_TIME_ATTRIBUTE).get();
-        return !channel_future.isDone() || (!channel_future.isSuccess() && since_creation_time < max_age_millis) || (channel_future.isSuccess() && !channel_future.channel().closeFuture().isSuccess());
+        return !channel_future.isDone() || !channel_future.isSuccess() && since_creation_time < max_age_millis || channel_future.isSuccess() && !channel_future.channel().closeFuture().isSuccess();
     }
 
     protected void destroy(ChannelFuture channel_future) {

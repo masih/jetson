@@ -45,4 +45,6 @@ public class LeanClientFactory<Service> extends ClientFactory<Service> {
 
         super(service_interface, new LeanClientChannelInitializer(service_interface, codecs));
     }
+
+    
 }
