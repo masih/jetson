@@ -37,7 +37,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Implements a JSON RPC server.
+ * Implements a RPC server.
  *
  * @author Masih Hajiarabderkani (mh638@st-andrews.ac.uk)
  */
