@@ -176,7 +176,7 @@ public class Server {
                         future_response.completeExceptionally(error);
                     }
                     context.writeAndFlush(future_response);
-                });
+                }, server_bootstrap.childGroup());
             }
             catch (final Throwable e) {
                 future_response.completeExceptionally(e);
