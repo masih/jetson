@@ -20,6 +20,7 @@ package org.mashti.jetson;
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.concurrent.ExecutionException;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -46,11 +47,11 @@ public class ClientTest {
         this.client_factory = client_factory;
     }
 
-    @Test(expected = RPCException.class)
-    public void testConnectionRefusal() throws RPCException {
+    @Test(expected = ExecutionException.class)
+    public void testConnectionRefusal() throws RPCException, ExecutionException, InterruptedException {
 
         final TestService service = client_factory.get(new InetSocketAddress(55555));
-        service.saySomething();
+        service.saySomething().get();
         Assert.fail();
     }
 }

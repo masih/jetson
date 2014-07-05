@@ -56,7 +56,7 @@ public class ClientFactory<Service> {
 
     protected ClientFactory(final Class<Service> service_interface, final Bootstrap bootstrap) {
 
-        this(service_interface, ReflectionUtil.sort(service_interface.getMethods()), bootstrap);
+        this(service_interface, ReflectionUtil.checkAndSort(service_interface.getMethods()), bootstrap);
 
     }
 
@@ -117,5 +117,11 @@ public class ClientFactory<Service> {
         bootstrap.option(ChannelOption.TCP_NODELAY, true);
         bootstrap.handler(handler);
         return bootstrap;
+    }
+
+    @Override
+    public String toString() {
+
+        return getClass().getSimpleName() + ':' + interfaces[0].getSimpleName();
     }
 }

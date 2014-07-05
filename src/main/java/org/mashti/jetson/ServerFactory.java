@@ -81,4 +81,10 @@ public class ServerFactory<Service> {
         server_bootstrap.childHandler(handler);
         return server_bootstrap;
     }
+    
+    @Override
+    public String toString() {
+
+        return getClass().getSimpleName();
+    }
 }

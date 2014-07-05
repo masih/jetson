@@ -23,7 +23,6 @@ import io.netty.util.concurrent.GenericFutureListener;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.net.InetSocketAddress;
-import java.util.concurrent.ExecutionException;
 import org.mashti.jetson.exception.InternalServerException;
 import org.mashti.jetson.exception.RPCException;
 import org.mashti.jetson.exception.TransportException;
@@ -62,16 +61,10 @@ public class Client implements InvocationHandler {
 
         if (dispatchContains(method)) {
 
-            final FutureResponse future_response = writeRequest(method, params);
+            final FutureResponse<?> future_response = writeRequest(method, params);
 
             try {
-                return future_response.get();
-            }
-            catch (InterruptedException e) {
-                throw new InternalServerException(e);
-            }
-            catch (ExecutionException e) {
-                throw e.getCause();
+                return future_response;
             }
             catch (Exception e) {
                 throw new InternalServerException(e);
@@ -86,19 +79,19 @@ public class Client implements InvocationHandler {
     @Override
     public String toString() {
 
-        return new StringBuilder("Client{").append("address=").append(address).append('}').toString();
+        return "Client{" + "address=" + address + '}';
     }
 
-    public FutureResponse newFutureResponse(final Method method, final Object[] arguments) {
+    public FutureResponse<?> newFutureResponse(final Method method, final Object[] arguments) {
 
-        final FutureResponse response = new FutureResponse();
+        final FutureResponse<?> response = new FutureResponse();
         response.setMethod(method);
         response.setArguments(arguments);
         response.setWrittenByteCountListener(written_byte_count_listener);
         return response;
     }
 
-    protected FutureResponse writeRequest(final FutureResponse future_response) {
+    protected FutureResponse<?> writeRequest(final FutureResponse<?> future_response) {
 
         final ChannelFuture channel_future = channel_pool.get(address);
         final GenericFutureListener<ChannelFuture> listener = new WriteRequestListener(channel_future, future_response);
@@ -106,13 +99,13 @@ public class Client implements InvocationHandler {
         return future_response;
     }
 
-    protected static void setException(final Throwable cause, final FutureResponse future_response) {
+    protected static void setException(final Throwable cause, final FutureResponse<?> future_response) {
 
         RPCException rpc_error = cause instanceof RPCException ? (RPCException) cause : new TransportException(cause);
-        future_response.setException(rpc_error);
+        future_response.completeExceptionally(rpc_error);
     }
 
-    protected void beforeFlush(final Channel channel, final FutureResponse future_response) throws RPCException {
+    protected void beforeFlush(final Channel channel, final FutureResponse<?> future_response) throws RPCException {
 
         // Do nothing; reserved for customization via extending classes
     }
@@ -125,17 +118,17 @@ public class Client implements InvocationHandler {
         return false;
     }
 
-    private FutureResponse writeRequest(final Method method, final Object[] params) {
+    private FutureResponse<?> writeRequest(final Method method, final Object[] params) {
 
-        final FutureResponse future_response = newFutureResponse(method, params);
+        final FutureResponse<?> future_response = newFutureResponse(method, params);
         return writeRequest(future_response);
     }
 
     protected static class ExceptionListener implements GenericFutureListener<ChannelFuture> {
 
-        private final FutureResponse future_response;
+        private final FutureResponse<?> future_response;
 
-        public ExceptionListener(final FutureResponse future_response) {
+        public ExceptionListener(final FutureResponse<?> future_response) {
 
             this.future_response = future_response;
         }
@@ -152,9 +145,9 @@ public class Client implements InvocationHandler {
     protected class WriteRequestListener implements GenericFutureListener<ChannelFuture> {
 
         private final ChannelFuture channel_future;
-        private final FutureResponse future_response;
+        private final FutureResponse<?> future_response;
 
-        public WriteRequestListener(final ChannelFuture channel_future, final FutureResponse future_response) {
+        public WriteRequestListener(final ChannelFuture channel_future, final FutureResponse<?> future_response) {
 
             this.channel_future = channel_future;
             this.future_response = future_response;

@@ -18,45 +18,45 @@
 package org.mashti.jetson;
 
 import java.util.Collection;
-import org.mashti.jetson.exception.RPCException;
+import java.util.concurrent.CompletableFuture;
 
 public interface TestService {
 
-    void doVoidWithNoParams() throws RPCException;
+    CompletableFuture<Void> doVoidWithNoParams();
 
-    int getNumberOfMessages(String... messages) throws RPCException;
+    CompletableFuture<Integer> getNumberOfMessages(String... messages);
 
-    int getCollectionSize(Collection<String> collection) throws RPCException;
+    CompletableFuture<Integer> getCollectionSize(Collection<String> collection);
 
-    String saySomething() throws RPCException;
+    CompletableFuture<String> saySomething();
 
-    Integer say65535() throws RPCException;
+    CompletableFuture<Integer> say65535();
 
-    Integer sayMinus65535() throws RPCException;
+    CompletableFuture<Integer> sayMinus65535();
 
-    Boolean sayTrue() throws RPCException;
+    CompletableFuture<Boolean> sayTrue();
 
-    Boolean sayFalse() throws RPCException;
+    CompletableFuture<Boolean> sayFalse();
 
-    void sleepForFiveSeconds() throws RPCException;
+    CompletableFuture<Void> sleepForFiveSeconds();
 
-    Boolean sayFalseOnRemote(Integer port) throws RPCException;
+    CompletableFuture<Boolean> sayFalseOnRemote(Integer port);
 
-    void throwException() throws Exception;
+    CompletableFuture<Void> throwException();
 
-    void throwExceptionOnRemote(Integer port) throws Exception;
+    CompletableFuture<Void> throwExceptionOnRemote(Integer port);
 
-    Integer add(Integer a, Integer b) throws RPCException;
+    CompletableFuture<Integer> add(Integer a, Integer b);
 
-    Integer addOnRemote(Integer a, Integer b, Integer port) throws RPCException;
+    CompletableFuture<Integer> addOnRemote(Integer a, Integer b, Integer port);
 
-    TestObject getObject() throws RPCException;
+    CompletableFuture<TestObject> getObject();
 
-    TestObject getObjectOnRemote(Integer port) throws RPCException;
+    CompletableFuture<TestObject> getObjectOnRemote(Integer port);
 
-    String concatenate(final String text, final Integer integer, final TestObject object, final char character) throws RPCException;
+    CompletableFuture<String> concatenate(String text, Integer integer, TestObject object, char character);
 
-    public class TestObject {
+    class TestObject {
 
         private String message;
 

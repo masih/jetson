@@ -14,13 +14,13 @@
  * You should have received a copy of the GNU General Public License
  * along with jetson.  If not, see <http://www.gnu.org/licenses/>.
  */
+
 package org.mashti.jetson;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import org.junit.Assert;
 import org.junit.Test;
-import org.mashti.jetson.exception.RPCException;
 
 import static org.junit.Assert.fail;
 
@@ -37,10 +37,10 @@ public class ServerTest extends AbstractTest {
         client.saySomething();
         server.unexpose();
         try {
-            client.saySomething();
+            client.saySomething().get();
             fail();
         }
-        catch (final RPCException e) {
+        catch (final Exception e) {
             //expected
         }
 
@@ -49,10 +49,10 @@ public class ServerTest extends AbstractTest {
         client.saySomething();
         server.unexpose();
         try {
-            client.saySomething();
+            client.saySomething().get();
             fail();
         }
-        catch (final RPCException e) {
+        catch (final Exception e) {
             //expected
         }
     }

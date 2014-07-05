@@ -28,11 +28,11 @@ import org.mashti.jetson.exception.InternalServerException;
 import org.mashti.jetson.exception.RPCException;
 
 @Sharable
-public abstract class ResponseEncoder extends MessageToByteEncoder<FutureResponse> {
+public abstract class ResponseEncoder extends MessageToByteEncoder<FutureResponse<?>> {
 
     //TODO http://normanmaurer.me/presentations/2014-facebook-eng-netty/slides.html#32.0
     @Override
-    protected void encode(final ChannelHandlerContext context, final FutureResponse future_response, final ByteBuf out) throws RPCException {
+    protected void encode(final ChannelHandlerContext context, final FutureResponse<?> future_response, final ByteBuf out) throws RPCException {
 
         final int current_index = out.writerIndex();
         final Integer id = future_response.getId();

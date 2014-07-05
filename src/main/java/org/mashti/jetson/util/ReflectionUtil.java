@@ -14,6 +14,7 @@
  * You should have received a copy of the GNU General Public License
  * along with jetson.  If not, see <http://www.gnu.org/licenses/>.
  */
+
 package org.mashti.jetson.util;
 
 import java.io.Serializable;
@@ -26,6 +27,7 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.concurrent.CompletableFuture;
 import org.mashti.jetson.exception.RPCException;
 
 /**
@@ -45,13 +47,13 @@ public final class ReflectionUtil {
     public static Class<?> getRawClass(final Type type) {
 
         if (type instanceof Class) {
-            return (Class) type;
+            return (Class<?>) type;
         }
-        else if (type instanceof ParameterizedType) {
+        if (type instanceof ParameterizedType) {
             final ParameterizedType parameterized_type = (ParameterizedType) type;
             return getRawClass(parameterized_type.getRawType());
         }
-        else if (type instanceof GenericArrayType) {
+        if (type instanceof GenericArrayType) {
             final GenericArrayType generic_array_type = (GenericArrayType) type;
             return getRawClass(generic_array_type.getGenericComponentType());
         }
@@ -95,12 +97,12 @@ public final class ReflectionUtil {
     public static Map<String, Method> mapNamesToMethods(final Class<?> service) {
 
         if (isCached(service)) { return getCachedDispatchMap(service); }
-        final Method[] methods = sort(service.getMethods());
+        final Method[] methods = checkAndSort(service.getMethods());
 
         final Map<String, Method> dispatch_map = new HashMap<String, Method>();
         int i = 1;
         for (final Method method : methods) {
-            validateJsonRpcExceptionTypes(method);
+//            validateJsonRpcExceptionTypes(method);
 
             String method_name = method.getName();
             if (dispatch_map.containsKey(method_name)) { // check if method is overloaded
@@ -114,7 +116,13 @@ public final class ReflectionUtil {
 
     }
 
-    public static Method[] sort(final Method... methods) {
+    public static Method[] checkAndSort(final Method... methods) {
+
+        for (Method method : methods) {
+            if (!CompletableFuture.class.isAssignableFrom(method.getReturnType())) {
+                throw new RuntimeException("method return types must be of type " + CompletableFuture.class);
+            }
+        }
 
         Arrays.sort(methods, METHOD_COMPARATOR);
         return methods;
@@ -148,7 +156,9 @@ public final class ReflectionUtil {
 
     private static void validateJsonRpcExceptionTypes(final Method method) {
 
-        if (!containsAnyAssignableFrom(RPCException.class, method.getExceptionTypes())) { throw new IllegalArgumentException(method + " must throw RPCException or one of its super types"); }
+        if (!containsAnyAssignableFrom(RPCException.class, method.getExceptionTypes())) {
+            throw new IllegalArgumentException(method + " must throw RPCException or one of its super types");
+        }
     }
 
     /**

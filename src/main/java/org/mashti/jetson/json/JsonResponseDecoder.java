@@ -25,6 +25,7 @@ import io.netty.buffer.ByteBufInputStream;
 import io.netty.channel.ChannelHandler.Sharable;
 import io.netty.channel.ChannelHandlerContext;
 import java.io.IOException;
+import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import org.mashti.jetson.FutureResponse;
 import org.mashti.jetson.ResponseDecoder;
@@ -61,32 +62,32 @@ public class JsonResponseDecoder extends ResponseDecoder {
             readAndValidateVersion(parser);
 
             final Type expected_return_type = future_response.getMethod().getGenericReturnType();
-            setResponseResultOrError(parser, future_response, expected_return_type);
+            setResponseResultOrError(parser, future_response, ((ParameterizedType)expected_return_type).getActualTypeArguments()[0]);
             parser.nextToken();
         }
         catch (final JsonParseException e) {
             LOGGER.debug("failed to parse response", e);
 
             checkFutureResponse(future_response);
-            future_response.setException(new InvalidResponseException(e));
+            future_response.completeExceptionally(new InvalidResponseException(e));
         }
         catch (final JsonGenerationException e) {
             LOGGER.debug("failed to generate response", e);
 
             checkFutureResponse(future_response);
-            future_response.setException(new InternalServerException(e));
+            future_response.completeExceptionally(new InternalServerException(e));
         }
         catch (final IOException e) {
             LOGGER.debug("IO error occurred while decoding response", e);
 
             checkFutureResponse(future_response);
-            future_response.setException(new TransportException("failed to process response", e));
+            future_response.completeExceptionally(new TransportException("failed to process response", e));
         }
         catch (final RuntimeException e) {
             LOGGER.debug("runtime error while decoding response", e);
 
             checkFutureResponse(future_response);
-            future_response.setException(new ServerRuntimeException(e));
+            future_response.completeExceptionally(new ServerRuntimeException(e));
         }
         finally {
             CloseableUtil.closeQuietly(parser);
@@ -119,7 +120,7 @@ public class JsonResponseDecoder extends ResponseDecoder {
     private void setResponseResult(final JsonParser parser, final FutureResponse response, final Type expected_return_type) throws IOException {
 
         final Object result = JsonParserUtil.readValueAs(parser, expected_return_type);
-        response.set(result);
+        response.complete(result);
     }
 
     private void setResponseError(final JsonParser parser, final FutureResponse response) throws IOException {
@@ -128,7 +129,7 @@ public class JsonResponseDecoder extends ResponseDecoder {
         if (error == null) { throw new InvalidResponseException("error in response must not be null"); }
 
         final Throwable throwable = JsonRpcExceptions.fromJsonRpcError(error);
-        response.setException(throwable);
+        response.completeExceptionally(throwable);
     }
 
     private void readAndValidateVersion(final JsonParser parser) throws IOException {
