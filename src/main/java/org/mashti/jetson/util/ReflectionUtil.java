@@ -47,13 +47,13 @@ public final class ReflectionUtil {
     public static Class<?> getRawClass(final Type type) {
 
         if (type instanceof Class) {
-            return (Class) type;
+            return (Class<?>) type;
         }
-        else if (type instanceof ParameterizedType) {
+        if (type instanceof ParameterizedType) {
             final ParameterizedType parameterized_type = (ParameterizedType) type;
             return getRawClass(parameterized_type.getRawType());
         }
-        else if (type instanceof GenericArrayType) {
+        if (type instanceof GenericArrayType) {
             final GenericArrayType generic_array_type = (GenericArrayType) type;
             return getRawClass(generic_array_type.getGenericComponentType());
         }
