@@ -45,6 +45,7 @@ public class Codecs {
     private static final DoubleCodec DOUBLE_CODEC = new DoubleCodec();
     private static final SerializableCodec SERIALIZABLE_CODEC = new SerializableCodec();
     private static final ObjectCodec OBJECT_CODEC = new ObjectCodec();
+    private static final UUIDCodec UUID_CODEC = new UUIDCodec();
     private final ConcurrentHashMap<Type, Codec> cached_codec_mapping = new ConcurrentHashMap<Type, Codec>();
     private final List<Codec> codecs;
 
@@ -131,6 +132,7 @@ public class Codecs {
         register(CHARACTER_CODEC);
         register(STRING_CODEC);
         register(BOOLEAN_CODEC);
+        register(UUID_CODEC);
         register(INET_ADDRESS_CODEC);
         register(INET_SOCKET_ADDRESS_CODEC);
         register(THROWABLE_CODEC);
