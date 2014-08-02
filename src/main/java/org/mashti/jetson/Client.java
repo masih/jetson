@@ -36,7 +36,7 @@ public class Client implements InvocationHandler {
     protected final InetSocketAddress address;
     private final Method[] dispatch;
     private final ChannelFuturePool channel_pool;
-    private volatile WrittenByteCountListener written_byte_count_listener;
+    protected volatile WrittenByteCountListener written_byte_count_listener;
 
     protected Client(final InetSocketAddress address, final Method[] dispatch, final ChannelFuturePool channel_pool) {
 
@@ -62,7 +62,6 @@ public class Client implements InvocationHandler {
         if (dispatchContains(method)) {
 
             final FutureResponse<?> future_response = writeRequest(method, params);
-
             try {
                 return future_response;
             }

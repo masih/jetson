@@ -40,7 +40,7 @@ public abstract class RequestDecoder extends MessageToMessageDecoder<ByteBuf> {
         out.add(future_response);
     }
 
-    FutureResponse<?> decode(final ChannelHandlerContext context, final ByteBuf in) {
+    protected FutureResponse<?> decode(final ChannelHandlerContext context, final ByteBuf in) {
 
         FutureResponse<?> future_response = null;
         final Integer id;

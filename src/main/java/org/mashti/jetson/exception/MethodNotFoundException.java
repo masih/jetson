@@ -14,6 +14,7 @@
  * You should have received a copy of the GNU General Public License
  * along with jetson.  If not, see <http://www.gnu.org/licenses/>.
  */
+
 package org.mashti.jetson.exception;
 
 public class MethodNotFoundException extends ServerException {
@@ -22,11 +23,16 @@ public class MethodNotFoundException extends ServerException {
 
     public MethodNotFoundException() {
 
-        super();
     }
 
     public MethodNotFoundException(final String message) {
 
         super(message);
     }
+
+    public MethodNotFoundException(final String message, Throwable cause) {
+
+        super(message, cause);
+    }
+
 }

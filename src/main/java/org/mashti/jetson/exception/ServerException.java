@@ -14,6 +14,7 @@
  * You should have received a copy of the GNU General Public License
  * along with jetson.  If not, see <http://www.gnu.org/licenses/>.
  */
+
 package org.mashti.jetson.exception;
 
 public abstract class ServerException extends RPCException {
@@ -22,12 +23,16 @@ public abstract class ServerException extends RPCException {
 
     ServerException() {
 
-        super();
     }
 
     ServerException(final String message) {
 
         super(message);
+    }
+
+    ServerException(final String message, final Throwable cause) {
+
+        super(message, cause);
     }
 
     ServerException(final Throwable cause) {

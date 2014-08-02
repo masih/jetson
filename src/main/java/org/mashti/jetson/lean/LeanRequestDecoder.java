@@ -14,6 +14,7 @@
  * You should have received a copy of the GNU General Public License
  * along with jetson.  If not, see <http://www.gnu.org/licenses/>.
  */
+
 package org.mashti.jetson.lean;
 
 import io.netty.buffer.ByteBuf;
@@ -30,26 +31,22 @@ import org.mashti.jetson.lean.codec.Codecs;
 public class LeanRequestDecoder extends RequestDecoder {
 
     private final List<Method> dispatch;
-    private final Codecs codecs;
-    private final int dispatch_size;
+    protected final Codecs codecs;
 
     public LeanRequestDecoder(final List<Method> dispatch, final Codecs codecs) {
 
         this.dispatch = dispatch;
         this.codecs = codecs;
-        dispatch_size = dispatch.size();
     }
 
     private Method getMethodByIndex(final int index) throws MethodNotFoundException {
 
-        final Method method = isInRange(index) ? dispatch.get(index) : null;
-        if (method == null) { throw new MethodNotFoundException("no method is found with the index: " + index); }
-        return method;
-    }
-
-    private boolean isInRange(final int index) {
-
-        return index > -1 && index < dispatch_size;
+        try {
+            return dispatch.get(index);
+        }
+        catch (final IndexOutOfBoundsException e) {
+            throw new MethodNotFoundException("no method is found with the index: " + index, e);
+        }
     }
 
     private Object[] readArguments(final Type[] argument_types, final ByteBuf in) throws RPCException {

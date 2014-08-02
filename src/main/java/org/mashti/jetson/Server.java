@@ -198,6 +198,9 @@ public class Server {
     private CompletableFuture<?> handleRequest(final Method method, final Object[] arguments) throws Throwable {
 
         try {
+
+            // TODO use {@link MethodHandle#invokeE}. Example:
+            //            return (CompletableFuture<?>) MethodHandles.lookup().unreflect(method).bindTo(service).invokeExact((Integer) arguments[0], (Integer) arguments[1]);
             return (CompletableFuture<?>) method.invoke(service, arguments);
         }
         catch (final java.lang.IllegalArgumentException e) {

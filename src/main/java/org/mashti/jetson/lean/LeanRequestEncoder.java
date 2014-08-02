@@ -30,7 +30,7 @@ import org.mashti.jetson.lean.codec.Codecs;
 public class LeanRequestEncoder extends RequestEncoder {
 
     private final List<Method> dispatch;
-    private final Codecs codecs;
+    protected final Codecs codecs;
 
     public LeanRequestEncoder(final List<Method> dispatch, final Codecs codecs) {
 
@@ -47,7 +47,7 @@ public class LeanRequestEncoder extends RequestEncoder {
         writeArguments(arguments, argument_types, out);
     }
 
-    private void writeArguments(final Object[] arguments, final Type[] argument_types, final ByteBuf out) throws RPCException {
+    protected void writeArguments(final Object[] arguments, final Type[] argument_types, final ByteBuf out) throws RPCException {
 
         for (int i = 0; i < argument_types.length; i++) {
 
@@ -57,7 +57,7 @@ public class LeanRequestEncoder extends RequestEncoder {
         }
     }
 
-    private void writeMethod(final Method method, final ByteBuf out) throws MethodNotFoundException {
+    protected void writeMethod(final Method method, final ByteBuf out) throws MethodNotFoundException {
 
         final int index = dispatch.indexOf(method);
         if (index == -1) { throw new MethodNotFoundException(); }

@@ -18,6 +18,7 @@
 package org.mashti.jetson;
 
 import java.lang.reflect.Method;
+import java.util.Arrays;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -33,6 +34,7 @@ public class FutureResponse<Result> extends CompletableFuture<Result> implements
     public FutureResponse() {
 
         this(NEXT_ID.incrementAndGet());
+
     }
 
     public FutureResponse(Method method, Object... arguments) {
@@ -101,8 +103,14 @@ public class FutureResponse<Result> extends CompletableFuture<Result> implements
         }
     }
 
-    synchronized void setWrittenByteCountListener(WrittenByteCountListener written_byte_count_listener) {
+    public synchronized void setWrittenByteCountListener(WrittenByteCountListener written_byte_count_listener) {
 
         this.written_byte_count_listener = written_byte_count_listener;
+    }
+
+    @Override
+    public String toString() {
+
+        return "FutureResponse{" + "id=" + id + ", method=" + method + ", arguments=" + Arrays.toString(arguments) + '}';
     }
 }
