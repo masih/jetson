@@ -22,10 +22,15 @@ import io.netty.channel.ChannelHandler.Sharable;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.MessageToMessageDecoder;
 import java.util.List;
+import java.util.Optional;
 import org.mashti.jetson.exception.RPCException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @Sharable
 public abstract class ResponseDecoder extends MessageToMessageDecoder<ByteBuf> {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(ResponseDecoder.class);
 
     @Override
     protected void decode(final ChannelHandlerContext context, final ByteBuf in, final List<Object> out) throws RPCException {
@@ -38,6 +43,11 @@ public abstract class ResponseDecoder extends MessageToMessageDecoder<ByteBuf> {
 
     protected FutureResponse<?> getFutureResponseById(final ChannelHandlerContext context, final Integer id) {
 
-        return ChannelFuturePool.getFutureResponse(context.channel(), id);
+        final Optional<FutureResponse<?>> response = ChannelFuturePool.getFutureResponse(context.channel(), id);
+        if (response.isPresent()) { return response.get(); }
+        else {
+            LOGGER.error("received response with id {} from context {}", id, context);
+            return null;
+        }
     }
 }

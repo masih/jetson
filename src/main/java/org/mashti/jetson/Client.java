@@ -123,6 +123,12 @@ public class Client implements InvocationHandler {
         return writeRequest(future_response);
     }
 
+    protected void writeToChannel(Channel channel, FutureResponse future_response) {
+
+        final ChannelFuture write = channel.write(future_response);
+        write.addListener(new ExceptionListener(future_response));
+    }
+
     protected static class ExceptionListener implements GenericFutureListener<ChannelFuture> {
 
         private final FutureResponse<?> future_response;
@@ -157,14 +163,14 @@ public class Client implements InvocationHandler {
 
             if (future.isSuccess()) {
                 final Channel channel = channel_future.channel();
-                final ChannelFuture write = channel.write(future_response);
-                write.addListener(new ExceptionListener(future_response));
+                writeToChannel(channel, future_response);
                 beforeFlush(channel, future_response);
                 channel.flush();
             }
             else {
                 setException(future.cause(), future_response);
             }
+            future.removeListener(this);
         }
     }
 }

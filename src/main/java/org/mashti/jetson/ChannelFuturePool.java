@@ -24,6 +24,7 @@ import io.netty.util.AttributeKey;
 import java.net.InetSocketAddress;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -64,7 +65,8 @@ public class ChannelFuturePool {
 
     public synchronized void clear() {
 
-        final Iterator<Map.Entry<InetSocketAddress, ChannelFuture>> iterator = channel_future_pool.entrySet().iterator();
+        final Iterator<Map.Entry<InetSocketAddress, ChannelFuture>> iterator = channel_future_pool.entrySet()
+                .iterator();
         while (iterator.hasNext()) {
             Map.Entry<InetSocketAddress, ChannelFuture> next = iterator.next();
             iterator.remove();
@@ -74,7 +76,7 @@ public class ChannelFuturePool {
         channel_future_pool.clear();
     }
 
-    static boolean addFutureResponse(final Channel channel, final FutureResponse response) {
+    static boolean addFutureResponse(final Channel channel, final FutureResponse<?> response) {
 
         final Set<FutureResponse<?>> responses = getFutureResponsesByChannel(channel);
         final boolean added = responses.add(response);
@@ -89,9 +91,11 @@ public class ChannelFuturePool {
         final Set<FutureResponse<?>> responses = getFutureResponsesByChannel(channel);
         if (responses != null && !responses.isEmpty()) {
             final RPCException exception = new TransportException("channel was closed");
-            responses.stream().filter(future_response -> !future_response.isDone()).forEach(future_response -> {
-                future_response.completeExceptionally(exception);
-            });
+            responses.stream()
+                    .filter(future_response -> !future_response.isDone())
+                    .forEach(future_response -> {
+                        future_response.completeExceptionally(exception);
+                    });
         }
     }
 
@@ -100,28 +104,28 @@ public class ChannelFuturePool {
         final Set<FutureResponse<?>> responses = getFutureResponsesByChannel(channel);
         if (responses != null && !responses.isEmpty()) {
             final RPCException exception = new RPCException(cause);
-            responses.stream().forEach(future_response -> {
-                future_response.completeExceptionally(exception);
-            });
+            responses.stream()
+                    .forEach(future_response -> {
+                        future_response.completeExceptionally(exception);
+                    });
         }
     }
 
-    static FutureResponse getFutureResponse(final Channel channel, final Integer id) {
+    static Optional<FutureResponse<?>> getFutureResponse(final Channel channel, final Integer id) {
 
         final Set<FutureResponse<?>> responses = getFutureResponsesByChannel(channel);
         assert responses != null : id + " unknown channel: " + channel;
-        if (responses != null) {
-            for (final FutureResponse r : responses) {
-                if (r.getId().equals(id)) { return r; }
-            }
-        }
-        LOGGER.warn("received response with id {} from an unknown channel {}", id, channel);
-        return null;
+
+        return responses.stream()
+                .filter(response -> response.getId()
+                        .equals(id))
+                .findFirst();
     }
 
     static Set<FutureResponse<?>> getFutureResponsesByChannel(final Channel channel) {
 
-        return channel.attr(FUTURE_RESPONSES_ATTRIBUTE_KEY).get();
+        return channel.attr(FUTURE_RESPONSES_ATTRIBUTE_KEY)
+                .get();
     }
 
     public ChannelFuture get(InetSocketAddress address) {
@@ -158,15 +162,23 @@ public class ChannelFuturePool {
 
         LOGGER.trace("making new channel for {}", address);
         final ChannelFuture channel_future = bootstrap.connect(address);
-        channel_future.channel().attr(FUTURE_RESPONSES_ATTRIBUTE_KEY).set(new ConcurrentSkipListSet<FutureResponse<?>>());
-        channel_future.channel().attr(CREATION_TIME_ATTRIBUTE).set(System.currentTimeMillis());
+        channel_future.channel()
+                .attr(FUTURE_RESPONSES_ATTRIBUTE_KEY)
+                .set(new ConcurrentSkipListSet<FutureResponse<?>>());
+        channel_future.channel()
+                .attr(CREATION_TIME_ATTRIBUTE)
+                .set(System.currentTimeMillis());
         return channel_future;
     }
 
     protected boolean isValid(ChannelFuture channel_future) {
 
-        final long since_creation_time = System.currentTimeMillis() - channel_future.channel().attr(CREATION_TIME_ATTRIBUTE).get();
-        return !channel_future.isDone() || !channel_future.isSuccess() && since_creation_time < max_age_millis || channel_future.isSuccess() && !channel_future.channel().closeFuture().isSuccess();
+        final long since_creation_time = System.currentTimeMillis() - channel_future.channel()
+                .attr(CREATION_TIME_ATTRIBUTE)
+                .get();
+        return !channel_future.isDone() || !channel_future.isSuccess() && since_creation_time < max_age_millis || channel_future.isSuccess() && !channel_future.channel()
+                .closeFuture()
+                .isDone();
     }
 
     protected void destroy(ChannelFuture channel_future) {

@@ -155,7 +155,10 @@ public class Server {
 
     static Server getServerFromContext(final ChannelHandlerContext context) {
 
-        return context.channel().parent().attr(SERVER_ATTRIBUTE).get();
+        return context.channel()
+                .parent()
+                .attr(SERVER_ATTRIBUTE)
+                .get();
     }
 
     protected void handle(final ChannelHandlerContext context, final FutureResponse<Object> future_response) {
@@ -199,8 +202,6 @@ public class Server {
 
         try {
 
-            // TODO use {@link MethodHandle#invokeE}. Example:
-            //            return (CompletableFuture<?>) MethodHandles.lookup().unreflect(method).bindTo(service).invokeExact((Integer) arguments[0], (Integer) arguments[1]);
             return (CompletableFuture<?>) method.invoke(service, arguments);
         }
         catch (final java.lang.IllegalArgumentException e) {
@@ -222,7 +223,8 @@ public class Server {
 
     private void configureServerChannel() {
 
-        server_channel.attr(SERVER_ATTRIBUTE).set(this);
+        server_channel.attr(SERVER_ATTRIBUTE)
+                .set(this);
     }
 
     private void updateLocalSocketAddress() {
@@ -233,7 +235,9 @@ public class Server {
     private void attemptBind() throws IOException {
 
         try {
-            server_channel = server_bootstrap.bind(endpoint).sync().channel();
+            server_channel = server_bootstrap.bind(endpoint)
+                    .sync()
+                    .channel();
         }
         catch (final Exception e) {
             LOGGER.debug("error while waiting for channel exposure", e);
@@ -243,14 +247,18 @@ public class Server {
 
     private void unbindServerChannel() throws InterruptedException {
 
-        server_channel.disconnect().sync();
-        server_channel.closeFuture().sync();
+        server_channel.disconnect()
+                .sync();
+        server_channel.closeFuture()
+                .sync();
     }
 
     private void disconnectActiveClients() throws InterruptedException {
 
-        server_channel_group.disconnect().sync();
-        server_channel_group.close().sync();
+        server_channel_group.disconnect()
+                .sync();
+        server_channel_group.close()
+                .sync();
         server_channel_group.clear();
     }
 }

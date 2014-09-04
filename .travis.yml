@@ -1,15 +1,25 @@
 language: java
 jdk:
-  - oraclejdk8
+- oraclejdk8
 env:
   global:
-  - secure: PkUgrM0HxcubsG2aZhQUSw/R43JgdBamquQO7xd0kmVeApFcAw4r78J02hce4HumvMhAbcccYDAZVbHGn/KnBs3YAXp5gvWAj0UQg+LRML+Mu5MUgcUdM6Y8bMs5x3aA5PeiII7m3GSZ9FY+VXzUb3ANDQdPV3mLi3LZ3Eelt44=
-  - secure: UBS5jbyBdHCpw+0zRmntttlbz9XbjhCx2XUkkSxlDtfjjENMsxOhz0baSsVhZ0NqtZuj8pOmLHv+lRg8wdrF2WNfGAjkmphxr63K3fNO3cubh0JbDo7lQa6sFTpaqGngf7E/tquUgNB1QSvH00KNkfYd1q4JtdN02C0trPGlL8Q=
+  - secure: GViqkJCgx1sldGEpp/7ABbf50Rkb2134z06T2iU+GDh10Z06m6Uw7hpFbnHIFKGuK1H3QaSomlU6m9bo6uk7LaNcmfPRs/qIsl6jCvuau+3sKcki+ZDP7W2XYzd41nR6rqsyQjl8syYLcEm1MGp2EjDc7r6e+i6BOz3s2ODVgBk=
 branches:
   only:
   - master
+
+before_script:
+  - pwd
+  - cd
+  - git clone https://github.com/github/maven-plugins.git
+  - cd maven-plugins
+  - mvn clean install
+  - cd /home/travis/build/mashti/jetson
+
 script: mvn clean deploy
+
 after_success:
 - mvn cobertura:cobertura coveralls:cobertura
 notifications:
   email: false
+
