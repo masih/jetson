@@ -171,7 +171,7 @@ public class Server {
         if (!future_response.isDone()) {
 
             try {
-                handleRequest(method, arguments).whenCompleteAsync((Object result, Throwable error) -> {
+                handleRequest(method, arguments).whenComplete((result, error) -> {
                     if (error == null) {
                         future_response.complete(result);
                     }
@@ -179,7 +179,7 @@ public class Server {
                         future_response.completeExceptionally(error);
                     }
                     context.writeAndFlush(future_response);
-                }, server_bootstrap.childGroup());
+                });
             }
             catch (final Throwable e) {
                 future_response.completeExceptionally(e);
