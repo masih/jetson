@@ -20,6 +20,8 @@ import java.lang.Thread.UncaughtExceptionHandler;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.atomic.AtomicLong;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * A wrapper around {@link Executors#defaultThreadFactory()} that names the threads using a given prefix concatenated with an atomically increasing integer starting from <code>0</code>.
@@ -28,12 +30,13 @@ import java.util.concurrent.atomic.AtomicLong;
  */
 public final class NamedThreadFactory implements ThreadFactory {
 
+    private static final Logger LOGGER = LoggerFactory.getLogger(NamedThreadFactory.class);
     private static final UncaughtExceptionHandler PRINT_UNCAUGHT_EXCEPTIONS = new UncaughtExceptionHandler() {
 
         @Override
         public void uncaughtException(final Thread t, final Throwable e) {
 
-            e.printStackTrace();
+            LOGGER.error("", e);
         }
     };
     private final AtomicLong sequence_number;
