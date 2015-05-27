@@ -5,13 +5,13 @@ An RPC framework with automatic proxy generation using Java Reflection
 ## Maven Dependency
 To add Jetson as a Maven dependency:
 
-First, add Mashti.org Maven repository:
+First, add [my Maven repository](https://github.com/masih/maven) to your POM:
 
 ``` xml
 <repository>
-  <id>org.mashti.maven</id>
-  <name>Mashti Maven Repository</name>
-  <url>http://maven.mashti.org</url>
+  <id>org.derkani.maven</id>
+  <name>Masih's Maven Repository</name>
+  <url>http://maven.derkani.org</url>
 </repository>
 ```
 
@@ -19,21 +19,14 @@ and finally, add Jetson dependency:
 
 ``` xml
 <dependency>
-  <groupId>org.mashti</groupId>
+  <groupId>org.derkani</groupId>
   <artifactId>jetson</artifactId>
   <version>1.0-SNAPSHOT</version>
 </dependency>
 ``` 
 
 ## Build Status
-[![Build Status](https://travis-ci.org/mashti/jetson.png?branch=master)](https://travis-ci.org/mashti/jetson)
-
-## Coverage Status
-[![Coverage Status](https://coveralls.io/repos/mashti/jetson/badge.png?branch=master)](https://coveralls.io/r/mashti/jetson?branch=master)
+[![Jetson CI](https://circleci.com/gh/masih/jetson.svg?style=svg)](https://circleci.com/gh/masih/jetson)
 
 ## License
-The project is licensed under GNU GPL version 3.0.
-
-## Acknowledgements
-Thanks to [YourKit](http://www.yourkit.com/java/profiler/index.jsp) for supporting Jetson with its full-featured Java Profiler.
-
+The project is licensed under BSD 3-Claus License.
