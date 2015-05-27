@@ -1,0 +1,14 @@
+machine:
+  java:
+    version: oraclejdk8
+
+general:
+  artifacts:
+    - target/*.jar
+  branches:
+    only:
+      - master
+
+test:
+  override:
+    - mvn clean deploy
