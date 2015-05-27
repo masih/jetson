@@ -29,4 +29,4 @@ and finally, add Jetson dependency:
 [![Jetson CI](https://circleci.com/gh/masih/jetson.svg?style=svg)](https://circleci.com/gh/masih/jetson)
 
 ## License
-The project is licensed under BSD 3-Claus License.
+The project is licensed under BSD 3-Clause License.
